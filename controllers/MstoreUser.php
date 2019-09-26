@@ -416,6 +416,65 @@ class JSON_API_MStore_User_Controller
 
     }
 
+    public function firebase_sms_login()
+    {
+
+        global $json_api;
+
+        if (!$json_api->query->phone) {
+            $json_api->error("You must include a 'phone' variable.");
+        } else {
+            $user_name = $json_api->query->phone;
+            $user_email = $json_api->query->phone."@mstore.io";
+            $email_exists = email_exists($user_email);
+
+            if ($email_exists) {
+                $user = get_user_by('email', $user_email);
+                $user_id = $user->ID;
+                $user_name = $user->user_login;
+            }
+
+
+            if (!$user_id && $email_exists == false) {
+
+                while (username_exists($user_name)) {
+                    $i++;
+                    $user_name = strtolower($user_name) . '.' . $i;
+
+                }
+
+                $random_password = wp_generate_password($length = 12, $include_standard_special_chars = false);
+                $userdata = array(
+                    'user_login' => $user_name,
+                    'user_email' => $user_email,
+                    'user_pass' => $random_password,
+                    'display_name' => $user_name,
+                    'first_name' => $user_name,
+                    'last_name' => ""
+                );
+
+                $user_id = wp_insert_user($userdata);
+                if ($user_id) $user_account = 'user registered.';
+
+            } else {
+
+                if ($user_id) $user_account = 'user logged in.';
+            }
+
+            $expiration = time() + apply_filters('auth_cookie_expiration', 120960000, $user_id, true);
+            $cookie = wp_generate_auth_cookie($user_id, $expiration, 'logged_in');
+
+            $response['msg'] = $user_account;
+            $response['wp_user_id'] = $user_id;
+            $response['cookie'] = $cookie;
+            $response['user_login'] = $user_name;
+            $response['user'] = $result;
+        }
+
+        return $response;
+
+    }
+
     /*
      * Post commment function
      */
