@@ -19,7 +19,7 @@ include plugin_dir_path(__FILE__)."templates/class-rename-generate.php";
 
 class MstoreCheckOut
 {
-    public $version = '1.1.2';
+    public $version = '1.3.4';
 
     public function __construct()
     {
