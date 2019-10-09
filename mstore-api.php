@@ -91,7 +91,7 @@ function load_mstore_templater()
 // Define for the API User wrapper which is based on json api user plugin
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-if (!is_plugin_active('json-api/json-api.php')) {
+if (!is_plugin_active('json-api/json-api.php') && !is_plugin_active('json-api-master/json-api.php')) {
     // add_action('admin_notices', 'pim_draw_notice_json_api');
     return;
 }
