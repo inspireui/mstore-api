@@ -3,7 +3,7 @@
  * Plugin Name: Mstore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the Mstore and FluxStore App
- * Version: 1.3.8
+ * Version: 1.4.0
  * Author: InspireUI
  * Author URI: http://inspireui.com
  *
@@ -20,7 +20,7 @@ include plugin_dir_path(__FILE__)."templates/class-rename-generate.php";
 
 class MstoreCheckOut
 {
-    public $version = '1.3.8';
+    public $version = '1.4.0';
 
     public function __construct()
     {
@@ -28,6 +28,15 @@ class MstoreCheckOut
         define('MSTORE_PLUGIN_FILE', __FILE__);
         include_once (ABSPATH . 'wp-admin/includes/plugin.php');
         if (is_plugin_active('woocommerce/woocommerce.php') == false) {
+            return 0;
+        }
+
+        $path = get_template_directory()."/templates";
+        if (!file_exists($path)) {
+            mkdir($path, 0777, true);
+        }
+        $templatePath = plugin_dir_path(__FILE__)."templates/mstore-api-template.php";
+        if (!copy($templatePath,$path."/mstore-api-template.php")) {
             return 0;
         }
 
