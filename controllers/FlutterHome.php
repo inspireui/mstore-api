@@ -1,28 +1,21 @@
 <?php
 
 /*
- * Base REST Controller for mstore
+ * Base REST Controller for flutter
  *
  * @since 1.4.0
  *
  * @package home
  */
 
-class MStoreHome extends WP_REST_Controller
+class FlutterHome extends WP_REST_Controller
 {
         /**
      * Endpoint namespace
      *
      * @var string
      */
-    protected $namespace = 'mstore/v1';
-
-    /**
-     * Route name
-     *
-     * @var string
-     */
-    protected $base = 'cache';
+    protected $namespace = 'wc/v2/flutter';//prefix must be wc/ or wc- to reuse check permission function in woo commerce
 
 
     /**
@@ -32,18 +25,44 @@ class MStoreHome extends WP_REST_Controller
      */
     public function __construct()
     {
-        add_action('rest_api_init', array($this, 'register_mstore_routes'));
+        add_action('rest_api_init', array($this, 'register_flutter_routes'));
+        add_filter( 'wp_rest_cache/allowed_endpoints', array($this, 'wprc_add_flutter_endpoints'));
     }
 
-    public function register_mstore_routes()
+    /**
+     * Register the flutter caching endpoints so they will be cached.
+     */
+    function wprc_add_flutter_endpoints( $allowed_endpoints ) {
+        if ( ! isset( $allowed_endpoints[ $this->namespace ] ) || ! in_array( 'cache', $allowed_endpoints[ $this->namespace ] ) ) {
+            $allowed_endpoints[ $this->namespace ][] = 'cache';
+            $allowed_endpoints[ $this->namespace ][] = 'category/cache';
+        }
+        return $allowed_endpoints;
+    }
+
+    public function register_flutter_routes()
     {
         register_rest_route($this->namespace, '/cache', array(
             'args'=>array(),
             array(
                 'methods' => WP_REST_Server::READABLE,
                 'callback' => array($this, 'get_home_data'),
+                'permission_callback' => array( $this, 'flutter_get_items_permissions_check' ),
             ),
         ));
+
+        register_rest_route($this->namespace, '/category/cache', array(
+            'args'=>array(),
+            array(
+                'methods' => WP_REST_Server::READABLE,
+                'callback' => array($this, 'get_category_data'),
+                'permission_callback' => array( $this, 'flutter_get_items_permissions_check' ),
+            ),
+        ));
+    }
+
+    public function flutter_get_items_permissions_check(){
+       return wc_rest_check_post_permissions( "product", 'read' );
     }
 
     /**
@@ -57,8 +76,7 @@ class MStoreHome extends WP_REST_Controller
     {
         $api = new WC_REST_Products_Controller();
         $request = new WP_REST_Request('GET');
-        global $json_api;
-        $path = str_replace('plugins/mstore-api','uploads',dirname(dirname(__FILE__)))."/2000/01/config.json";
+        $path = str_replace('plugins/mstore-api/controllers','uploads',dirname( __FILE__ ))."/2000/01/config.json";
         
         if (file_exists($path)) {
             $fileContent = file_get_contents($path);
@@ -94,7 +112,7 @@ class MStoreHome extends WP_REST_Controller
             
             return $array;
         }else{
-            $json_api->error("Config file hasn't been uploaded yet.");
+            return new WP_Error( "existed_config", "Config file hasn't been uploaded yet.", array( 'status' => 400 ) );
         }
     }
 
@@ -117,6 +135,35 @@ class MStoreHome extends WP_REST_Controller
         return $response->get_data();
     }
     
+
+    /**
+     * Get Category Data for caching
+     *
+     * @param object $request
+     *
+     * @return json
+     */
+    public function get_category_data($request)
+    {
+        $api = new WC_REST_Products_Controller();
+        $ids = $request["categoryIds"];
+        if (isset($ids)) {
+            $ids = explode(",",$ids);
+        }else{
+            $ids = [];
+        }
+
+        if(count($ids) > 0){
+            $results = [];
+            foreach ($ids as $id) {
+                $results[$id] = $this->getProductsByLayout(["category"=>$id], $api, $request);
+            }
+            return $results;
+        }else{
+            return new WP_Error( "empty_ids", "categoryIds is empty", array( 'status' => 400 ) );
+        }
+    }
+    
 }
 
-new MStoreHome;
+new FlutterHome;
