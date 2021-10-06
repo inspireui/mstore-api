@@ -389,18 +389,7 @@ class JSON_API_MStore_User_Controller
 		}else{	
             $url='https://graph.facebook.com/me/?fields='.$fields.'&access_token='.$json_api->query->access_token;
                 
-                //  Initiate curl
-            $ch = curl_init();
-            // Enable SSL verification
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $enable_ssl);
-            // Will return the response, if false it print the response
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            // Set the url
-            curl_setopt($ch, CURLOPT_URL,$url);
-            // Execute
-            $result=curl_exec($ch);
-            // Closing
-            curl_close($ch);
+            $result = wp_remote_retrieve_body(wp_remote_get($url));
 
                 $result = json_decode($result, true);
                 
@@ -679,11 +668,7 @@ class JSON_API_MStore_User_Controller
         } else {
             $url = 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=' . $json_api->query->access_token;
 
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-            $result = curl_exec($ch);
-            curl_close($ch);
+            $result = wp_remote_retrieve_body(wp_remote_get($url));
 
             $result = json_decode($result, true);
             if (isset($result["email"])) {

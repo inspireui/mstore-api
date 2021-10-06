@@ -42,6 +42,9 @@ class MStoreHome extends WP_REST_Controller
             array(
                 'methods' => WP_REST_Server::READABLE,
                 'callback' => array($this, 'get_home_data'),
+                'permission_callback' => function (){
+                    return true;
+                },
             ),
         ));
     }

@@ -7,21 +7,30 @@ function getValue(&$val, $default = '')
 {
     return isset($val) ? $val : $default;
 }
-
+$data = null;
 if(isset($_POST['order'])){
     $data = json_decode(urldecode(base64_decode($_POST['order'])), true);
 }elseif (filter_has_var(INPUT_GET, 'order')) {
     $data = filter_has_var(INPUT_GET, 'order') ? json_decode(urldecode(base64_decode(filter_input(INPUT_GET, 'order'))), true) : [];
+}elseif (filter_has_var(INPUT_GET, 'code')) {
+    $code = filter_input(INPUT_GET, 'code');
+    global $wpdb;
+    $table_name = $wpdb->prefix . "mstore_checkout";
+    $item = $wpdb->get_row( "SELECT * FROM $table_name WHERE code = '$code'" );
+    if ($item) {
+        $data = json_decode(urldecode(base64_decode($item->order)), true);
+    }else{
+        return var_dump("Can't not get the order");
+    }
 }
 
-if (isset($data)):
+if ($data != null):
     global $woocommerce;
     // Validate the cookie token
     $userId = wp_validate_auth_cookie($data['token'], 'logged_in');
 
     if (!$userId) {
-        // echo "Invalid authentication cookie. Please try to login again!";
-        return;
+        return var_dump("Invalid authentication cookie. Please try to login again!");
     }
 
     // Check user and authentication
@@ -31,8 +40,8 @@ if (isset($data)):
             wp_set_current_user($userId, $user->user_login);
             wp_set_auth_cookie($userId);
 
-            // $url = filter_has_var(INPUT_SERVER, 'REQUEST_URI') ? filter_input(INPUT_SERVER, 'REQUEST_URI') : '';
-            // header("Refresh: 0; url=$url");
+            $url = filter_has_var(INPUT_SERVER, 'REQUEST_URI') ? filter_input(INPUT_SERVER, 'REQUEST_URI') : '';
+            header("Refresh: 0; url=$url");
         }
     }
     $woocommerce->session->set('refresh_totals', true);
@@ -369,7 +378,7 @@ if (isset($data)):
                                                                 <td class="product-name">
                                                                     <?= apply_filters('woocommerce_cart_item_name', $_product->get_name(), $cart_item, $cart_item_key) . '&nbsp;'; ?>
                                                                     <?= apply_filters('woocommerce_checkout_cart_item_quantity', ' <strong class="product-quantity">' . sprintf('&times; %s', $cart_item['quantity']) . '</strong>', $cart_item, $cart_item_key); ?>
-                                                                    <?= WC()->cart->get_item_data($cart_item); ?>
+                                                                    <?= wc_get_formatted_cart_item_data($cart_item); ?>
                                                                 </td>
                                                                 <td class="product-total">
                                                                     <?= apply_filters('woocommerce_cart_item_subtotal', WC()->cart->get_product_subtotal($_product, $cart_item['quantity']), $cart_item, $cart_item_key); ?>
@@ -413,7 +422,7 @@ if (isset($data)):
                                                         </tr>
                                                     <?php endforeach; ?>
 
-                                                    <?php if (wc_tax_enabled() && 'excl' === WC()->cart->tax_display_cart) : ?>
+                                                    <?php if (wc_tax_enabled() && 'excl' === WC()->cart->get_tax_price_display_mode()) : ?>
                                                         <?php if ('itemized' === get_option('woocommerce_tax_total_display')) : ?>
                                                             <?php foreach (WC()->cart->get_tax_totals() as $code => $tax) : ?>
                                                                 <tr class="tax-rate tax-rate-<?= esc_attr(sanitize_title($code)); ?>">
