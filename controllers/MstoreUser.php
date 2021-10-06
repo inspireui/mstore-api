@@ -214,8 +214,6 @@ class JSON_API_MStore_User_Controller
                     }
 
                     if ($userLoginReq && $userEmailReq) {
-                        // filter_input_array(INPUT_GET, $_REQUEST['user_login']) = $username;
-                        // filter_input_array(INPUT_GET, $_REQUEST['user_email']) = $email;
                         $argsBelow = [
                             'user_login' => $username,
                             'user_email' => $email

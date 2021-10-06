@@ -387,8 +387,6 @@ class VendorAdminWooHelper
         $wc_report = new WC_Admin_Report();
 
         // Set date parameters for the current month
-
-
         switch ($interval) {
             case 'year':
                 $start_date = strtotime(date('Y-m', current_time('timestamp')) . '-01 midnight');
@@ -1066,14 +1064,6 @@ class VendorAdminWooHelper
                 $product->set_sku(wc_clean($request['sku']));
             }
 
-            // Catalog Visibility.
-            //   if ( isset( $request['catalog_visibility'] ) ) {
-            // 	$product->set_catalog_visibility( $request['catalog_visibility'] );
-            //   }
-            // Check for featured/gallery images, upload it and set it.
-            //   if ( isset( $request['images'] ) ) {
-            // 	$product = $this->set_product_images( $product, $request['images'] );
-            //   }
             // Sales and prices.
             $product->set_status($request['status']);
 

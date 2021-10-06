@@ -181,14 +181,6 @@ class FlutterHome extends WP_REST_Controller
         $response = $api->get_items($request);
         $products = $response->get_data();
         return $products;
-        // $results = [];
-        // if(isset($products) && !empty($products)){
-        //     foreach($products as $item){
-        //         $item["meta_data"] = [];
-        //         $results[] = $item; 
-        //     }
-        // }
-        // return $results;
     }
 
 

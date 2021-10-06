@@ -229,7 +229,6 @@ class FlutterWCFMHelper
     }
 
 
-    /* Added By Toan */
     public function flutter_get_wcfm_sale_stats($user_id)
     {
         $id = $user_id;
@@ -335,13 +334,6 @@ class FlutterWCFMHelper
             }
         }
 
-        $reviews_vendor_filter = '';
-        // if( wcfm_is_vendor() && $vendor_id ) {
-        // 		$reviews_vendor_filter = " AND `vendor_id` = " . $vendor_id;
-        // 	}  elseif ( ! empty( $request['reviews_vendor'] ) ) {
-        // 		$reviews_vendor = sanitize_text_field( $request['reviews_vendor'] );
-        // 		$reviews_vendor_filter = " AND `vendor_id` = {$reviews_vendor}";
-        // 	}
         $reviews_vendor_filter = " AND `vendor_id` = " . $vendor_id;
         $sql = "SELECT COUNT(ID) from {$wpdb->prefix}wcfm_marketplace_reviews";
         $sql .= " WHERE 1=1";
@@ -480,8 +472,7 @@ class FlutterWCFMHelper
         }
     }
 
-    /* GET WCFM SALE STATS FUNCTIONS. CUSTOM BY TOAN 04/11/2020 */
-
+    /* GET WCFM SALE STATS FUNCTIONS */
     function wcfm_query_time_range_filter($sql, $time, $interval = '7day', $start_date = '', $end_date = '', $table_handler = 'commission')
     {
         switch ($interval) {
@@ -974,8 +965,6 @@ class FlutterWCFMHelper
         //echo ' '.$km;
         return $km;
     }
-
-    /* Added By Toan */
 
     function get_product_categories($request)
     {

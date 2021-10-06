@@ -348,7 +348,6 @@ function custom_woocommerce_rest_prepare_product_variation_object($response, $ob
 
     global $woocommerce_wpml;
 
-    /* Added By Toan */
     $is_purchased = false;
     if (isset($request['user_id'])) {
         $user_id = $request['user_id'];

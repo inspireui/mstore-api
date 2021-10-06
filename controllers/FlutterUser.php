@@ -11,7 +11,6 @@ class FlutterUserController extends FlutterBaseController
 
     public function register_routes()
     {
-        /// Added by Toan 30/11/2020
         register_rest_route($this->namespace, '/reset-password', array(
             array(
                 'methods' => 'POST',
@@ -260,7 +259,6 @@ class FlutterUserController extends FlutterBaseController
     }
 
 
-    /// Added by Toan 30/11/2020
     public function reset_password()
     {
         $json = file_get_contents('php://input');
