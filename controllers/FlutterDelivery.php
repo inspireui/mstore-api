@@ -1,6 +1,7 @@
 <?php
-require_once (__DIR__ . '/helpers/DeliveryWCFMHelper.php');
-require_once (__DIR__ . '/helpers/DeliveryWooHelper.php');
+require_once(__DIR__ . '/helpers/DeliveryWCFMHelper.php');
+require_once(__DIR__ . '/helpers/DeliveryWooHelper.php');
+
 /*
  * Base REST Controller for flutter
  *
@@ -17,7 +18,7 @@ class FlutterDelivery extends FlutterBaseController
      * @var string
      */
     protected $namespace = 'delivery';
-    
+
     /**
      * Register all routes releated with stores
      *
@@ -40,26 +41,24 @@ class FlutterDelivery extends FlutterBaseController
                 'callback' => array(
                     $this,
                     'get_notification'
-                ) ,
-                'permission_callback' => function ()
-                {
+                ),
+                'permission_callback' => function () {
                     return parent::checkApiPermission();
                 }
-            ) ,
+            ),
         ));
-		
-		register_rest_route($this->namespace, '/profile', array(
+
+        register_rest_route($this->namespace, '/profile', array(
             array(
                 'methods' => 'GET',
                 'callback' => array(
                     $this,
                     'get_delivery_profile'
-                ) ,
-                'permission_callback' => function ()
-                {
+                ),
+                'permission_callback' => function () {
                     return parent::checkApiPermission();
                 }
-            ) ,
+            ),
         ));
 
         register_rest_route($this->namespace, '/profile', array(
@@ -68,12 +67,11 @@ class FlutterDelivery extends FlutterBaseController
                 'callback' => array(
                     $this,
                     'update_delivery_profile'
-                ) ,
-                'permission_callback' => function ()
-                {
+                ),
+                'permission_callback' => function () {
                     return parent::checkApiPermission();
                 }
-            ) ,
+            ),
         ));
 
         register_rest_route($this->namespace, '/orders', array(
@@ -82,12 +80,11 @@ class FlutterDelivery extends FlutterBaseController
                 'callback' => array(
                     $this,
                     'get_delivery_orders'
-                ) ,
-                'permission_callback' => function ()
-                {
+                ),
+                'permission_callback' => function () {
                     return parent::checkApiPermission();
                 }
-            ) ,
+            ),
         ));
 
         register_rest_route($this->namespace, '/stores', array(
@@ -96,12 +93,11 @@ class FlutterDelivery extends FlutterBaseController
                 'callback' => array(
                     $this,
                     'get_delivery_stores'
-                ) ,
-                'permission_callback' => function ()
-                {
+                ),
+                'permission_callback' => function () {
                     return parent::checkApiPermission();
                 }
-            ) ,
+            ),
         ));
 
         register_rest_route($this->namespace, '/orders/(?P<id>[\d]+)/', array(
@@ -110,12 +106,11 @@ class FlutterDelivery extends FlutterBaseController
                 'callback' => array(
                     $this,
                     'get_delivery_order'
-                ) ,
-                'permission_callback' => function ()
-                {
+                ),
+                'permission_callback' => function () {
                     return parent::checkApiPermission();
                 }
-            ) ,
+            ),
         ));
 
         register_rest_route($this->namespace, '/orders', array(
@@ -124,12 +119,11 @@ class FlutterDelivery extends FlutterBaseController
                 'callback' => array(
                     $this,
                     'update_delivery_order'
-                ) ,
-                'permission_callback' => function ()
-                {
+                ),
+                'permission_callback' => function () {
                     return parent::checkApiPermission();
                 }
-            ) ,
+            ),
         ));
 
         register_rest_route($this->namespace, '/stat', array(
@@ -138,125 +132,129 @@ class FlutterDelivery extends FlutterBaseController
                 'callback' => array(
                     $this,
                     'get_delivery_stat'
-                ) ,
-                'permission_callback' => function ()
-                {
+                ),
+                'permission_callback' => function () {
                     return parent::checkApiPermission();
                 }
-            ) ,
+            ),
         ));
     }
 
 
-    function get_delivery_orders($request){
+    function get_delivery_orders($request)
+    {
         $user_id = $this->authorize_user($request['token']);
-        if(is_wp_error($user_id)){
+        if (is_wp_error($user_id)) {
             return $user_id;
         }
         $helper = new DeliveryWCFMHelper();
-        if($request['platform'] == 'woo'){
-			$helper = new DeliveryWooHelper();
-		}
-        return $helper->get_delivery_orders($user_id,$request);
+        if ($request['platform'] == 'woo') {
+            $helper = new DeliveryWooHelper();
+        }
+        return $helper->get_delivery_orders($user_id, $request);
     }
 
-    function get_delivery_stores($request){
+    function get_delivery_stores($request)
+    {
         $user_id = $this->authorize_user($request['token']);
-        if(is_wp_error($user_id)){
+        if (is_wp_error($user_id)) {
             return $user_id;
         }
         $helper = new DeliveryWCFMHelper();
-        if($request['platform'] == 'woo'){
-			$helper = new DeliveryWooHelper();
-		}
-        return $helper->get_delivery_stores($user_id,$request);
+        if ($request['platform'] == 'woo') {
+            $helper = new DeliveryWooHelper();
+        }
+        return $helper->get_delivery_stores($user_id, $request);
     }
 
-    function get_delivery_order($request){
+    function get_delivery_order($request)
+    {
         $user_id = $this->authorize_user($request['token']);
-        if(is_wp_error($user_id)){
+        if (is_wp_error($user_id)) {
             return $user_id;
         }
         $helper = new DeliveryWCFMHelper();
-        if($request['platform'] == 'woo'){
-			$helper = new DeliveryWooHelper();
-		}
-        return $helper->get_delivery_order($user_id,$request);
+        if ($request['platform'] == 'woo') {
+            $helper = new DeliveryWooHelper();
+        }
+        return $helper->get_delivery_order($user_id, $request);
     }
 
-    function get_delivery_stat($request){
+    function get_delivery_stat($request)
+    {
         $user_id = $this->authorize_user($request['token']);
-        if(is_wp_error($user_id)){
+        if (is_wp_error($user_id)) {
             return $user_id;
         }
         $helper = new DeliveryWCFMHelper();
-        if($request['platform'] == 'woo'){
-			$helper = new DeliveryWooHelper();
-		}
+        if ($request['platform'] == 'woo') {
+            $helper = new DeliveryWooHelper();
+        }
         return $helper->get_delivery_stat($user_id);
     }
 
-    function get_notification($request){
+    function get_notification($request)
+    {
         $user_id = $this->authorize_user($request['token']);
-        if(is_wp_error($user_id)){
+        if (is_wp_error($user_id)) {
             return $user_id;
         }
         $helper = new DeliveryWCFMHelper();
-        if($request['platform'] == 'woo'){
-			$helper = new DeliveryWooHelper();
-		}
-        return $helper->get_notification($request,$user_id);
+        if ($request['platform'] == 'woo') {
+            $helper = new DeliveryWooHelper();
+        }
+        return $helper->get_notification($request, $user_id);
     }
 
-    public function update_delivery_profile($request){
+    public function update_delivery_profile($request)
+    {
         $user_id = $this->authorize_user($request['token']);
-        if(is_wp_error($user_id)){
+        if (is_wp_error($user_id)) {
             return $user_id;
         }
         $helper = new DeliveryWCFMHelper();
-        if($request['platform'] == 'woo'){
-			$helper = new DeliveryWooHelper();
-		}
-        return $helper->update_delivery_profile($request,$user_id);
+        if ($request['platform'] == 'woo') {
+            $helper = new DeliveryWooHelper();
+        }
+        return $helper->update_delivery_profile($request, $user_id);
     }
 
-    public function update_delivery_order($request){
+    public function update_delivery_order($request)
+    {
         $user_id = $this->authorize_user($request['token']);
-        if(is_wp_error($user_id)){
+        if (is_wp_error($user_id)) {
             return $user_id;
         }
         $helper = new DeliveryWCFMHelper();
-        if($request['platform'] == 'woo'){
-			$helper = new DeliveryWooHelper();
-		}
+        if ($request['platform'] == 'woo') {
+            $helper = new DeliveryWooHelper();
+        }
         return $helper->update_delivery_order($request['order_id']);
     }
 
-    public function get_delivery_profile($request){
+    public function get_delivery_profile($request)
+    {
         $user_id = $this->authorize_user($request['token']);
-        if(is_wp_error($user_id)){
+        if (is_wp_error($user_id)) {
             return $user_id;
         }
         $helper = new DeliveryWCFMHelper();
-        if($request['platform'] == 'woo'){
-			$helper = new DeliveryWooHelper();
-		}
+        if ($request['platform'] == 'woo') {
+            $helper = new DeliveryWooHelper();
+        }
         return $helper->get_delivery_profile($user_id);
     }
 
 
-    protected function authorize_user($token){
-        if (isset($token))
-        {
+    protected function authorize_user($token)
+    {
+        if (isset($token)) {
             $cookie = urldecode(base64_decode($token));
-        }
-        else
-        {
+        } else {
             return parent::sendError("unauthorized", "You are not allowed to do this", 401);
         }
         $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-        if (!$user_id)
-        {
+        if (!$user_id) {
             return parent::sendError("invalid_login", "You do not exist in this world. Please re-check your existence with your Creator :)", 401);
         }
 

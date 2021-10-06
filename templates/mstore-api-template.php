@@ -7,19 +7,20 @@ function getValue(&$val, $default = '')
 {
     return isset($val) ? $val : $default;
 }
+
 $data = null;
-if(isset($_POST['order'])){
+if (isset($_POST['order'])) {
     $data = json_decode(urldecode(base64_decode($_POST['order'])), true);
-}elseif (filter_has_var(INPUT_GET, 'order')) {
+} elseif (filter_has_var(INPUT_GET, 'order')) {
     $data = filter_has_var(INPUT_GET, 'order') ? json_decode(urldecode(base64_decode(filter_input(INPUT_GET, 'order'))), true) : [];
-}elseif (filter_has_var(INPUT_GET, 'code')) {
+} elseif (filter_has_var(INPUT_GET, 'code')) {
     $code = filter_input(INPUT_GET, 'code');
     global $wpdb;
     $table_name = $wpdb->prefix . "mstore_checkout";
-    $item = $wpdb->get_row( "SELECT * FROM $table_name WHERE code = '$code'" );
+    $item = $wpdb->get_row("SELECT * FROM $table_name WHERE code = '$code'");
     if ($item) {
         $data = json_decode(urldecode(base64_decode($item->order)), true);
-    }else{
+    } else {
         return var_dump("Can't not get the order");
     }
 }
@@ -100,7 +101,7 @@ if ($data != null):
 
     <div id="page" class="site">
         <div class="site-content-contain">
-            <div id="content"  class="site-content">
+            <div id="content" class="site-content">
                 <div class="wrap">
                     <div id="primary" class="content-area">
                         <main id="main" class="site-main" role="main">
@@ -223,7 +224,7 @@ if ($data != null):
                                                                 <input class="input-text "
                                                                        name="billing_email" id="billing_email"
                                                                        placeholder=""
-                                                                       value="<?= isset($billing['email']) ? esc_html(getValue($billing['email'])): ''; ?>"/>
+                                                                       value="<?= isset($billing['email']) ? esc_html(getValue($billing['email'])) : ''; ?>"/>
                                                             </p>
                                                         </div>
 
@@ -262,7 +263,7 @@ if ($data != null):
                                                                     <input class="input-text "
                                                                            name="shipping_last_name"
                                                                            id="shipping_last_name" placeholder=""
-                                                                           value="<?= isset($shipping['last_name']) ? esc_html(getValue($shipping['last_name'])): ''; ?>"/>
+                                                                           value="<?= isset($shipping['last_name']) ? esc_html(getValue($shipping['last_name'])) : ''; ?>"/>
                                                                 </p>
                                                                 <p class="form-row form-row-wide"
                                                                    id="shipping_company_field" data-priority="30">
@@ -345,7 +346,7 @@ if ($data != null):
                                                                           id="order_comments"
                                                                           placeholder="Notes about your order, e.g. special notes for delivery."
                                                                           rows="2" cols="5"
-                                                                          value="<?= isset($data['customer_note']) ? esc_html($data['customer_note']) : ''; ?>"><?=  isset($data['customer_note']) ? esc_html($data['customer_note']) : ''; ?></textarea>
+                                                                          value="<?= isset($data['customer_note']) ? esc_html($data['customer_note']) : ''; ?>"><?= isset($data['customer_note']) ? esc_html($data['customer_note']) : ''; ?></textarea>
                                                             </p>
                                                         </div>
                                                     </div>
@@ -453,7 +454,8 @@ if ($data != null):
                                                 <div id="payment" class="woocommerce-checkout-payment">
 
                                                     <input type="radio" name="payment_method"
-                                                           id="payment_method_<?= esc_attr($data['payment_method']); ?>" checked="checked"
+                                                           id="payment_method_<?= esc_attr($data['payment_method']); ?>"
+                                                           checked="checked"
                                                            value="<?= esc_html($data['payment_method']); ?>"/>
 
                                                     <input type="checkbox"

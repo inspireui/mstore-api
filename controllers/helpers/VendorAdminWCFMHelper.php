@@ -1,4 +1,5 @@
 <?php
+
 class VendorAdminWCFMHelper
 {
     public function sendError($code, $message, $statusCode)
@@ -179,15 +180,15 @@ class VendorAdminWCFMHelper
         }
         $vendor_data["store_name"] = $data["store_name"];
         $vendor_data["store_slug"] = $data["store_slug"];
-		wp_update_user( array(
-   			'ID'            => $user_id,
-    		'user_nicename' =>  $data["store_slug"]
-		) );
-		$vendor_data["wcfmmp_store_name"] = $data["store_name"];
-		update_user_meta( $user_id, 'store_name', $data["store_name"] );
-		update_user_meta( $user_id, 'wcfmmp_store_name', $data["store_name"]);
-		
-			
+        wp_update_user(array(
+            'ID' => $user_id,
+            'user_nicename' => $data["store_slug"]
+        ));
+        $vendor_data["wcfmmp_store_name"] = $data["store_name"];
+        update_user_meta($user_id, 'store_name', $data["store_name"]);
+        update_user_meta($user_id, 'wcfmmp_store_name', $data["store_name"]);
+
+
         $vendor_data["store_email"] = $data["store_email"];
         $vendor_data["phone"] = $data["phone"];
 
@@ -278,10 +279,9 @@ class VendorAdminWCFMHelper
         // $vendor_data['list_banner'] = $request[''];
         // $vendor_data['list_banner_video'] = $request[''];
         $vendor_data["shop_description"] = $data["shop_description"];
-		$vendor_data["_store_description"] = $data["shop_description"];
-		update_user_meta( $user_id, '_store_description',  $data["shop_description"] );
+        $vendor_data["_store_description"] = $data["shop_description"];
+        update_user_meta($user_id, '_store_description', $data["shop_description"]);
 
-		
 
         $vendor_data["address"] = $data["address"];
 
@@ -297,7 +297,7 @@ class VendorAdminWCFMHelper
         $vendor_data["store_hide_address"] = $data["store_hide_address"];
         $vendor_data["store_hide_map"] = $data["store_hide_map"];
         $vendor_data["store_hide_description"] =
-        $data["store_hide_description"];
+            $data["store_hide_description"];
         $vendor_data["store_hide_policy"] = $data["store_hide_policy"];
 
         update_user_meta($user_id, "wcfmmp_profile_settings", $vendor_data);
@@ -386,11 +386,11 @@ class VendorAdminWCFMHelper
                     "name" =>
                         0 === strpos($attribute["name"], "pa_")
                             ? get_taxonomy($attribute["name"])->labels
-                                ->singular_name
+                            ->singular_name
                             : $attribute["name"],
-                    "position" => (int) $attribute["position"],
-                    "visible" => (bool) $attribute["is_visible"],
-                    "variation" => (bool) $attribute["is_variation"],
+                    "position" => (int)$attribute["position"],
+                    "visible" => (bool)$attribute["is_visible"],
+                    "variation" => (bool)$attribute["is_variation"],
                     "options" => $this->get_attribute_options(
                         $product->get_id(),
                         $attribute
@@ -423,21 +423,13 @@ class VendorAdminWCFMHelper
                     $p_varation = new WC_Product_Variation($variation->ID);
                     $dataVariation;
                     $dataVariation["variation_id"] = $p_varation->get_id();
-                    $dataVariation[
-                        "max_qty"
-                    ] = $p_varation->get_stock_quantity();
+                    $dataVariation["max_qty"] = $p_varation->get_stock_quantity();
                     $dataVariation["variation_is_active"] =
                         $p_varation->get_status() == "publish";
-                    $dataVariation[
-                        "display_price"
-                    ] = $p_varation->get_sale_price();
-                    $dataVariation[
-                        "display_regular_price"
-                    ] = $p_varation->get_regular_price();
+                    $dataVariation["display_price"] = $p_varation->get_sale_price();
+                    $dataVariation["display_regular_price"] = $p_varation->get_regular_price();
                     $dataVariation["slugs"] = $p_varation->get_attributes();
-                    $dataVariation[
-                        "manage_stock"
-                    ] = $p_varation->get_manage_stock();
+                    $dataVariation["manage_stock"] = $p_varation->get_manage_stock();
                     $attributes = $p_varation->get_attributes();
                     $dataVariation["attributes"] = [];
                     foreach ($dataVariation["slugs"] as $key => $value) {
@@ -516,33 +508,32 @@ class VendorAdminWCFMHelper
                 $search = $request["search"];
                 $sql .= " AND order_id LIKE '$search%'";
             }
-			if(isset($request['name'])){
-				$results = [];
-        		$table_name2 = $wpdb->prefix . "users";
-        		$name = $request['name'];
-				$sql2 = "SELECT {$table_name2}.ID";
-				$sql2 .= " FROM {$table_name2}";
-				$sql2 .= " WHERE {$table_name2}.display_name LIKE '%$name%'";
-				$sql2 .= " ORDER BY {$table_name2}.display_name";
-       			$users = $wpdb->get_results($sql2);
-        		if (count($users) > 0) {
-					$user_str = array();
-					foreach($users as $user){
-						$user_str[] = $user->ID;
-					}
-					$user_strr = implode(',',$user_str);
-					$sql .= " AND `{$table_name}`.customer_id IN ({$user_strr})";
-        		}
-				else {
-	        return new WP_REST_Response(
-            [
-                "status" => "success",
-                "response" => [],
-            ],
-            200
-        );
-				}
-			}
+            if (isset($request['name'])) {
+                $results = [];
+                $table_name2 = $wpdb->prefix . "users";
+                $name = $request['name'];
+                $sql2 = "SELECT {$table_name2}.ID";
+                $sql2 .= " FROM {$table_name2}";
+                $sql2 .= " WHERE {$table_name2}.display_name LIKE '%$name%'";
+                $sql2 .= " ORDER BY {$table_name2}.display_name";
+                $users = $wpdb->get_results($sql2);
+                if (count($users) > 0) {
+                    $user_str = array();
+                    foreach ($users as $user) {
+                        $user_str[] = $user->ID;
+                    }
+                    $user_strr = implode(',', $user_str);
+                    $sql .= " AND `{$table_name}`.customer_id IN ({$user_strr})";
+                } else {
+                    return new WP_REST_Response(
+                        [
+                            "status" => "success",
+                            "response" => [],
+                        ],
+                        200
+                    );
+                }
+            }
             $sql .= " GROUP BY $table_name.`order_id` ORDER BY $table_name.`order_id` DESC LIMIT $per_page OFFSET $page";
             $items = $wpdb->get_results($sql);
 
@@ -555,18 +546,18 @@ class VendorAdminWCFMHelper
                 $order = $response->get_data();
                 $count = count($order["line_items"]);
                 $order["product_count"] = $count;
-				$line_items = array();
+                $line_items = array();
                 for ($i = 0; $i < $count; $i++) {
                     $product_id = absint(
                         $order["line_items"][$i]["product_id"]
                     );
-					
-					$product = get_post( $product_id );
-    				$product_author = $product->post_author;
-					if(absint($product_author) != absint($user_id)){
-						continue;
-					}
-					
+
+                    $product = get_post($product_id);
+                    $product_author = $product->post_author;
+                    if (absint($product_author) != absint($user_id)) {
+                        continue;
+                    }
+
                     $image = wp_get_attachment_image_src(
                         get_post_thumbnail_id($product_id)
                     );
@@ -574,15 +565,15 @@ class VendorAdminWCFMHelper
                         $order["line_items"][$i]["featured_image"] = $image[0];
                     }
                     $order_item = new WC_Order_Item_Product($order["line_items"][$i]["id"]);
-					$order["line_items"][$i]["meta"] = $order_item->get_meta_data();
-                    if(is_plugin_active('wc-frontend-manager-delivery/wc-frontend-manager-delivery.php')){
+                    $order["line_items"][$i]["meta"] = $order_item->get_meta_data();
+                    if (is_plugin_active('wc-frontend-manager-delivery/wc-frontend-manager-delivery.php')) {
                         $table_name = $wpdb->prefix . "wcfm_delivery_orders";
-                        $sql  = "SELECT delivery_boy FROM `{$table_name}`";
+                        $sql = "SELECT delivery_boy FROM `{$table_name}`";
                         $sql .= " WHERE 1=1";
                         $sql .= " AND product_id = '{$product_id}'";
                         $sql .= " AND order_id = '{$item->order_id}'";
                         $users = $wpdb->get_results($sql);
-                
+
                         if (count($users) > 0) {
                             $user = get_userdata($users[0]->delivery_boy);
                             $order["line_items"][$i]['delivery_user'] = [
@@ -592,9 +583,9 @@ class VendorAdminWCFMHelper
                             ];
                         }
                     }
-					$line_items[] =   $order["line_items"][$i];
+                    $line_items[] = $order["line_items"][$i];
                 }
-				$order["line_items"] = $line_items;
+                $order["line_items"] = $line_items;
                 $results[] = $order;
             }
         }
@@ -651,20 +642,20 @@ class VendorAdminWCFMHelper
         if ($sales_stats["gross_sales"]["last_month"] != 0) {
             $profit_percentage = round(
                 $sales_stats["gross_sales"]["month"] -
-                    $sales_stats["gross_sales"]["last_month"],
+                $sales_stats["gross_sales"]["last_month"],
                 2
             );
             $profit_percentage = round(
                 (($profit_percentage /
-                    $sales_stats["gross_sales"]["last_month"]) *
+                        $sales_stats["gross_sales"]["last_month"]) *
                     100) /
-                    100,
+                100,
                 2
             );
         } else {
             $profit_percentage = round(
                 $sales_stats["gross_sales"]["month"] -
-                    $sales_stats["gross_sales"]["last_month"],
+                $sales_stats["gross_sales"]["last_month"],
                 2
             );
             $profit_percentage = round(
@@ -712,19 +703,19 @@ class VendorAdminWCFMHelper
         if ($sales_stats["earnings"]["last_month"] != 0) {
             $profit_percentage = round(
                 $sales_stats["earnings"]["month"] -
-                    $sales_stats["earnings"]["last_month"],
+                $sales_stats["earnings"]["last_month"],
                 2
             );
             $profit_percentage = round(
                 (($profit_percentage / $sales_stats["earnings"]["last_month"]) *
                     100) /
-                    100,
+                100,
                 2
             );
         } else {
             $profit_percentage = round(
                 $sales_stats["earnings"]["month"] -
-                    $sales_stats["earnings"]["last_month"],
+                $sales_stats["earnings"]["last_month"],
                 2
             );
             $profit_percentage = round(
@@ -804,10 +795,10 @@ class VendorAdminWCFMHelper
                 "wc-frontend-manager"
             ),
             '#<a target="_blank" class="wcfm_dashboard_item_title" href="' .
-                get_wcfm_view_order_url($order_id) .
-                '">' .
-                $order->get_order_number() .
-                "</a>",
+            get_wcfm_view_order_url($order_id) .
+            '">' .
+            $order->get_order_number() .
+            "</a>",
             wc_get_order_status_name(str_replace("wc-", "", $order_status)),
             $shop_name
         );
@@ -840,7 +831,7 @@ class VendorAdminWCFMHelper
 
         $length = sanitize_text_field($request["per_page"]);
         $offset = sanitize_text_field($request["page"]);
-		$offset = ($offset -1) *$length;
+        $offset = ($offset - 1) * $length;
 
         $the_orderby = !empty($request["orderby"])
             ? sanitize_text_field($request["orderby"])
@@ -909,12 +900,12 @@ class VendorAdminWCFMHelper
         if ($reviewid) {
             $review_data = $wpdb->get_row(
                 "SELECT * FROM {$wpdb->prefix}wcfm_marketplace_reviews WHERE `ID`= " .
-                    $reviewid
+                $reviewid
             );
             $review_meta = $wpdb->get_results(
                 "SELECT * FROM {$wpdb->prefix}wcfm_marketplace_review_rating_meta WHERE `type` = 'rating_category' AND `review_id`= " .
-                    $reviewid .
-                    " ORDER BY ID ASC"
+                $reviewid .
+                " ORDER BY ID ASC"
             );
             if (
                 $review_data &&
@@ -948,9 +939,9 @@ class VendorAdminWCFMHelper
                     if (!$total_review_rating) {
                         $total_review_rating = 0;
                     } else {
-                        $total_review_rating = (float) $total_review_rating;
+                        $total_review_rating = (float)$total_review_rating;
                     }
-                    $total_review_rating += (float) $review_data->review_rating;
+                    $total_review_rating += (float)$review_data->review_rating;
                     update_user_meta(
                         $review_data->vendor_id,
                         "_wcfmmp_total_review_rating",
@@ -987,9 +978,7 @@ class VendorAdminWCFMHelper
                     ) {
                         if (
                             isset(
-                                $wcfm_store_review_categories[
-                                    $wcfm_review_cat_key
-                                ]
+                                $wcfm_store_review_categories[$wcfm_review_cat_key]
                             )
                         ) {
                             $total_category_review_rating = 0;
@@ -998,40 +987,24 @@ class VendorAdminWCFMHelper
                                 $category_review_rating &&
                                 !empty($category_review_rating) &&
                                 isset(
-                                    $category_review_rating[
-                                        $wcfm_review_cat_key
-                                    ]
+                                    $category_review_rating[$wcfm_review_cat_key]
                                 )
                             ) {
                                 $total_category_review_rating =
-                                    $category_review_rating[
-                                        $wcfm_review_cat_key
-                                    ]["total"];
+                                    $category_review_rating[$wcfm_review_cat_key]["total"];
                                 $avg_category_review_rating =
-                                    $category_review_rating[
-                                        $wcfm_review_cat_key
-                                    ]["avg"];
+                                    $category_review_rating[$wcfm_review_cat_key]["avg"];
                             }
                             $total_category_review_rating +=
-                                (float) $wcfm_store_review_categories[
-                                    $wcfm_review_cat_key
-                                ];
+                                (float)$wcfm_store_review_categories[$wcfm_review_cat_key];
                             $avg_category_review_rating =
                                 $total_category_review_rating /
                                 $total_review_count;
-                            $category_review_rating[$wcfm_review_cat_key][
-                                "total"
-                            ] = $total_category_review_rating;
-                            $category_review_rating[$wcfm_review_cat_key][
-                                "avg"
-                            ] = $avg_category_review_rating;
+                            $category_review_rating[$wcfm_review_cat_key]["total"] = $total_category_review_rating;
+                            $category_review_rating[$wcfm_review_cat_key]["avg"] = $avg_category_review_rating;
                         } else {
-                            $category_review_rating[$wcfm_review_cat_key][
-                                "total"
-                            ] = 0;
-                            $category_review_rating[$wcfm_review_cat_key][
-                                "avg"
-                            ] = 0;
+                            $category_review_rating[$wcfm_review_cat_key]["total"] = 0;
+                            $category_review_rating[$wcfm_review_cat_key]["avg"] = 0;
                         }
                     }
                     $category_review_rating = update_user_meta(
@@ -1091,11 +1064,11 @@ class VendorAdminWCFMHelper
                     if (!$total_review_rating) {
                         $total_review_rating = 0;
                     } else {
-                        $total_review_rating = (float) $total_review_rating;
+                        $total_review_rating = (float)$total_review_rating;
                     }
                     if ($total_review_rating) {
                         $total_review_rating -=
-                            (float) $review_data->review_rating;
+                            (float)$review_data->review_rating;
                     }
                     update_user_meta(
                         $review_data->vendor_id,
@@ -1136,9 +1109,7 @@ class VendorAdminWCFMHelper
                     ) {
                         if (
                             isset(
-                                $wcfm_store_review_categories[
-                                    $wcfm_review_cat_key
-                                ]
+                                $wcfm_store_review_categories[$wcfm_review_cat_key]
                             )
                         ) {
                             $total_category_review_rating = 0;
@@ -1147,25 +1118,17 @@ class VendorAdminWCFMHelper
                                 $category_review_rating &&
                                 !empty($category_review_rating) &&
                                 isset(
-                                    $category_review_rating[
-                                        $wcfm_review_cat_key
-                                    ]
+                                    $category_review_rating[$wcfm_review_cat_key]
                                 )
                             ) {
                                 $total_category_review_rating =
-                                    $category_review_rating[
-                                        $wcfm_review_cat_key
-                                    ]["total"];
+                                    $category_review_rating[$wcfm_review_cat_key]["total"];
                                 $avg_category_review_rating =
-                                    $category_review_rating[
-                                        $wcfm_review_cat_key
-                                    ]["avg"];
+                                    $category_review_rating[$wcfm_review_cat_key]["avg"];
                             }
                             if ($total_category_review_rating) {
                                 $total_category_review_rating -=
-                                    (float) $wcfm_store_review_categories[
-                                        $wcfm_review_cat_key
-                                    ];
+                                    (float)$wcfm_store_review_categories[$wcfm_review_cat_key];
                             }
                             if (
                                 $total_category_review_rating &&
@@ -1175,19 +1138,11 @@ class VendorAdminWCFMHelper
                                     $total_category_review_rating /
                                     $total_review_count;
                             }
-                            $category_review_rating[$wcfm_review_cat_key][
-                                "total"
-                            ] = $total_category_review_rating;
-                            $category_review_rating[$wcfm_review_cat_key][
-                                "avg"
-                            ] = $avg_category_review_rating;
+                            $category_review_rating[$wcfm_review_cat_key]["total"] = $total_category_review_rating;
+                            $category_review_rating[$wcfm_review_cat_key]["avg"] = $avg_category_review_rating;
                         } else {
-                            $category_review_rating[$wcfm_review_cat_key][
-                                "total"
-                            ] = 0;
-                            $category_review_rating[$wcfm_review_cat_key][
-                                "avg"
-                            ] = 0;
+                            $category_review_rating[$wcfm_review_cat_key]["total"] = 0;
+                            $category_review_rating[$wcfm_review_cat_key]["avg"] = 0;
                         }
                     }
                     $category_review_rating = update_user_meta(
@@ -1221,7 +1176,8 @@ class VendorAdminWCFMHelper
         $start_date = "",
         $end_date = "",
         $table_handler = "commission"
-    ) {
+    )
+    {
         switch ($interval) {
             case "year":
                 $sql .= " AND YEAR( {$table_handler}.{$time} ) = YEAR( CURDATE() )";
@@ -1282,7 +1238,8 @@ class VendorAdminWCFMHelper
         $order_id = 0,
         $filter_date_form = "",
         $filter_date_to = ""
-    ) {
+    )
+    {
         global $WCFM, $wpdb, $WCMp, $WCFMmp;
 
         if ($vendor_id) {
@@ -1329,7 +1286,7 @@ class VendorAdminWCFMHelper
                                 $net_sale_whole_week->order_id
                             );
                             $line_items = $order->get_items("line_item");
-                            $valid_items = (array) ($order_item_ids = explode(
+                            $valid_items = (array)($order_item_ids = explode(
                                 ",",
                                 $net_sale_whole_week->product_ids
                             ));
@@ -1350,7 +1307,7 @@ class VendorAdminWCFMHelper
                                         in_array($_product_id, $valid_items) ||
                                         in_array($_variation_id, $valid_items)
                                     ) {
-                                        $gross_sales += (float) sanitize_text_field(
+                                        $gross_sales += (float)sanitize_text_field(
                                             $line_item->get_total()
                                         );
                                         if (
@@ -1365,7 +1322,7 @@ class VendorAdminWCFMHelper
                                                     "give_tax"
                                                 )
                                             ) {
-                                                $gross_sales += (float) sanitize_text_field(
+                                                $gross_sales += (float)sanitize_text_field(
                                                     $line_item->get_total_tax()
                                                 );
                                             }
@@ -1375,7 +1332,7 @@ class VendorAdminWCFMHelper
                                                     "wcvendors_vendor_give_taxes"
                                                 )
                                             ) {
-                                                $gross_sales += (float) sanitize_text_field(
+                                                $gross_sales += (float)sanitize_text_field(
                                                     $line_item->get_total_tax()
                                                 );
                                             }
@@ -1391,7 +1348,7 @@ class VendorAdminWCFMHelper
                                         $valid_items
                                     )
                                 ) {
-                                    $gross_sales += (float) sanitize_text_field(
+                                    $gross_sales += (float)sanitize_text_field(
                                         $line_item->get_total()
                                     );
                                     if (
@@ -1406,7 +1363,7 @@ class VendorAdminWCFMHelper
                                                 "give_tax"
                                             )
                                         ) {
-                                            $gross_sales += (float) sanitize_text_field(
+                                            $gross_sales += (float)sanitize_text_field(
                                                 $line_item->get_total_tax()
                                             );
                                         }
@@ -1416,7 +1373,7 @@ class VendorAdminWCFMHelper
                                                 "wcvendors_vendor_give_taxes"
                                             )
                                         ) {
-                                            $gross_sales += (float) sanitize_text_field(
+                                            $gross_sales += (float)sanitize_text_field(
                                                 $line_item->get_total_tax()
                                             );
                                         }
@@ -1432,12 +1389,12 @@ class VendorAdminWCFMHelper
                             WC_Vendors::$pv_options->get_option("give_shipping")
                         ) {
                             $gross_sales +=
-                                (float) $net_sale_whole_week->total_shipping;
+                                (float)$net_sale_whole_week->total_shipping;
                         }
                     } else {
                         if (get_option("wcvendors_vendor_give_shipping")) {
                             $gross_sales +=
-                                (float) $net_sale_whole_week->total_shipping;
+                                (float)$net_sale_whole_week->total_shipping;
                         }
                     }
                 }
@@ -1481,7 +1438,7 @@ class VendorAdminWCFMHelper
                             $line_item = new WC_Order_Item_Product(
                                 $net_sale_whole_week->order_item_id
                             );
-                            $gross_sales += (float) sanitize_text_field(
+                            $gross_sales += (float)sanitize_text_field(
                                 $line_item->get_total()
                             );
                             if (
@@ -1489,11 +1446,11 @@ class VendorAdminWCFMHelper
                                     "give_tax"
                                 )
                             ) {
-                                $gross_sales += (float) sanitize_text_field(
+                                $gross_sales += (float)sanitize_text_field(
                                     $line_item->get_total_tax()
                                 );
                                 $gross_sales +=
-                                    (float) $net_sale_whole_week->shipping_tax_amount;
+                                    (float)$net_sale_whole_week->shipping_tax_amount;
                             }
                             if (
                                 $WCMp->vendor_caps->vendor_payment_settings(
@@ -1501,7 +1458,7 @@ class VendorAdminWCFMHelper
                                 )
                             ) {
                                 $gross_sales +=
-                                    (float) $net_sale_whole_week->shipping;
+                                    (float)$net_sale_whole_week->shipping;
                             }
                         } catch (Exception $e) {
                             continue;
@@ -1620,7 +1577,7 @@ class VendorAdminWCFMHelper
             if (!empty($gross_sales_whole_week)) {
                 foreach ($gross_sales_whole_week as $net_sale_whole_week) {
                     $gross_commission_ids[] = $net_sale_whole_week->ID;
-                    $gross_total_refund_amount += (float) sanitize_text_field(
+                    $gross_total_refund_amount += (float)sanitize_text_field(
                         $net_sale_whole_week->refunded_amount
                     );
                 }
@@ -1633,19 +1590,19 @@ class VendorAdminWCFMHelper
                                 true
                             )
                         ) {
-                            $gross_sales = (float) $WCFMmp->wcfmmp_commission->wcfmmp_get_commission_meta_sum(
+                            $gross_sales = (float)$WCFMmp->wcfmmp_commission->wcfmmp_get_commission_meta_sum(
                                 $gross_commission_ids,
                                 "gross_total"
                             );
                         } else {
-                            $gross_sales = (float) $WCFMmp->wcfmmp_commission->wcfmmp_get_commission_meta_sum(
+                            $gross_sales = (float)$WCFMmp->wcfmmp_commission->wcfmmp_get_commission_meta_sum(
                                 $gross_commission_ids,
                                 "gross_sales_total"
                             );
                         }
 
                         // Deduct Refunded Amount
-                        $gross_sales -= (float) $gross_total_refund_amount;
+                        $gross_sales -= (float)$gross_total_refund_amount;
                     } catch (Exception $e) {
                         //continue;
                     }
@@ -1670,7 +1627,8 @@ class VendorAdminWCFMHelper
         $order_id = 0,
         $filter_date_form = "",
         $filter_date_to = ""
-    ) {
+    )
+    {
         global $WCFM, $wpdb, $WCMp;
 
         if ($vendor_id) {
@@ -2232,7 +2190,7 @@ class VendorAdminWCFMHelper
                         $variation_post = [
                             "post_title" => $product->get_title(),
                             "post_name" =>
-                            "product-" . $product->get_id() . "-variation",
+                                "product-" . $product->get_id() . "-variation",
                             "post_status" => "publish",
                             "post_parent" => $product->get_id(),
                             "post_type" => "product_variation",
@@ -2310,23 +2268,13 @@ class VendorAdminWCFMHelper
                         $p_varation = new WC_Product_Variation($variation->ID);
                         $dataVariation;
                         $dataVariation["variation_id"] = $p_varation->get_id();
-                        $dataVariation[
-                            "max_qty"
-                        ] = $p_varation->get_stock_quantity();
+                        $dataVariation["max_qty"] = $p_varation->get_stock_quantity();
                         $dataVariation["variation_is_active"] =
                             $p_varation->get_status() == "publish";
-                        $dataVariation[
-                            "display_price"
-                        ] = $p_varation->get_sale_price();
-                        $dataVariation[
-                            "display_regular_price"
-                        ] = $p_varation->get_regular_price();
-                        $dataVariation[
-                            "attributes"
-                        ] = $p_varation->get_attributes();
-                        $dataVariation[
-                            "manage_stock"
-                        ] = $p_varation->get_manage_stock();
+                        $dataVariation["display_price"] = $p_varation->get_sale_price();
+                        $dataVariation["display_regular_price"] = $p_varation->get_regular_price();
+                        $dataVariation["attributes"] = $p_varation->get_attributes();
+                        $dataVariation["manage_stock"] = $p_varation->get_manage_stock();
                         $p["variable_products"][] = $dataVariation;
                     }
                 }
@@ -2740,9 +2688,9 @@ class VendorAdminWCFMHelper
                         $attribute["name"],
                         $product
                     ),
-                    "position" => (int) $attribute["position"],
-                    "visible" => (bool) $attribute["is_visible"],
-                    "variation" => (bool) $attribute["is_variation"],
+                    "position" => (int)$attribute["position"],
+                    "visible" => (bool)$attribute["is_visible"],
+                    "variation" => (bool)$attribute["is_variation"],
                     "options" => $this->get_attribute_options(
                         $product->get_id(),
                         $attribute
@@ -2774,26 +2722,18 @@ class VendorAdminWCFMHelper
                     $p_varation = new WC_Product_Variation($variation->ID);
                     $dataVariation;
                     $dataVariation["variation_id"] = $p_varation->get_id();
-                    $dataVariation[
-                        "max_qty"
-                    ] = $p_varation->get_stock_quantity();
+                    $dataVariation["max_qty"] = $p_varation->get_stock_quantity();
                     $dataVariation["variation_is_active"] =
                         $p_varation->get_status() == "publish";
-                    $dataVariation[
-                        "display_price"
-                    ] = $p_varation->get_sale_price();
-                    $dataVariation[
-                        "display_regular_price"
-                    ] = $p_varation->get_regular_price();
+                    $dataVariation["display_price"] = $p_varation->get_sale_price();
+                    $dataVariation["display_regular_price"] = $p_varation->get_regular_price();
                     $attributes = $p_varation->get_attributes();
                     foreach ($attributes as $attribute) {
                         $slugs[] = $attribute["value"];
                     }
                     $dataVariation["attributes"] = $attributes;
                     $dataVariation["slugs"] = $slugs;
-                    $dataVariation[
-                        "manage_stock"
-                    ] = $p_varation->get_manage_stock();
+                    $dataVariation["manage_stock"] = $p_varation->get_manage_stock();
                     $p["variable_products"][] = $dataVariation;
                 }
             }
@@ -2989,45 +2929,47 @@ class VendorAdminWCFMHelper
     //         }
     //     }
     // }
-    	function wcfm_update_order_delivery_boys_meta( $order_id, $delivery_boys_array = array() ) {
-		if( empty( $delivery_boys_array ) ) $delivery_boys_array = wcfm_get_order_delivery_boys( $order_id );
-		$delivery_boys_string = '';
-		if( !empty( $delivery_boys_array ) ) {
-			foreach( $delivery_boys_array as $delivery_boy ) {
-				if( !empty( $delivery_boy['delivery_boy'] ) ) {
-					$delivery_boys_string .= ',' . $delivery_boy['delivery_boy'];
-				}
-			}
-			update_post_meta( $order_id, '_wcfm_delivery_boys', $delivery_boys_string );
-		}
-	} 
-    
-		function wcfm_get_order_delivery_boys( $order_id, $order_item_id = '' ) {
-		global $WCFM, $WCFMd, $wpdb;
-		
-		$delivery_boys_array = array();
-		
-		if( !$order_id ) return $delivery_boys_array;
-		
-		$sql  = "SELECT * FROM `{$wpdb->prefix}wcfm_delivery_orders`";
-		$sql .= " WHERE 1=1";
-		$sql .= " AND order_id = {$order_id}";
-		if( apply_filters( 'wcfm_is_show_marketplace_itemwise_orders', true ) ) {
-			if( $order_item_id ) $sql .= " AND item_id = {$order_item_id}";
-		} else {
-			$sql .= " GROUP BY vendor_id";
-		}
-		
-		$delivery_boys = $wpdb->get_results( $sql );
-		if( !empty( $delivery_boys ) ) {
-			foreach( $delivery_boys as $delivery_boy ) {
-				$delivery_boys_array[] = array( 'order' => $order_id, 'item' => $delivery_boy->item_id, 'vendor' => $delivery_boy->vendor_id, 'delivery_boy' => $delivery_boy->delivery_boy, 'status' => $delivery_boy->delivery_status );
-			}
-		}
-		
-		return apply_filters( 'wcfm_delivery_boys', $delivery_boys_array, $order_id, $order_item_id, $delivery_boys );
-	}
-	
+    function wcfm_update_order_delivery_boys_meta($order_id, $delivery_boys_array = array())
+    {
+        if (empty($delivery_boys_array)) $delivery_boys_array = wcfm_get_order_delivery_boys($order_id);
+        $delivery_boys_string = '';
+        if (!empty($delivery_boys_array)) {
+            foreach ($delivery_boys_array as $delivery_boy) {
+                if (!empty($delivery_boy['delivery_boy'])) {
+                    $delivery_boys_string .= ',' . $delivery_boy['delivery_boy'];
+                }
+            }
+            update_post_meta($order_id, '_wcfm_delivery_boys', $delivery_boys_string);
+        }
+    }
+
+    function wcfm_get_order_delivery_boys($order_id, $order_item_id = '')
+    {
+        global $WCFM, $WCFMd, $wpdb;
+
+        $delivery_boys_array = array();
+
+        if (!$order_id) return $delivery_boys_array;
+
+        $sql = "SELECT * FROM `{$wpdb->prefix}wcfm_delivery_orders`";
+        $sql .= " WHERE 1=1";
+        $sql .= " AND order_id = {$order_id}";
+        if (apply_filters('wcfm_is_show_marketplace_itemwise_orders', true)) {
+            if ($order_item_id) $sql .= " AND item_id = {$order_item_id}";
+        } else {
+            $sql .= " GROUP BY vendor_id";
+        }
+
+        $delivery_boys = $wpdb->get_results($sql);
+        if (!empty($delivery_boys)) {
+            foreach ($delivery_boys as $delivery_boy) {
+                $delivery_boys_array[] = array('order' => $order_id, 'item' => $delivery_boy->item_id, 'vendor' => $delivery_boy->vendor_id, 'delivery_boy' => $delivery_boy->delivery_boy, 'status' => $delivery_boy->delivery_status);
+            }
+        }
+
+        return apply_filters('wcfm_delivery_boys', $delivery_boys_array, $order_id, $order_item_id, $delivery_boys);
+    }
+
     public function wcfmd_delivery_boy_assigned($request, $vendor_id)
     {
         global $WCFM, $WCFMmp, $WCFMu, $WCFMd, $wpdb;
@@ -3131,7 +3073,7 @@ class VendorAdminWCFMHelper
                 true
             );
             if ($WCFMmp && $order_item_processed_id) {
-                $gross_sales_total = (float) $WCFMmp->wcfmmp_commission->wcfmmp_get_commission_meta(
+                $gross_sales_total = (float)$WCFMmp->wcfmmp_commission->wcfmmp_get_commission_meta(
                     $order_item_processed_id,
                     "gross_sales_total"
                 );
@@ -3164,8 +3106,8 @@ class VendorAdminWCFMHelper
                         "wc-frontend-manager-delivery"
                     ),
                     $wcfm_delivery_boy_user->first_name .
-                        " " .
-                        $wcfm_delivery_boy_user->last_name,
+                    " " .
+                    $wcfm_delivery_boy_user->last_name,
                     "#" . $order_id,
                     get_the_title($product_id)
                 );
@@ -3197,8 +3139,8 @@ class VendorAdminWCFMHelper
                             "wc-frontend-manager-delivery"
                         ),
                         $wcfm_delivery_boy_user->first_name .
-                            " " .
-                            $wcfm_delivery_boy_user->last_name,
+                        " " .
+                        $wcfm_delivery_boy_user->last_name,
                         "#" . $order_id
                     );
                     $comment_id = $order->add_order_note(
@@ -3212,7 +3154,7 @@ class VendorAdminWCFMHelper
             }
 
             // Deivery Boy Notification
-         	$serverKey = get_option("mstore_firebase_server_key");
+            $serverKey = get_option("mstore_firebase_server_key");
             if (apply_filters("wcfm_is_allow_itemwise_notification", true)) {
                 $wcfm_messages = sprintf(
                     __(
@@ -3220,8 +3162,8 @@ class VendorAdminWCFMHelper
                         "wc-frontend-manager-delivery"
                     ),
                     '#<span class="wcfm_dashboard_item_title">' .
-                        $order_id .
-                        "</span>",
+                    $order_id .
+                    "</span>",
                     get_the_title($product_id)
                 );
                 $WCFM->wcfm_notification->wcfm_send_direct_message(
@@ -3242,14 +3184,14 @@ class VendorAdminWCFMHelper
                     $wcfm_delivery_boy,
                     $wcfm_messages
                 );
-				$deviceToken =	get_user_meta($wcfm_delivery_boy, 'mstore_delivery_device_token', true );
-                    if (isset($serverKey) && $serverKey != false && isset($deviceToken) && $deviceToken != false) {                        
-                        $body = ["notification" => ["title" => "You have new notification", "body" => $wcfm_messages, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], "data" => ["title" => $title, "body" => $notification_message, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], "to" => $deviceToken];
-                        $headers = ["Authorization" => "key=".$serverKey, 'Content-Type' => 'application/json; charset=utf-8'];
-                        $response = wp_remote_post("https://fcm.googleapis.com/fcm/send", ["headers" => $headers, "body" => json_encode($body)]);
-                        $statusCode = wp_remote_retrieve_response_code($response);
-                        $body = wp_remote_retrieve_body($response);
-                    }
+                $deviceToken = get_user_meta($wcfm_delivery_boy, 'mstore_delivery_device_token', true);
+                if (isset($serverKey) && $serverKey != false && isset($deviceToken) && $deviceToken != false) {
+                    $body = ["notification" => ["title" => "You have new notification", "body" => $wcfm_messages, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], "data" => ["title" => $title, "body" => $notification_message, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], "to" => $deviceToken];
+                    $headers = ["Authorization" => "key=" . $serverKey, 'Content-Type' => 'application/json; charset=utf-8'];
+                    $response = wp_remote_post("https://fcm.googleapis.com/fcm/send", ["headers" => $headers, "body" => json_encode($body)]);
+                    $statusCode = wp_remote_retrieve_response_code($response);
+                    $body = wp_remote_retrieve_body($response);
+                }
             } else {
                 if (
                     ($vendor_id &&
@@ -3271,8 +3213,8 @@ class VendorAdminWCFMHelper
                             "wc-frontend-manager-delivery"
                         ),
                         '#<span class="wcfm_dashboard_item_title">' .
-                            $order_id .
-                            "</span>"
+                        $order_id .
+                        "</span>"
                     );
                     $WCFM->wcfm_notification->wcfm_send_direct_message(
                         -1,
@@ -3292,10 +3234,10 @@ class VendorAdminWCFMHelper
                         $wcfm_delivery_boy,
                         $wcfm_messages
                     );
-					$deviceToken =	get_user_meta($wcfm_delivery_boy, 'mstore_delivery_device_token', true );
-                    if (isset($serverKey) && $serverKey != false && isset($deviceToken) && $deviceToken != false) {                        
+                    $deviceToken = get_user_meta($wcfm_delivery_boy, 'mstore_delivery_device_token', true);
+                    if (isset($serverKey) && $serverKey != false && isset($deviceToken) && $deviceToken != false) {
                         $body = ["notification" => ["title" => "You have new notification", "body" => $wcfm_messages, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], "data" => ["title" => $title, "body" => $notification_message, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], "to" => $deviceToken];
-                        $headers = ["Authorization" => "key=".$serverKey, 'Content-Type' => 'application/json; charset=utf-8'];
+                        $headers = ["Authorization" => "key=" . $serverKey, 'Content-Type' => 'application/json; charset=utf-8'];
                         $response = wp_remote_post("https://fcm.googleapis.com/fcm/send", ["headers" => $headers, "body" => json_encode($body)]);
                         $statusCode = wp_remote_retrieve_response_code($response);
                         $body = wp_remote_retrieve_body($response);
@@ -3322,7 +3264,7 @@ class VendorAdminWCFMHelper
                 );
             }
         }
-		   return new WP_REST_Response(
+        return new WP_REST_Response(
             [
                 "status" => "success",
             ],
@@ -3332,18 +3274,17 @@ class VendorAdminWCFMHelper
 
     public function get_delivery_users($name)
     {
-		global $wpdb;
+        global $wpdb;
         $results = [];
         $table_name = $wpdb->prefix . "users";
         $table_name2 = $wpdb->prefix . "usermeta";
         $search = $name;
-		$sql = "SELECT {$table_name}.ID, {$table_name}.display_name";
-		$sql .= " FROM {$table_name} INNER JOIN {$table_name2}";
-		$sql .=	" ON {$table_name}.ID = {$table_name2}.user_id"; 
-		$sql .= " WHERE {$table_name2}.meta_key = '{$wpdb->prefix}capabilities' ";
-		$sql .=	" AND {$table_name2}.meta_value LIKE '%wcfm_delivery_boy%' AND {$table_name}.display_name LIKE '%$search%'";
-		$sql .= " ORDER BY {$table_name}.display_name";
-
+        $sql = "SELECT {$table_name}.ID, {$table_name}.display_name";
+        $sql .= " FROM {$table_name} INNER JOIN {$table_name2}";
+        $sql .= " ON {$table_name}.ID = {$table_name2}.user_id";
+        $sql .= " WHERE {$table_name2}.meta_key = '{$wpdb->prefix}capabilities' ";
+        $sql .= " AND {$table_name2}.meta_value LIKE '%wcfm_delivery_boy%' AND {$table_name}.display_name LIKE '%$search%'";
+        $sql .= " ORDER BY {$table_name}.display_name";
 
 
         $users = $wpdb->get_results($sql);
@@ -3359,14 +3300,14 @@ class VendorAdminWCFMHelper
         }
         $user_ids = [];
         foreach ($users as $user) {
-			$profile_pic = wp_get_attachment_image_src(get_user_meta($user->ID, 'wclovers_user_avatar', true))[0];
-			if(!profile_pic){
-				$profile_pic = null;
-			}
+            $profile_pic = wp_get_attachment_image_src(get_user_meta($user->ID, 'wclovers_user_avatar', true))[0];
+            if (!profile_pic) {
+                $profile_pic = null;
+            }
             $user_ids[] = [
                 "id" => $user->ID,
                 "name" => $user->display_name,
-				"profile_picture" => $profile_pic,
+                "profile_picture" => $profile_pic,
             ];
         }
 
