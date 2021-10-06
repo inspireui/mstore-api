@@ -392,4 +392,7 @@ function customProductResponse($response, $object, $request)
     return $response;
 }
 
+function getLangCodeFromConfigFile ($file) {
+    return str_replace('config_', '', str_replace('.json', '',$file));
+}
 ?>

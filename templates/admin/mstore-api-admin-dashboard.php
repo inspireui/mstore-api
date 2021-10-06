@@ -173,7 +173,7 @@ if (isset($verified) && $verified == "1") {
                     <tr>
                         <td><?= $file ?></td>
                         <td><a href="<?= $uploads_dir['baseurl'] . "/2000/01/" . $file ?>" target="_blank">Download</a>
-                            / <a data-id="<?= $file ?>" class="mstore-delete-json-file">Delete</a></td>
+                            / <a data-id="<?= getLangCodeFromConfigFile($file) ?>" class="mstore-delete-json-file">Delete</a></td>
                     </tr>
                     <?php
                 }
@@ -191,19 +191,36 @@ if (isset($verified) && $verified == "1") {
 
         <p style="font-size: 14px; color: #1B9D0D; margin-top:10px">
             <?php
-            if (isset($_POST['but_submit'])) {
-                wp_upload_bits($_FILES['fileToUpload']['name'], null, file_get_contents($_FILES['fileToUpload']['tmp_name']));
+           if (isset($_POST['but_submit'])) {
+
+            //validate file
+            preg_match('/config_[a-z]{2}.json/', $_FILES['fileToUpload']['name'], $output_array);
+            if (count($output_array) == 0) {
+              echo "<script type='text/javascript'>
+                  alert('You need to upload config_xx.json file');
+                </script>";
+            }else{
+              $fileContent = file_get_contents($_FILES['fileToUpload']['tmp_name']);
+              $array = json_decode($fileContent, true);
+              if($array){
+                wp_upload_bits($_FILES['fileToUpload']['name'], null, file_get_contents($_FILES['fileToUpload']['tmp_name'])); 
                 $upload_dir = $uploads_dir["basedir"];
-                $source = $_FILES['fileToUpload']['tmp_name'];
-                $destination = trailingslashit($upload_dir) . '2000/01/' . $_FILES['fileToUpload']['name'];
-                if (!file_exists($upload_dir . "/2000/01")) {
-                    mkdir($upload_dir . "/2000/01", 0777, true);
+                $source      = $_FILES['fileToUpload']['tmp_name'];
+                $destination = trailingslashit( $upload_dir ) . '2000/01/'.$_FILES['fileToUpload']['name'];
+                if (!file_exists($upload_dir."/2000/01")) {
+                  mkdir($upload_dir."/2000/01", 0777, true);
                 }
                 move_uploaded_file($source, $destination);
                 echo "<script type='text/javascript'>
-      location.reload();
-        </script>";
+                location.reload();
+                  </script>";
+              }else{
+                echo "<script type='text/javascript'>
+                  alert('You need to upload config_xx.json file');
+                </script>";
+              }
             }
+        }
             ?>
         </p>
 
