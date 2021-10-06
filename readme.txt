@@ -2,8 +2,8 @@
 Contributors:      InspireUI Ltd
 Tags:              mstore, fluxstore, react-native, flutter, inspireui, ios, android
 Requires at least: 4.4
-Tested up to:      5.6
-Stable tag:        2.0.6
+Tested up to:      5.8
+Stable tag:        3.4.5
 License:           GPL-2.0
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -45,6 +45,7 @@ Faster- Smoother- Closer.
 == Changelog ==
 = 3.4.5 =
   * Fix security issue when upload config file
+  * Update to compatible with the latest WordPress 5.8
   
 = 3.4.4 =
   * Support Tera Wallet
