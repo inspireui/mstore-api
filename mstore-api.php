@@ -1,11 +1,11 @@
 <?php
 /**
- * Plugin Name: Mstore API
+ * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
- * Description: The MStore API Plugin which is used for the Mstore and FluxStore App
+ * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
  * Version: 3.4.5
  * Author: InspireUI
- * Author URI: http://inspireui.com
+ * Author URI: https://inspireui.com
  *
  * Text Domain: MStore-Api
  */
