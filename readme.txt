@@ -45,6 +45,7 @@ Faster- Smoother- Closer.
 == Changelog ==
 = 3.4.5 =
   * Fix security issue when upload config file
+  * Fix Authenticated Arbitrary File Deletion Vulnerability
   * Update to compatible with the latest WordPress 5.8
   
 = 3.4.4 =
