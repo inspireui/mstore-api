@@ -126,14 +126,15 @@ class MstoreCheckOut
         }
     }
 
-    function mstore_delete_json_file()
-    {
+    function mstore_delete_json_file(){
         $id = $_REQUEST['id'];
-        $uploads_dir = wp_upload_dir();
-        $filePath = trailingslashit($uploads_dir["basedir"]) . "/2000/01/" . $id;
-        unlink($filePath);
-        echo "success";
-        die();
+        if(strlen($id) == 2){
+            $uploads_dir   = wp_upload_dir();
+            $filePath = trailingslashit( $uploads_dir["basedir"] )."/2000/01/config_".$id.".json";
+            unlink($filePath);
+            echo "success";
+            die();
+        }
     }
 
     function mstore_update_limit_product()

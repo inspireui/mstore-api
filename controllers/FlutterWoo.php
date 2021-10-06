@@ -788,41 +788,41 @@ class FlutterWoo extends FlutterBaseController
         return WC()->cart->get_totals();
     }
 
-    public function upload_config_file($request)
-    {
-        if (!isset($_FILES['file'])) {
-            return parent::sendError("invalid_key", "Key must be 'file'", 400);
-        }
-        $file = $_FILES['file'];
-        if ($file["size"] == 0) {
-            return parent::sendError("invalid_file", "File is required", 400);
-        }
-
-        if ($file["type"] !== "application/json") {
-            return parent::sendError("invalid_file", "You need to upload json file", 400);
-        }
-
-        if (strpos($file["name"], "config") === false || strpos($file["name"], ".json") === false) {
-            return parent::sendError("invalid_file", "You need to upload config_xx.json file", 400);
-        }
-        $fileContent = file_get_contents($file['tmp_name']);
+    public function upload_config_file($request){
+		if (!isset($_FILES['file'])) {
+			return parent::sendError("invalid_key","Key must be 'file'", 400);
+		}
+		$file = $_FILES['file'];
+		if ($file["size"] == 0) {
+			return parent::sendError("invalid_file","File is required", 400);
+		}
+		
+		if ($file["type"] !== "application/json") {
+			return parent::sendError("invalid_file","You need to upload json file", 400);
+		}
+		
+		preg_match('/config_[a-z]{2}.json/', $file["name"], $output_array);
+		if (count($output_array) == 0) {
+			return parent::sendError("invalid_file","You need to upload config_xx.json file", 400);
+		}
+		$fileContent = file_get_contents($file['tmp_name']);
         $array = json_decode($fileContent, true);
-        if ($array) {
-            wp_upload_bits($file['name'], null, $fileContent);
-            $uploads_dir = wp_upload_dir();
-            $upload_dir = $uploads_dir["basedir"];
-            $upload_url = $uploads_dir["baseurl"];
-            $source = $file['tmp_name'];
-            $destination = trailingslashit($upload_dir) . '2000/01/' . $file['name'];
-            if (!file_exists($upload_dir . "/2000/01")) {
-                mkdir($upload_dir . "/2000/01", 0777, true);
-            }
-            move_uploaded_file($source, $destination);
-            return $upload_url . "/2000/01/" . $file['name'];
-        } else {
-            return parent::sendError("invalid_file", "The config_xx.json file is invalid format", 400);
-        }
-    }
+		if($array){
+			wp_upload_bits($file['name'], null, $fileContent); 
+			$uploads_dir   = wp_upload_dir();
+			$upload_dir = $uploads_dir["basedir"];
+			$upload_url = $uploads_dir["baseurl"];
+			$source      = $file['tmp_name'];
+			$destination = trailingslashit( $upload_dir ) . '2000/01/'.$file['name'];
+			if (!file_exists($upload_dir."/2000/01")) {
+			  mkdir($upload_dir."/2000/01", 0777, true);
+			}
+			move_uploaded_file($source, $destination);
+			return $upload_url."/2000/01/".$file['name'];
+		}else{
+			return parent::sendError("invalid_file","The config_xx.json file is invalid format", 400);
+		}
+	}
 
     public function get_taxes($request)
     {
