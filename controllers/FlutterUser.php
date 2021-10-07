@@ -332,7 +332,7 @@ class FlutterUserController extends FlutterBaseController
 
         $username = sanitize_user($usernameReq);
 
-        $email = sanitize_email($emailReq);
+        $email = FlutterValidator::sanitizeEmail($emailReq);
         if (isset($params["seconds"])) {
             $seconds = (int)$params["seconds"];
         } else {

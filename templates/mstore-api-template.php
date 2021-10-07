@@ -114,7 +114,7 @@ if ($data != null):
                                         <form
                                                 name="checkout" method="post"
                                                 class="checkout woocommerce-checkout"
-                                                action="<?= esc_url(get_bloginfo('url')); ?>/checkout/"
+                                                action="<?= FlutterValidator::escapeUrl(get_bloginfo('url')); ?>/checkout/"
                                                 enctype="multipart/form-data">
                                             <?php do_action('woocommerce_checkout_before_customer_details'); ?>
                                             <div class="col2-set" id="customer_details">
@@ -375,7 +375,7 @@ if ($data != null):
 
                                                         if ($_product && $_product->exists() && $cart_item['quantity'] > 0 && apply_filters('woocommerce_checkout_cart_item_visible', true, $cart_item, $cart_item_key)) {
                                                             ?>
-                                                            <tr class="<?= esc_attr(apply_filters('woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key)); ?>">
+                                                            <tr class="<?= FlutterValidator::escapeAttribute(apply_filters('woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key)); ?>">
                                                                 <td class="product-name">
                                                                     <?= apply_filters('woocommerce_cart_item_name', $_product->get_name(), $cart_item, $cart_item_key) . '&nbsp;'; ?>
                                                                     <?= apply_filters('woocommerce_checkout_cart_item_quantity', ' <strong class="product-quantity">' . sprintf('&times; %s', $cart_item['quantity']) . '</strong>', $cart_item, $cart_item_key); ?>
@@ -397,7 +397,7 @@ if ($data != null):
                                                     </tr>
 
                                                     <?php foreach (WC()->cart->get_coupons() as $code => $coupon) : ?>
-                                                        <tr class="cart-discount coupon-<?= esc_attr(sanitize_title($code)); ?>">
+                                                        <tr class="cart-discount coupon-<?= FlutterValidator::escapeAttribute(sanitize_title($code)); ?>">
                                                             <th><?php wc_cart_totals_coupon_label($coupon); ?></th>
                                                             <td><?php wc_cart_totals_coupon_html($coupon); ?></td>
                                                         </tr>
@@ -426,7 +426,7 @@ if ($data != null):
                                                     <?php if (wc_tax_enabled() && 'excl' === WC()->cart->get_tax_price_display_mode()) : ?>
                                                         <?php if ('itemized' === get_option('woocommerce_tax_total_display')) : ?>
                                                             <?php foreach (WC()->cart->get_tax_totals() as $code => $tax) : ?>
-                                                                <tr class="tax-rate tax-rate-<?= esc_attr(sanitize_title($code)); ?>">
+                                                                <tr class="tax-rate tax-rate-<?= FlutterValidator::escapeAttribute(sanitize_title($code)); ?>">
                                                                     <th><?= esc_html($tax->label); ?></th>
                                                                     <td><?= wp_kses_post($tax->formatted_amount); ?></td>
                                                                 </tr>
@@ -454,7 +454,7 @@ if ($data != null):
                                                 <div id="payment" class="woocommerce-checkout-payment">
 
                                                     <input type="radio" name="payment_method"
-                                                           id="payment_method_<?= esc_attr($data['payment_method']); ?>"
+                                                           id="payment_method_<?= FlutterValidator::escapeAttribute($data['payment_method']); ?>"
                                                            checked="checked"
                                                            value="<?= esc_html($data['payment_method']); ?>"/>
 

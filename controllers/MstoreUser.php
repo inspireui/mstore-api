@@ -147,7 +147,7 @@ class JSON_API_MStore_User_Controller
         if (!$emailReq) {
             $json_api->error("You must include 'email' var in your request. ");
         } else {
-            $email = sanitize_email($emailReq);
+            $email = FlutterValidator::sanitizeEmail($emailReq);
         }
 
         // if (!$json_api->query->nonce) {

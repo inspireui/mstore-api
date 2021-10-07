@@ -2874,7 +2874,7 @@ class VendorAdminWCFMHelper
     //                     $product_ids = array();
     //                     foreach ($products_objs as $products_obj)
     //                     {
-    //                         $product_ids[] = esc_attr($products_obj->ID);
+    //                         $product_ids[] = FlutterValidator::escapeAttribute($products_obj->ID);
     //                     }
     //                 }
     //                 update_post_meta($new_coupon_id, '_wcfm_vendor_coupon_all_product', 'yes');

@@ -88,7 +88,7 @@ if (isset($verified) && $verified == "1") {
         ?>
         <div class="form-group" style="margin-top:10px;margin-bottom:40px">
             <textarea class="mstore-update-firebase-server-key mstore_input"
-                      style="height: 120px"><?= esc_attr($serverKey) ?></textarea>
+                      style="height: 120px"><?= FlutterValidator::escapeAttribute($serverKey) ?></textarea>
         </div>
     </form>
 
@@ -107,12 +107,12 @@ if (isset($verified) && $verified == "1") {
         }
         ?>
         <div class="form-group" style="margin-top:10px;">
-            <input type="text" placeholder="Title" value="<?= esc_attr($newOrderTitle) ?>"
+            <input type="text" placeholder="Title" value="<?= FlutterValidator::escapeAttribute($newOrderTitle) ?>"
                    class="mstore-update-new-order-title mstore_input">
         </div>
         <div class="form-group" style="margin-top:10px;margin-bottom:40px">
             <textarea placeholder="Message" class="mstore-update-new-order-message mstore_input"
-                      style="height: 120px"><?= esc_attr($newOrderMsg) ?></textarea>
+                      style="height: 120px"><?= FlutterValidator::escapeAttribute($newOrderMsg) ?></textarea>
         </div>
     </form>
 
@@ -131,12 +131,12 @@ if (isset($verified) && $verified == "1") {
         }
         ?>
         <div class="form-group" style="margin-top:10px;">
-            <input type="text" placeholder="Title" value="<?= esc_attr($statusOrderTitle) ?>"
+            <input type="text" placeholder="Title" value="<?= FlutterValidator::escapeAttribute($statusOrderTitle) ?>"
                    class="mstore-update-status-order-title mstore_input">
         </div>
         <div class="form-group" style="margin-top:10px;margin-bottom:40px">
             <textarea placeholder="Message" class="mstore-update-status-order-message mstore_input"
-                      style="height: 120px"><?= esc_attr($statusOrderMsg) ?></textarea>
+                      style="height: 120px"><?= FlutterValidator::escapeAttribute($statusOrderMsg) ?></textarea>
         </div>
     </form>
 
@@ -172,7 +172,7 @@ if (isset($verified) && $verified == "1") {
                     ?>
                     <tr>
                         <td><?= $file ?></td>
-                        <td><a href="<?= esc_url($uploads_dir['baseurl'] . "/2000/01/" . $file) ?>" target="_blank">Download</a>
+                        <td><a href="<?= FlutterValidator::escapeUrl($uploads_dir['baseurl'] . "/2000/01/" . $file) ?>" target="_blank">Download</a>
                             / <a data-id="<?= getLangCodeFromConfigFile($file) ?>" data-nonce="<?= wp_create_nonce('delete_config_json_file') ?>" class="mstore-delete-json-file">Delete</a></td>
                     </tr>
                     <?php
@@ -229,7 +229,7 @@ if (isset($verified) && $verified == "1") {
             $success = deactiveMStoreApi();
             if ($success !== true) {
                 ?>
-                <p style="font-size: 16px;color: red;"><?= esc_attr($success) ?></p>
+                <p style="font-size: 16px;color: red;"><?= FlutterValidator::escapeAttribute($success) ?></p>
                 <?php
             } else {
                 echo "<script type='text/javascript'>

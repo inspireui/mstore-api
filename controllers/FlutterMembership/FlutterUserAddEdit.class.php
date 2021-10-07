@@ -406,7 +406,7 @@ class FlutterUserAddEdit
                     if (isset($_POST['stripeEmail']) && isset($_POST['stripeToken'])) {
                         //already have a token
                         $str .= indeed_create_form_element(array('type' => 'hidden', 'name' => 'stripeToken', 'value' => FlutterValidator::cleanText($_POST['stripeToken'])));
-                        $str .= indeed_create_form_element(array('type' => 'hidden', 'name' => 'stripeEmail', 'value' => sanitize_email($_POST['stripeEmail'])));
+                        $str .= indeed_create_form_element(array('type' => 'hidden', 'name' => 'stripeEmail', 'value' => FlutterValidator::sanitizeEmail($_POST['stripeEmail'])));
                     } else {
                         if (!class_exists('ihcStripe')) {
                             require_once IHC_PATH . 'classes/PaymentGateways/ihcStripe.class.php';
