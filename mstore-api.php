@@ -380,7 +380,7 @@ function prepare_checkout()
 
     if (isset($_GET['mobile']) && isset($_GET['code'])) {
 
-        $code = $_GET['code'];
+        $code = FlutterValidator::cleanText($_GET['code']);
         global $wpdb;
         $table_name = $wpdb->prefix . "mstore_checkout";
         $item = $wpdb->get_row("SELECT * FROM $table_name WHERE code = '$code'");

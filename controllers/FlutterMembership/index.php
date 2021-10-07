@@ -83,7 +83,7 @@ class FlutterMembership extends FlutterBaseController
                 'captcha' => true,
                 'action' => '',
                 'is_public' => true,
-                'url' => $url,
+                'url' => get_home_url(),
             );
             $obj = new FlutterUserAddEdit();
             $obj->setVariable($args);//setting the object variables

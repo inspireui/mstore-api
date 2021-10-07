@@ -25,7 +25,7 @@ if (!isset($verified) || $verified === "" || $verified === false) {
 
             if ($verified !== true) {
                 ?>
-                <p style="font-size: 16px;color: red;"><?= $verified ?></p>
+                <p style="font-size: 16px;color: red;"><?php echo $verified ?></p>
                 <?php
             } else {
                 ?>
@@ -73,7 +73,7 @@ if (isset($verified) && $verified == "1") {
         $limit = get_option("mstore_limit_product");
         ?>
         <div class="form-group" style="margin-top:10px;margin-bottom:40px">
-            <input type="number" value="<?= (!isset($limit) || $limit == false) ? 10 : $limit ?>"
+            <input type="number" value="<?php echo (!isset($limit) || $limit == false) ? 10 : $limit ?>"
                    class="mstore-update-limit-product">
         </div>
     </form>
@@ -88,7 +88,7 @@ if (isset($verified) && $verified == "1") {
         ?>
         <div class="form-group" style="margin-top:10px;margin-bottom:40px">
             <textarea class="mstore-update-firebase-server-key mstore_input"
-                      style="height: 120px"><?= FlutterValidator::escapeAttribute($serverKey) ?></textarea>
+                      style="height: 120px"><?php echo FlutterValidator::escapeAttribute($serverKey) ?></textarea>
         </div>
     </form>
 
@@ -107,12 +107,12 @@ if (isset($verified) && $verified == "1") {
         }
         ?>
         <div class="form-group" style="margin-top:10px;">
-            <input type="text" placeholder="Title" value="<?= FlutterValidator::escapeAttribute($newOrderTitle) ?>"
+            <input type="text" placeholder="Title" value="<?php echo FlutterValidator::escapeAttribute($newOrderTitle); ?>"
                    class="mstore-update-new-order-title mstore_input">
         </div>
         <div class="form-group" style="margin-top:10px;margin-bottom:40px">
             <textarea placeholder="Message" class="mstore-update-new-order-message mstore_input"
-                      style="height: 120px"><?= FlutterValidator::escapeAttribute($newOrderMsg) ?></textarea>
+                      style="height: 120px"><?php echo FlutterValidator::escapeAttribute($newOrderMsg); ?></textarea>
         </div>
     </form>
 
@@ -131,12 +131,12 @@ if (isset($verified) && $verified == "1") {
         }
         ?>
         <div class="form-group" style="margin-top:10px;">
-            <input type="text" placeholder="Title" value="<?= FlutterValidator::escapeAttribute($statusOrderTitle) ?>"
+            <input type="text" placeholder="Title" value="<?php echo FlutterValidator::escapeAttribute($statusOrderTitle); ?>"
                    class="mstore-update-status-order-title mstore_input">
         </div>
         <div class="form-group" style="margin-top:10px;margin-bottom:40px">
             <textarea placeholder="Message" class="mstore-update-status-order-message mstore_input"
-                      style="height: 120px"><?= FlutterValidator::escapeAttribute($statusOrderMsg) ?></textarea>
+                      style="height: 120px"><?php echo FlutterValidator::escapeAttribute($statusOrderMsg); ?></textarea>
         </div>
     </form>
 
@@ -171,9 +171,9 @@ if (isset($verified) && $verified == "1") {
                 foreach ($configs as $file) {
                     ?>
                     <tr>
-                        <td><?= $file ?></td>
-                        <td><a href="<?= FlutterValidator::escapeUrl($uploads_dir['baseurl'] . "/2000/01/" . $file) ?>" target="_blank">Download</a>
-                            / <a data-id="<?= getLangCodeFromConfigFile($file) ?>" data-nonce="<?= wp_create_nonce('delete_config_json_file') ?>" class="mstore-delete-json-file">Delete</a></td>
+                        <td><?php echo $file; ?></td>
+                        <td><a href="<?php echo FlutterValidator::escapeUrl($uploads_dir['baseurl'] . "/2000/01/" . $file); ?>" target="_blank">Download</a>
+                            / <a data-id="<?php echo getLangCodeFromConfigFile($file); ?>" data-nonce="<?php echo wp_create_nonce('delete_config_json_file'); ?>" class="mstore-delete-json-file">Delete</a></td>
                     </tr>
                     <?php
                 }
@@ -229,7 +229,7 @@ if (isset($verified) && $verified == "1") {
             $success = deactiveMStoreApi();
             if ($success !== true) {
                 ?>
-                <p style="font-size: 16px;color: red;"><?= FlutterValidator::escapeAttribute($success) ?></p>
+                <p style="font-size: 16px;color: red;"><?php echo FlutterValidator::escapeAttribute($success); ?></p>
                 <?php
             } else {
                 echo "<script type='text/javascript'>
