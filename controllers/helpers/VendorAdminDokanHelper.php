@@ -449,7 +449,7 @@ class VendorAdminDokanHelper
 
         $status_filter = '';
         if (isset($request['status_type']) && ($request['status_type'] != '')) {
-            $status_filter = sanitize_text_field($request['status_type']);
+            $status_filter = FlutterValidator::cleanText($request['status_type']);
         }
 
         if (dokan()->is_pro_exists()) {
@@ -536,8 +536,8 @@ class VendorAdminDokanHelper
                 $sql .= " AND MONTH( {$table_handler}.{$time} ) = MONTH( NOW() ) AND YEAR( {$table_handler}.{$time} ) = YEAR( CURDATE() )";
                 break;
             case 'custom':
-                $start_date = !empty($_GET['start_date']) ? sanitize_text_field($_GET['start_date']) : $start_date;
-                $end_date = !empty($_GET['end_date']) ? sanitize_text_field($_GET['end_date']) : $end_date;
+                $start_date = !empty($_GET['start_date']) ? FlutterValidator::cleanText($_GET['start_date']) : $start_date;
+                $end_date = !empty($_GET['end_date']) ? FlutterValidator::cleanText($_GET['end_date']) : $end_date;
                 if ($start_date) $start_date = wcfm_standard_date($start_date);
                 if ($end_date) $end_date = wcfm_standard_date($end_date);
                 $sql .= " AND DATE( {$table_handler}.{$time} ) BETWEEN '" . $start_date . "' AND '" . $end_date . "'";

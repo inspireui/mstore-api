@@ -828,12 +828,12 @@ class VendorAdminWCFMHelper
 
         $vendor_id = $user_id;
 
-        $length = sanitize_text_field($request["per_page"]);
-        $offset = sanitize_text_field($request["page"]);
+        $length = FlutterValidator::cleanText($request["per_page"]);
+        $offset = FlutterValidator::cleanText($request["page"]);
         $offset = ($offset - 1) * $length;
 
         $the_orderby = !empty($request["orderby"])
-            ? sanitize_text_field($request["orderby"])
+            ? FlutterValidator::cleanText($request["orderby"])
             : "ID";
         $the_order =
             !empty($request["order"]) && "asc" === $request["order"]
@@ -842,7 +842,7 @@ class VendorAdminWCFMHelper
 
         $status_filter = "";
         if (isset($request["status_type"]) && $request["status_type"] != "") {
-            $status_filter = sanitize_text_field($request["status_type"]);
+            $status_filter = FlutterValidator::cleanText($request["status_type"]);
             if ($status_filter == "approved") {
                 $status_filter = " AND `approved` = 1";
             } elseif ($status_filter == "pending") {
@@ -1189,10 +1189,10 @@ class VendorAdminWCFMHelper
                 break;
             case "custom":
                 $start_date = !empty($_GET["start_date"])
-                    ? sanitize_text_field($_GET["start_date"])
+                    ? FlutterValidator::cleanText($_GET["start_date"])
                     : $start_date;
                 $end_date = !empty($_GET["end_date"])
-                    ? sanitize_text_field($_GET["end_date"])
+                    ? FlutterValidator::cleanText($_GET["end_date"])
                     : $end_date;
                 if ($start_date) {
                     $start_date = wcfm_standard_date($start_date);
@@ -1306,7 +1306,7 @@ class VendorAdminWCFMHelper
                                         in_array($_product_id, $valid_items) ||
                                         in_array($_variation_id, $valid_items)
                                     ) {
-                                        $gross_sales += (float)sanitize_text_field(
+                                        $gross_sales += (float)FlutterValidator::cleanText(
                                             $line_item->get_total()
                                         );
                                         if (
@@ -1321,7 +1321,7 @@ class VendorAdminWCFMHelper
                                                     "give_tax"
                                                 )
                                             ) {
-                                                $gross_sales += (float)sanitize_text_field(
+                                                $gross_sales += (float)FlutterValidator::cleanText(
                                                     $line_item->get_total_tax()
                                                 );
                                             }
@@ -1331,7 +1331,7 @@ class VendorAdminWCFMHelper
                                                     "wcvendors_vendor_give_taxes"
                                                 )
                                             ) {
-                                                $gross_sales += (float)sanitize_text_field(
+                                                $gross_sales += (float)FlutterValidator::cleanText(
                                                     $line_item->get_total_tax()
                                                 );
                                             }
@@ -1347,7 +1347,7 @@ class VendorAdminWCFMHelper
                                         $valid_items
                                     )
                                 ) {
-                                    $gross_sales += (float)sanitize_text_field(
+                                    $gross_sales += (float)FlutterValidator::cleanText(
                                         $line_item->get_total()
                                     );
                                     if (
@@ -1362,7 +1362,7 @@ class VendorAdminWCFMHelper
                                                 "give_tax"
                                             )
                                         ) {
-                                            $gross_sales += (float)sanitize_text_field(
+                                            $gross_sales += (float)FlutterValidator::cleanText(
                                                 $line_item->get_total_tax()
                                             );
                                         }
@@ -1372,7 +1372,7 @@ class VendorAdminWCFMHelper
                                                 "wcvendors_vendor_give_taxes"
                                             )
                                         ) {
-                                            $gross_sales += (float)sanitize_text_field(
+                                            $gross_sales += (float)FlutterValidator::cleanText(
                                                 $line_item->get_total_tax()
                                             );
                                         }
@@ -1437,7 +1437,7 @@ class VendorAdminWCFMHelper
                             $line_item = new WC_Order_Item_Product(
                                 $net_sale_whole_week->order_item_id
                             );
-                            $gross_sales += (float)sanitize_text_field(
+                            $gross_sales += (float)FlutterValidator::cleanText(
                                 $line_item->get_total()
                             );
                             if (
@@ -1445,7 +1445,7 @@ class VendorAdminWCFMHelper
                                     "give_tax"
                                 )
                             ) {
-                                $gross_sales += (float)sanitize_text_field(
+                                $gross_sales += (float)FlutterValidator::cleanText(
                                     $line_item->get_total_tax()
                                 );
                                 $gross_sales +=
@@ -1576,7 +1576,7 @@ class VendorAdminWCFMHelper
             if (!empty($gross_sales_whole_week)) {
                 foreach ($gross_sales_whole_week as $net_sale_whole_week) {
                     $gross_commission_ids[] = $net_sale_whole_week->ID;
-                    $gross_total_refund_amount += (float)sanitize_text_field(
+                    $gross_total_refund_amount += (float)FlutterValidator::cleanText(
                         $net_sale_whole_week->refunded_amount
                     );
                 }

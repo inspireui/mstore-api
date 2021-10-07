@@ -362,11 +362,11 @@ class FlutterUserController extends FlutterBaseController
 
                 foreach ($dataRequest as $field => $value) {
                     if (in_array($field, $allowed_params)) {
-                        $user[$field] = trim(sanitize_text_field($value));
+                        $user[$field] = trim(FlutterValidator::cleanText($value));
                     }
                 }
 
-                $user['role'] = isset($params["role"]) ? sanitize_text_field($params["role"]) : get_option('default_role');
+                $user['role'] = isset($params["role"]) ? FlutterValidator::cleanText($params["role"]) : get_option('default_role');
                 $user_id = wp_insert_user($user);
 
                 if (is_wp_error($user_id)) {
@@ -453,11 +453,11 @@ class FlutterUserController extends FlutterBaseController
         $dataRequest = $params;
         foreach ($dataRequest as $field => $value) {
             if (in_array($field, $allowed_params)) {
-                $user[$field] = trim(sanitize_text_field($value));
+                $user[$field] = trim(FlutterValidator::cleanText($value));
             }
         }
 
-        $user['role'] = isset($params["role"]) ? sanitize_text_field($params["role"]) : get_option('default_role');
+        $user['role'] = isset($params["role"]) ? FlutterValidator::cleanText($params["role"]) : get_option('default_role');
         $user_id = wp_insert_user($user);
 
         if (is_wp_error($user_id)) {

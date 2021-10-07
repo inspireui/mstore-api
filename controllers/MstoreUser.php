@@ -235,12 +235,12 @@ class JSON_API_MStore_User_Controller
                     }
                     foreach ($dataRequest as $field => $value) {
                         if (in_array($field, $allowed_params)) {
-                            $user[$field] = trim(sanitize_text_field($value));
+                            $user[$field] = trim(FlutterValidator::cleanText($value));
                         }
 
                     }
 
-                    $user['role'] = $roleReq ? sanitize_text_field($roleReq) : get_option('default_role');
+                    $user['role'] = $roleReq ? FlutterValidator::cleanText($roleReq) : get_option('default_role');
                     $user_id = wp_insert_user($user);
 
                     /*Send e-mail to admin and new user -

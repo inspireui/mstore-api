@@ -405,7 +405,7 @@ class FlutterUserAddEdit
 
                     if (isset($_POST['stripeEmail']) && isset($_POST['stripeToken'])) {
                         //already have a token
-                        $str .= indeed_create_form_element(array('type' => 'hidden', 'name' => 'stripeToken', 'value' => sanitize_text_field($_POST['stripeToken'])));
+                        $str .= indeed_create_form_element(array('type' => 'hidden', 'name' => 'stripeToken', 'value' => FlutterValidator::cleanText($_POST['stripeToken'])));
                         $str .= indeed_create_form_element(array('type' => 'hidden', 'name' => 'stripeEmail', 'value' => sanitize_email($_POST['stripeEmail'])));
                     } else {
                         if (!class_exists('ihcStripe')) {
@@ -619,7 +619,7 @@ class FlutterUserAddEdit
                 $this->user_data[$name] = '';
                 if (isset($_POST[$name])) {
                     /// prev value from submit form
-                    $this->user_data[$name] = sanitize_text_field($_POST[$name]);
+                    $this->user_data[$name] = FlutterValidator::cleanText($_POST[$name]);
                 } else if (isset($ihc_stored_form_values[$name])) {
                     /// prev value from submit form, before register with sm
                     $this->user_data[$name] = $ihc_stored_form_values[$name];
@@ -827,7 +827,7 @@ class FlutterUserAddEdit
                 if (isset($this->user_data[$v['name']]) && !empty($this->user_data[$v['name']])) {
                     $val = $this->user_data[$v['name']];
                 } elseif (isset($_POST[$v['name']])) {
-                    $val = sanitize_text_field($_POST[$v['name']]);
+                    $val = FlutterValidator::cleanText($_POST[$v['name']]);
                 }
                 if (empty($val) && $v['type'] == 'plain_text') { //maybe it's plain text
                     $val = $v['plain_text_value'];
@@ -891,7 +891,7 @@ class FlutterUserAddEdit
                 if (isset($this->user_data[$v['name']]) && !empty($this->user_data[$v['name']])) {
                     $val = $this->user_data[$v['name']];
                 } elseif (isset($_POST[$v['name']])) {
-                    $val = sanitize_text_field($_POST[$v['name']]);
+                    $val = FlutterValidator::cleanText($_POST[$v['name']]);
                 }
                 if (empty($val) && $v['type'] == 'plain_text') { //maybe it's plain text
                     $val = $v['plain_text_value'];
@@ -941,7 +941,7 @@ class FlutterUserAddEdit
                 if (isset($this->user_data[$v['name']]) && !empty($this->user_data[$v['name']])) {
                     $val = $this->user_data[$v['name']];
                 } elseif (isset($_POST[$v['name']])) {
-                    $val = sanitize_text_field($_POST[$v['name']]);
+                    $val = FlutterValidator::cleanText($_POST[$v['name']]);
                 }
                 if (empty($val) && $v['type'] == 'plain_text') { //maybe it's plain text
                     $val = $v['plain_text_value'];
@@ -992,7 +992,7 @@ class FlutterUserAddEdit
                 if (isset($this->user_data[$v['name']]) && !empty($this->user_data[$v['name']])) {
                     $val = $this->user_data[$v['name']];
                 } elseif (isset($_POST[$v['name']])) {
-                    $val = sanitize_text_field($_POST[$v['name']]);
+                    $val = FlutterValidator::cleanText($_POST[$v['name']]);
                 }
 
                 if (empty($val) && $v['type'] == 'plain_text') { //maybe it's plain text

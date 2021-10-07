@@ -24,6 +24,7 @@ include_once plugin_dir_path(__FILE__) . "controllers/FlutterVendorAdmin.php";
 include_once plugin_dir_path(__FILE__) . "controllers/FlutterWoo.php";
 include_once plugin_dir_path(__FILE__) . "controllers/FlutterDelivery.php";
 include_once plugin_dir_path(__FILE__) . "functions/index.php";
+include_once plugin_dir_path(__FILE__) . "functions/validator.php";
 include_once plugin_dir_path(__FILE__) . "controllers/FlutterMembership/index.php";
 include_once plugin_dir_path(__FILE__) . "controllers/FlutterTeraWallet.php";
 
@@ -127,8 +128,8 @@ class MstoreCheckOut
     }
 
     function mstore_delete_json_file(){
-        $id = sanitize_text_field($_REQUEST['id']);
-        $nonce = sanitize_text_field($_REQUEST['nonce']);
+        $id = FlutterValidator::cleanText($_REQUEST['id']);
+        $nonce = FlutterValidator::cleanText($_REQUEST['nonce']);
         if(strlen($id) == 2){
             if (wp_verify_nonce($nonce, 'delete_config_json_file')) {
                 $uploads_dir   = wp_upload_dir();
@@ -150,31 +151,31 @@ class MstoreCheckOut
 
     function mstore_update_firebase_server_key()
     {
-        $serverKey = sanitize_text_field($_REQUEST['serverKey']);
+        $serverKey = FlutterValidator::cleanText($_REQUEST['serverKey']);
         update_option("mstore_firebase_server_key", $serverKey);
     }
 
     function mstore_update_new_order_title()
     {
-        $title = sanitize_text_field($_REQUEST['title']);
+        $title = FlutterValidator::cleanText($_REQUEST['title']);
         update_option("mstore_new_order_title", $title);
     }
 
     function mstore_update_new_order_message()
     {
-        $message = sanitize_text_field($_REQUEST['message']);
+        $message = FlutterValidator::cleanText($_REQUEST['message']);
         update_option("mstore_new_order_message", $message);
     }
 
     function mstore_update_status_order_title()
     {
-        $title = sanitize_text_field($_REQUEST['title']);
+        $title = FlutterValidator::cleanText($_REQUEST['title']);
         update_option("mstore_status_order_title", $title);
     }
 
     function mstore_update_status_order_message()
     {
-        $message = sanitize_text_field($_REQUEST['message']);
+        $message = FlutterValidator::cleanText($_REQUEST['message']);
         update_option("mstore_status_order_message", $message);
     }
 
@@ -547,7 +548,7 @@ function prepare_checkout()
             WC()->session->set('chosen_payment_method', $data['payment_method']);
         }
         if (isset($data['customer_note']) && !empty($data['customer_note'])) {
-            $_POST["order_comments"] = sanitize_text_field($data['customer_note']);
+            $_POST["order_comments"] = FlutterValidator::cleanText($data['customer_note']);
             $checkout_fields = WC()->checkout->__get("checkout_fields");
             $checkout_fields["order"] = ["order_comments" => ["type" => "textarea", "class" => [], "label" => "Order notes", "placeholder" => "Notes about your order, e.g. special notes for delivery."]];
             WC()->checkout->__set("checkout_fields", $checkout_fields);
