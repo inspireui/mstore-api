@@ -1,5 +1,5 @@
 <?php
-require_once(dirname(__DIR__) . '/FlutterBase.php');
+require_once(dirname(__DIR__) . '/flutter_base.php');
 
 class FlutterMembership extends FlutterBaseController
 {
@@ -68,7 +68,7 @@ class FlutterMembership extends FlutterBaseController
     {
         if (is_plugin_active('indeed-membership-pro/indeed-membership-pro.php')) {
             if (!class_exists('FlutterUserAddEdit')) {
-                require_once(__DIR__ . '/FlutterUserAddEdit.class.php');
+                require_once(__DIR__ . '/flutter_user_add_edit.class.php');
             }
             $nonce = wp_create_nonce('ihc_user_add_edit_nonce');
             $json = file_get_contents('php://input');
