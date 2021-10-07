@@ -962,7 +962,6 @@ class FlutterWCFMHelper
         $a = sin($dlat / 2) * sin($dlat / 2) + cos($lat1) * cos($lat2) * sin($dlon / 2) * sin($dlon / 2);
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
         $km = $r * $c;
-        //echo ' '.$km;
         return $km;
     }
 

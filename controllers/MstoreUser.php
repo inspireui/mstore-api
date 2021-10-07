@@ -150,27 +150,14 @@ class JSON_API_MStore_User_Controller
             $email = FlutterValidator::sanitizeEmail($emailReq);
         }
 
-        // if (!$json_api->query->nonce) {
-        //     $json_api->error("You must include 'nonce' var in your request. Use the 'get_nonce' Core API method. ");
-        // } else {
-        //     $nonce = sanitize_text_field($json_api->query->nonce);
-        // }
-
-        // if (!$json_api->query->display_name) {
-        //     $json_api->error("You must include 'display_name' var in your request. ");
-        // } else $display_name = sanitize_text_field($json_api->query->display_name);
-
-        // $user_pass = filter_has_vart(INPUT_GET, 'user_pass') ? sanitize_text_field(filter_input(INPUT_GET, 'user_pass')) : '';
-
         if ($secondsReq) {
             $seconds = (int)$secondsReq;
         } else {
             $seconds = 120960000;
         }
-//1400 days
+        //1400 days
 
         //Add usernames we don't want used
-
         $invalid_usernames = array('admin');
 
         //Do username validation
@@ -745,9 +732,6 @@ class JSON_API_MStore_User_Controller
             $json_api->error("Please include 'content' var in your request.");
         }
 
-        // if (!$json_api->query->comment_status ) {
-        //   $json_api->error("Please include 'comment_status' var in your request. Possible values are '1' (approved) or '0' (not-approved)");
-        // }else $comment_approved = $json_api->query->comment_status;
         $comment_approved = 0;
         $user_info = get_userdata($user_id);
         $time = current_time('mysql');
