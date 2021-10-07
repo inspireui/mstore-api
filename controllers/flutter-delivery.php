@@ -1,6 +1,6 @@
 <?php
-require_once(__DIR__ . '/helpers/delivery_wcfm_helper.php');
-require_once(__DIR__ . '/helpers/delivery_woo_helper.php');
+require_once(__DIR__ . '/helpers/delivery-wcfm-helper.php');
+require_once(__DIR__ . '/helpers/delivery-woo-helper.php');
 
 /*
  * Base REST Controller for flutter

@@ -2185,7 +2185,7 @@ class FlutterUserAddEdit
             'is_register' => $this->type == 'create' ? true : false,
         );
         if (!class_exists('FlutterDoPayment')) {
-            require_once(__DIR__ . '/flutter_do_payment.php');
+            require_once(__DIR__ . '/flutter-do-payment.php');
         }
         $paymentObject = new FlutterDoPayment($options, $this->payment_gateway);
         $data = $paymentObject->processing();

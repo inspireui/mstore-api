@@ -1,7 +1,7 @@
 <?php
-require_once(__DIR__ . '/helpers/vendor_admin_woo_helper.php');
-require_once(__DIR__ . '/helpers/vendor_admin_wcfm_helper.php');
-require_once(__DIR__ . '/helpers/vendor_admin_dokan_helper.php');
+require_once(__DIR__ . '/helpers/vendor-admin-woo-helper.php');
+require_once(__DIR__ . '/helpers/vendor-admin-wcfm-helper.php');
+require_once(__DIR__ . '/helpers/vendor-admin-dokan-helper.php');
 
 /*
  * Base REST Controller for flutter

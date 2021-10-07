@@ -1,6 +1,6 @@
 <?php
 require_once(__DIR__ . '/helpers/wcfm.php');
-require_once(__DIR__ . '/flutter_products.php');
+require_once(__DIR__ . '/flutter-products.php');
 
 /*
  * Base REST Controller for flutter

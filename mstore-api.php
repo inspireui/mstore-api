@@ -17,16 +17,16 @@ defined('ABSPATH') or wp_die('No script kiddies please!');
 
 include plugin_dir_path(__FILE__) . "templates/class-mobile-detect.php";
 include plugin_dir_path(__FILE__) . "templates/class-rename-generate.php";
-include_once plugin_dir_path(__FILE__) . "controllers/flutter_user.php";
-include_once plugin_dir_path(__FILE__) . "controllers/flutter_home.php";
-include_once plugin_dir_path(__FILE__) . "controllers/flutter_booking.php";
-include_once plugin_dir_path(__FILE__) . "controllers/flutter_vendor_admin.php";
-include_once plugin_dir_path(__FILE__) . "controllers/flutter_woo.php";
-include_once plugin_dir_path(__FILE__) . "controllers/flutter_delivery.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-user.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-home.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-booking.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-vendor-admin.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-woo.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-delivery.php";
 include_once plugin_dir_path(__FILE__) . "functions/index.php";
 include_once plugin_dir_path(__FILE__) . "functions/validator.php";
-include_once plugin_dir_path(__FILE__) . "controllers/flutter_membership/index.php";
-include_once plugin_dir_path(__FILE__) . "controllers/flutter_tera_wallet.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-membership/index.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-tera-wallet.php";
 
 class MstoreCheckOut
 {
@@ -43,14 +43,14 @@ class MstoreCheckOut
         add_action('woocommerce_init', 'woocommerce_mstore_init');
         function woocommerce_mstore_init()
         {
-            include_once plugin_dir_path(__FILE__) . "controllers/flutter_order.php";
-            include_once plugin_dir_path(__FILE__) . "controllers/flutter_multi_vendor.php";
-            include_once plugin_dir_path(__FILE__) . "controllers/flutter_vendor.php";
-            include_once plugin_dir_path(__FILE__) . "controllers/helpers/delivery_wcfm_helper.php";
-            include_once plugin_dir_path(__FILE__) . "controllers/helpers/delivery_wcfm_helper.php";
-            include_once plugin_dir_path(__FILE__) . "controllers/helpers/vendor_admin_woo_helper.php";
-            include_once plugin_dir_path(__FILE__) . "controllers/helpers/vendor_admin_wcfm_helper.php";
-            include_once plugin_dir_path(__FILE__) . "controllers/helpers/vendor_admin_dokan_helper.php";
+            include_once plugin_dir_path(__FILE__) . "controllers/flutter-order.php";
+            include_once plugin_dir_path(__FILE__) . "controllers/flutter-multi-vendor.php";
+            include_once plugin_dir_path(__FILE__) . "controllers/flutter-vendor.php";
+            include_once plugin_dir_path(__FILE__) . "controllers/helpers/delivery-wcfm-helper.php";
+            include_once plugin_dir_path(__FILE__) . "controllers/helpers/delivery-wcfm-helper.php";
+            include_once plugin_dir_path(__FILE__) . "controllers/helpers/vendor-admin-woo-helper.php";
+            include_once plugin_dir_path(__FILE__) . "controllers/helpers/vendor-admin-wcfm-helper.php";
+            include_once plugin_dir_path(__FILE__) . "controllers/helpers/vendor-admin-dokan-helper.php";
         }
 
         $order = filter_has_var(INPUT_GET, 'code') && strlen(filter_input(INPUT_GET, 'code')) > 0 ? true : false;
@@ -58,7 +58,7 @@ class MstoreCheckOut
             add_filter('woocommerce_is_checkout', '__return_true');
         }
 
-        include_once plugin_dir_path(__FILE__) . "controllers/mstore_home.php";
+        include_once plugin_dir_path(__FILE__) . "controllers/mstore-home.php";
 
         add_action('wp_print_scripts', array($this, 'handle_received_order_page'));
 
@@ -311,7 +311,7 @@ function registerJsonApiController($aControllers)
 
 function setMstoreUserControllerPath()
 {
-    return plugin_dir_path(__FILE__) . '/controllers/mstore_user.php';
+    return plugin_dir_path(__FILE__) . '/controllers/mstore-user.php';
 }
 
 function json_apiCheckAuthCookie()

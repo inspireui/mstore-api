@@ -1,5 +1,5 @@
 <?php
-require_once(__DIR__ . '/flutter_base.php');
+require_once(__DIR__ . '/flutter-base.php');
 
 class FlutterUserController extends FlutterBaseController
 {
