@@ -956,7 +956,6 @@ class FlutterUserController extends FlutterBaseController
 
         if (isset($params->avatar)) {
             $count = 1;
-            require_once(ABSPATH . '/wp-load.php');
             require_once(ABSPATH . 'wp-admin' . '/includes/file.php');
             require_once(ABSPATH . 'wp-admin' . '/includes/image.php');
             $imgdata = $params->avatar;
