@@ -198,7 +198,7 @@ class FlutterTeraWallet extends FlutterBaseController
             wp_set_current_user($user_id);
             $_POST['woo_wallet_transfer_user_id'] = $user->id;
             $_POST['woo_wallet_transfer_amount'] = $params['amount'];
-            $_POST['woo_wallet_transfer_note'] = $params['note'];
+            $_POST['woo_wallet_transfer_note'] = sanitize_text_field($params['note']);
             $_POST['woo_wallet_transfer'] = wp_create_nonce('woo_wallet_transfer');
 
 

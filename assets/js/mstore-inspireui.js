@@ -1,15 +1,17 @@
-jQuery( document ).ready( function($) {
-    $(document).on( 'click', '.mstore-delete-json-file', function() {
+jQuery(document).ready(function ($) {
+    $(document).on('click', '.mstore-delete-json-file', function () {
         var id = $(this).data('id');
+        var nonce = $(this).data('nonce');
         $.ajax({
             type: 'post',
             url: MyAjax.ajaxurl,
             data: {
                 action: 'mstore_delete_json_file',
-                id: id
+                id: id,
+                nonce: nonce
             },
-            success: function( result ) {
-                if( result == 'success' ) {
+            success: function (result) {
+                if (result == 'success') {
                     location.reload();
                 }
             }
@@ -17,7 +19,7 @@ jQuery( document ).ready( function($) {
         return false;
     })
 
-    $(document).on( 'blur', '.mstore-update-limit-product', function() {
+    $(document).on('blur', '.mstore-update-limit-product', function () {
         var limit = $(this).val();
         $.ajax({
             type: 'post',
@@ -26,15 +28,15 @@ jQuery( document ).ready( function($) {
                 action: 'mstore_update_limit_product',
                 limit: limit
             },
-            success: function( result ) {
-                if( result == 'success' ) {
+            success: function (result) {
+                if (result == 'success') {
                 }
             }
         })
         return false;
     })
 
-    $(document).on( 'blur', '.mstore-update-firebase-server-key', function() {
+    $(document).on('blur', '.mstore-update-firebase-server-key', function () {
         var serverKey = $(this).val();
         $.ajax({
             type: 'post',
@@ -43,15 +45,15 @@ jQuery( document ).ready( function($) {
                 action: 'mstore_update_firebase_server_key',
                 serverKey: serverKey
             },
-            success: function( result ) {
-                if( result == 'success' ) {
+            success: function (result) {
+                if (result == 'success') {
                 }
             }
         })
         return false;
     })
 
-    $(document).on( 'blur', '.mstore-update-new-order-title', function() {
+    $(document).on('blur', '.mstore-update-new-order-title', function () {
         var title = $(this).val();
         $.ajax({
             type: 'post',
@@ -60,15 +62,15 @@ jQuery( document ).ready( function($) {
                 action: 'mstore_update_new_order_title',
                 title: title
             },
-            success: function( result ) {
-                if( result == 'success' ) {
+            success: function (result) {
+                if (result == 'success') {
                 }
             }
         })
         return false;
     })
 
-    $(document).on( 'blur', '.mstore-update-new-order-message', function() {
+    $(document).on('blur', '.mstore-update-new-order-message', function () {
         var message = $(this).val();
         $.ajax({
             type: 'post',
@@ -77,15 +79,15 @@ jQuery( document ).ready( function($) {
                 action: 'mstore_update_new_order_message',
                 message: message
             },
-            success: function( result ) {
-                if( result == 'success' ) {
+            success: function (result) {
+                if (result == 'success') {
                 }
             }
         })
         return false;
     })
 
-    $(document).on( 'blur', '.mstore-update-status-order-title', function() {
+    $(document).on('blur', '.mstore-update-status-order-title', function () {
         var title = $(this).val();
         $.ajax({
             type: 'post',
@@ -94,15 +96,15 @@ jQuery( document ).ready( function($) {
                 action: 'mstore_update_status_order_title',
                 title: title
             },
-            success: function( result ) {
-                if( result == 'success' ) {
+            success: function (result) {
+                if (result == 'success') {
                 }
             }
         })
         return false;
     })
 
-    $(document).on( 'blur', '.mstore-update-status-order-message', function() {
+    $(document).on('blur', '.mstore-update-status-order-message', function () {
         var message = $(this).val();
         $.ajax({
             type: 'post',
@@ -111,8 +113,8 @@ jQuery( document ).ready( function($) {
                 action: 'mstore_update_status_order_message',
                 message: message
             },
-            success: function( result ) {
-                if( result == 'success' ) {
+            success: function (result) {
+                if (result == 'success') {
                 }
             }
         })
