@@ -144,18 +144,6 @@ class VendorAdminDokanHelper
 
         $item = $wpdb->get_results($sql);
 
-        // $terms = array(
-        //     'post_type' => 'product',
-        //     'posts_per_page' => absint($limit),
-        //     'paged'=>absint($page),
-        //     'post_author'=>$vendor_id
-        // );
-        // // Added search product feature
-        // if (isset($request['search']))
-        // {
-        //     $terms['s'] = $request['search'];
-        // }
-        // $loop = new WP_Query( $terms );
         $products_arr = array();
         foreach ($item as $pro) {
             $product = wc_get_product($pro->ID);
@@ -744,14 +732,7 @@ class VendorAdminDokanHelper
                     $product->set_sku(wc_clean($request['sku']));
                 }
 
-                // Catalog Visibility.
-                //   if ( isset( $request['catalog_visibility'] ) ) {
-                // 	$product->set_catalog_visibility( $request['catalog_visibility'] );
-                //   }
-                // Check for featured/gallery images, upload it and set it.
-                //   if ( isset( $request['images'] ) ) {
-                // 	$product = $this->set_product_images( $product, $request['images'] );
-                //   }
+        
                 // Sales and prices.
                 if (in_array($product->get_type(), array(
                     'variable',
@@ -1081,14 +1062,6 @@ class VendorAdminDokanHelper
                 $product->set_sku(wc_clean($request['sku']));
             }
 
-            // Catalog Visibility.
-            //   if ( isset( $request['catalog_visibility'] ) ) {
-            // 	$product->set_catalog_visibility( $request['catalog_visibility'] );
-            //   }
-            // Check for featured/gallery images, upload it and set it.
-            //   if ( isset( $request['images'] ) ) {
-            // 	$product = $this->set_product_images( $product, $request['images'] );
-            //   }
             // Sales and prices.
             $product->set_status($request['status']);
 

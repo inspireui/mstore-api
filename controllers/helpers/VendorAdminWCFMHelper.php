@@ -269,14 +269,6 @@ class VendorAdminWCFMHelper
             $vendor_data["list_banner_type"] = $data["list_banner_type"];
         }
 
-        // $vendor_data['gravatar'] = $request[''];
-        // $vendor_data['banner_type'] = $request[''];
-        // $vendor_data['banner'] = $request[''];
-        // $vendor_data['banner_slider'] = $request[''];
-        // $vendor_data['mobile_banner'] = $request[''];
-        // $vendor_data['list_banner_type'] = $request[''];
-        // $vendor_data['list_banner'] = $request[''];
-        // $vendor_data['list_banner_video'] = $request[''];
         $vendor_data["shop_description"] = $data["shop_description"];
         $vendor_data["_store_description"] = $data["shop_description"];
         update_user_meta($user_id, '_store_description', $data["shop_description"]);
@@ -335,18 +327,6 @@ class VendorAdminWCFMHelper
 
         $item = $wpdb->get_results($sql);
 
-        // $terms = array(
-        //     'post_type' => 'product',
-        //     'posts_per_page' => absint($limit),
-        //     'paged'=>absint($page),
-        //     'post_author'=>$vendor_id
-        // );
-        // // Added search product feature
-        // if (isset($request['search']))
-        // {
-        //     $terms['s'] = $request['search'];
-        // }
-        // $loop = new WP_Query( $terms );
         $products_arr = [];
         foreach ($item as $pro) {
             $product = wc_get_product($pro->ID);
@@ -446,22 +426,6 @@ class VendorAdminWCFMHelper
                         }
                     }
 
-                    // foreach ($p_varation->get_attributes() as $attribute){
-                    //     $dataVariation['attributes'][]=  $attribute->get_data();
-                    //     // $dataVariation['attributes'][$attribute['name']] =$attribute['value'];
-                    //     // $post_type_obj = get_post_type_object( 'ice_cream' );
-                    //     // echo $post_type_obj->labels->singular_name;
-                    // }
-                    // $tmpData = array();
-                    //  $slugs = array();
-                    // foreach($dataVariation['attributes'] as $key => $value){
-                    //     $post_type_obj = get_post_type_object( $value );
-                    //     $slugs[$key] =  $post_type_obj->labels->singular_name;
-                    //     $slugs[$key] = urldecode($value);
-                    // }
-                    // $dataVariation['attributes'] =$attributes;
-                    //$dataVariation['slugs'] = $slugs;
-                    //  $dataVariation['attributes'] = $tmpData;
                     $p["variable_products"][] = $dataVariation;
                 }
             }
@@ -850,13 +814,6 @@ class VendorAdminWCFMHelper
             }
         }
 
-        //$reviews_vendor_filter = "";
-        // if( wcfm_is_vendor() && $vendor_id ) {
-        // 		$reviews_vendor_filter = " AND `vendor_id` = " . $vendor_id;
-        // 	}  elseif ( ! empty( $request['reviews_vendor'] ) ) {
-        // 		$reviews_vendor = sanitize_text_field( $request['reviews_vendor'] );
-        // 		$reviews_vendor_filter = " AND `vendor_id` = {$reviews_vendor}";
-        // 	}
         $reviews_vendor_filter = " AND `vendor_id` = " . $vendor_id;
         $sql = "SELECT COUNT(ID) from {$wpdb->prefix}wcfm_marketplace_reviews";
         $sql .= " WHERE 1=1";
@@ -1992,14 +1949,6 @@ class VendorAdminWCFMHelper
                     $product->set_sku(wc_clean($request["sku"]));
                 }
 
-                // Catalog Visibility.
-                //   if ( isset( $request['catalog_visibility'] ) ) {
-                // 	$product->set_catalog_visibility( $request['catalog_visibility'] );
-                //   }
-                // Check for featured/gallery images, upload it and set it.
-                //   if ( isset( $request['images'] ) ) {
-                // 	$product = $this->set_product_images( $product, $request['images'] );
-                //   }
                 // Sales and prices.
                 if (
                     in_array(
@@ -2393,14 +2342,6 @@ class VendorAdminWCFMHelper
                 $product->set_sku(wc_clean($request["sku"]));
             }
 
-            // Catalog Visibility.
-            //   if ( isset( $request['catalog_visibility'] ) ) {
-            // 	$product->set_catalog_visibility( $request['catalog_visibility'] );
-            //   }
-            // Check for featured/gallery images, upload it and set it.
-            //   if ( isset( $request['images'] ) ) {
-            // 	$product = $this->set_product_images( $product, $request['images'] );
-            //   }
             // Sales and prices.
             $product->set_status($request["status"]);
 
@@ -2542,16 +2483,7 @@ class VendorAdminWCFMHelper
             if (is_wp_error($product)) {
                 return $this->sendError("request_failed", "Bad data", 400);
             }
-            // $attribute_id   = $attribute->get_id(); // Get attribute Id
-            // $attribute_data = wc_get_attribute( $attribute_id ); // Get attribute data from the attribute Id
-            // // Update the product attribute with a new taxonomy label name
-            // wc_update_attribute( $attribute_id, array(
-            //     'name'         => 'New label', // <== == == Here set the taxonomy label name
-            //     'slug'         => $attribute_data->slug,
-            //     'type'         => $attribute_data->type,
-            //     'order_by'     => $attribute_data->order_by,
-            //     'has_archives' => $attribute_data->has_archives,
-            // ) );
+
             $attribute_json = json_decode($request["productAttributes"], true);
             $pro_attributes = [];
             foreach ($attribute_json as $key => $value) {
@@ -2776,158 +2708,6 @@ class VendorAdminWCFMHelper
         );
     }
 
-    // public function vendor_admin_create_coupon($request, $user_id)
-    // {
-    //     global $WCFM, $wpdb;
-    //     $title = $request['title'];
-    //     if (isset($title) && !empty($title))
-    //     {
-    //         $is_update = false;
-    //         $is_publish = false;
-    //         $current_user_id = apply_filters('wcfm_current_vendor_id', $user_id);
-    //     }
-    //     if (isset($request['status']) && ($request['status'] == 'draft'))
-    //     {
-    //         $coupon_status = 'draft';
-    //     }
-    //     else
-    //     {
-    //         if (user_can($user_id, 'publish_shop_coupons') && apply_filters('wcfm_is_allow_publish_coupons', true)) $coupon_status = 'publish';
-    //         else $coupon_status = 'pending';
-    //     }
-    //     // Creating new coupon
-    //     $new_coupon = apply_filters('wcfm_coupon_content_before_save', array(
-    //         'post_title' => wc_clean($title) ,
-    //         'post_status' => $coupon_status,
-    //         'post_type' => 'shop_coupon',
-    //         'post_excerpt' => apply_filters('wcfm_editor_content_before_save', $request['description']) ,
-    //         'post_author' => $current_user_id,
-    //         'post_name' => sanitize_title($title)
-    //     ) , $request);
-    //     if (isset($request['coupon_id']) && $request['coupon_id'] == 0)
-    //     {
-    //         if ($coupon_status != 'draft')
-    //         {
-    //             $is_publish = true;
-    //         }
-    //         $new_coupon_id = wp_insert_post($new_coupon, true);
-    //         // Coupon Real Author
-    //         update_post_meta($new_coupon_id, '_wcfm_coupon_author', $user_id);
-    //     }
-    //     else
-    //     { // For Update
-    //         $is_update = true;
-    //         $new_coupon['ID'] = $request['coupon_id'];
-    //         $user = get_userdata($user_id);
-    //         $isSeller = in_array("seller", $user->roles) || in_array("wcfm_vendor", $user->roles);
-    //         if (wcfm_is_marketplace() && (!function_exists('wcfmmp_get_store_url') || $isSeller)) unset($new_coupon['post_author']);
-    //         unset($new_coupon['post_name']);
-    //         if (($coupon_status != 'draft') && (get_post_status($new_coupon['ID']) == 'publish'))
-    //         {
-    //             if (apply_filters('wcfm_is_allow_publish_live_coupons', true))
-    //             {
-    //                 $new_coupon['post_status'] = 'publish';
-    //             }
-    //             else
-    //             {
-    //                 $new_coupon['post_status'] = 'pending';
-    //             }
-    //         }
-    //         else if ((get_post_status($new_coupon['ID']) == 'draft') && ($coupon_status != 'draft'))
-    //         {
-    //             $is_publish = true;
-    //         }
-    //         $new_coupon_id = wp_update_post($new_coupon, true);
-    //         if (!is_wp_error($new_coupon_id))
-    //         {
-    //             // For Update
-    //             if ($is_update) $new_coupon_id = $request['coupon_id'];
-    //             // Check for dupe coupons
-    //             $coupon_code = wc_format_coupon_code(wc_clean($request['title']));
-    //             $id_from_code = wc_get_coupon_id_by_code($coupon_code, $new_coupon_id);
-    //             if ($id_from_code)
-    //             {
-    //                 if (!$is_update)
-    //                 {
-    //                     //echo '{"status": false, "message": "' . __( 'Coupon code already exists - customers will use the latest coupon with this code.', 'woocommerce' ) . '", "id": "' . $new_coupon_id . '"}';
-    //                     $has_error = true;
-    //                 }
-    //             }
-    //             $wc_coupon = new WC_Coupon($new_coupon_id);
-    //             $wc_coupon->set_props(apply_filters('wcfm_coupon_data_factory', array(
-    //                 'code' => wc_clean($request['title']) ,
-    //                 'discount_type' => wc_clean($request['discount_type']) ,
-    //                 'amount' => wc_format_decimal($request['coupon_amount']) ,
-    //                 'date_expires' => wcfm_standard_date(wc_clean($request['expiry_date'])) ,
-    //                 'free_shipping' => isset($request['free_shipping']) ,
-    //             ) , $new_coupon_id, $request));
-    //             if (wcfm_is_marketplace() && !WCFM_Dependencies::wcfmu_plugin_active_check() && (wcfm_is_vendor() || (function_exists('wcfmmp_get_store_url') && !wcfm_is_vendor())))
-    //             {
-    //                 $products_objs = $WCFM
-    //                     ->wcfm_vendor_support
-    //                     ->wcfm_get_products_by_vendor($current_user_id, 'publish');
-    //                 $product_ids = array(
-    //                     0 => - 1
-    //                 );
-    //                 if (!empty($products_objs))
-    //                 {
-    //                     $product_ids = array();
-    //                     foreach ($products_objs as $products_obj)
-    //                     {
-    //                         $product_ids[] = FlutterValidator::escapeAttribute($products_obj->ID);
-    //                     }
-    //                 }
-    //                 update_post_meta($new_coupon_id, '_wcfm_vendor_coupon_all_product', 'yes');
-    //                 $wc_coupon->set_props(array(
-    //                     'product_ids' => $product_ids
-    //                 ));
-    //             }
-    //             $wc_coupon->save();
-    //             // For Dokan Pro Only
-    //             if (WCFM_Dependencies::dokanpro_plugin_active_check() || function_exists('wcfmmp_get_store_url'))
-    //             {
-    //                 if (isset($request['show_on_store']))
-    //                 {
-    //                     update_post_meta($new_coupon_id, 'show_on_store', 'yes');
-    //                     // Smart Coupon Support
-    //                     if (apply_filters('wcfm_is_allow_added_coupon_as_global_coupon', true, $new_coupon_id))
-    //                     {
-    //                         update_post_meta($new_coupon_id, 'sc_is_visible_storewide', 'yes');
-    //                         $global_coupons_list = get_option('sc_display_global_coupons');
-    //                         $global_coupons = (!empty($global_coupons_list)) ? explode(',', $global_coupons_list) : array();
-    //                         $global_coupons[] = $new_coupon_id;
-    //                         update_option('sc_display_global_coupons', implode(',', array_unique($global_coupons)) , 'no');
-    //                     }
-    //                 }
-    //                 else
-    //                 {
-    //                     update_post_meta($new_coupon_id, 'show_on_store', 'no');
-    //                     // Smart Coupon Support
-    //                     if (apply_filters('wcfm_is_allow_added_coupon_as_global_coupon', true, $new_coupon_id))
-    //                     {
-    //                         update_post_meta($new_coupon_id, 'sc_is_visible_storewide', 'yes');
-    //                         $global_coupons_list = get_option('sc_display_global_coupons');
-    //                         $global_coupons = (!empty($global_coupons_list)) ? explode(',', $global_coupons_list) : array();
-    //                         $key = array_search((string)$new_coupon_id, $global_coupons, true);
-    //                         if (false !== $key)
-    //                         {
-    //                             unset($global_coupons[$key]);
-    //                             update_option('sc_display_global_coupons', implode(',', array_unique($global_coupons)) , 'no');
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //             do_action( 'wcfm_coupons_manage_from_process', $new_coupon_id, $wcfm_coupon_manager_form_data );
-    //             if(!$has_error) {
-    //                 if( get_post_status( $new_coupon_id ) == 'draft' ) {
-    //                     if(!$has_error) echo '{"status": true, "message": "' . $wcfm_coupon_messages['coupon_saved'] . '", "id": "' . $new_coupon_id . '"}';
-    //                 } else {
-    //                     if(!$has_error) echo '{"status": true, "message": "' . $wcfm_coupon_messages['coupon_published'] . '", "redirect": "' . get_wcfm_coupons_manage_url($new_coupon_id) . '"}';
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
     function wcfm_update_order_delivery_boys_meta($order_id, $delivery_boys_array = array())
     {
         if (empty($delivery_boys_array)) $delivery_boys_array = wcfm_get_order_delivery_boys($order_id);

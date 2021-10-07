@@ -241,23 +241,6 @@ class FlutterVendorAdmin extends FlutterBaseController
                 }
             ),
         ));
-
-
-        // register_rest_route($this->namespace, '/coupons', array(
-        //     array(
-        //         'methods' => WP_REST_Server::CREATE,
-        //         'callback' => array(
-        //             $this,
-        //             'vendor_admin_create_coupon'
-        //         ) ,
-        //         'permission_callback' => function ()
-        //         {
-        //             return parent::checkApiPermission();
-        //         }
-        //     ) ,
-        // ));
-
-        /* --------------------------- */
     }
 
     public function get_delivery_users($request)
