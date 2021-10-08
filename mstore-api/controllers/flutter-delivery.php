@@ -248,6 +248,7 @@ class FlutterDelivery extends FlutterBaseController
 
     protected function authorize_user($token)
     {
+        $token = FlutterValidator::cleanText($token);
         if (isset($token)) {
             $cookie = urldecode(base64_decode($token));
         } else {
