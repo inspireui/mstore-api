@@ -48,6 +48,7 @@ Faster- Smoother- Closer.
   * Fix Authenticated Arbitrary File Deletion Vulnerability
   * Update to compatible with the latest WordPress 5.8
   * Release the Postman Collection - https://www.getpostman.com/collections/8f9c088b0e5b82b90400
+  * Rename files to upgrade Naming Convention.
   
 = 3.4.4 =
   * Support Tera Wallet

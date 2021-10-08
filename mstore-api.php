@@ -229,7 +229,7 @@ class MstoreCheckOut
 $mstoreCheckOut = new MstoreCheckOut();
 
 // use JO\Module\Templater\Templater;
-include plugin_dir_path(__FILE__) . "templates/Templater.php";
+include plugin_dir_path(__FILE__) . "templates/class-templater.php";
 
 add_action('plugins_loaded', 'load_mstore_templater');
 function load_mstore_templater()
