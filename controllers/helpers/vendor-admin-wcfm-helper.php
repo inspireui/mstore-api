@@ -172,7 +172,7 @@ class VendorAdminWCFMHelper
 
     public function update_vendor_profile($request, $user_id)
     {
-        $data = json_decode($request, true);
+        $data = json_decode( FlutterValidator::cleanText($request), true);
         $vendor_data = get_user_meta($user_id, "wcfmmp_profile_settings", true);
         if (is_string($vendor_data)) {
             $vendor_data = [];
@@ -305,8 +305,15 @@ class VendorAdminWCFMHelper
     public function flutter_get_products($request, $user_id)
     {
         global $woocommerce, $wpdb;
-        $page = isset($request["page"]) ? $request["page"] : 1;
-        $limit = isset($request["per_page"]) ? $request["per_page"] : 10;
+        $request = FlutterValidator::cleanText($request);
+        $page = isset($request["page"]) ? FlutterValidator::cleanText($request["page"])  : 1;
+        $limit = isset($request["per_page"]) ? FlutterValidator::cleanText($request["per_page"]) : 10;
+        if(!is_numeric($page)){
+            $page = 1;
+        }
+        if(!is_numeric($limit)){
+            $limit = 10;
+        }
         if ($page >= 1) {
             $page = ($page - 1) * $limit;
         }
@@ -452,11 +459,17 @@ class VendorAdminWCFMHelper
             global $wpdb;
             $page = 1;
             $per_page = 10;
-            if (isset($request["page"])) {
-                $page = $request["page"];
+            if (isset($request['page'])) {
+                $page = FlutterValidator::cleanText($request['page']);
+                if(!is_numeric($page)){
+                    $page = 1;
+                }
             }
-            if (isset($request["per_page"])) {
-                $per_page = $request["per_page"];
+            if (isset($request['per_page'])) {
+                $per_page = FlutterValidator::cleanText($request['per_page']);
+                if(!is_numeric($per_page)){
+                    $per_page = 10;
+                }
             }
             $page = ($page - 1) * $per_page;
             $table_name = $wpdb->prefix . "wcfm_marketplace_orders";
@@ -701,6 +714,7 @@ class VendorAdminWCFMHelper
 
     public function flutter_update_order_status($request, $user_id)
     {
+        $request = FlutterValidator::cleanText($request);
         global $WCFM;
 
         $order_id = absint($request["order_id"]);
@@ -788,6 +802,7 @@ class VendorAdminWCFMHelper
 
     public function flutter_get_reviews($request, $user_id)
     {
+        $request = FlutterValidator::cleanText($request);
         global $WCFM, $wpdb, $WCFMmp;
 
         $vendor_id = $user_id;
@@ -846,6 +861,7 @@ class VendorAdminWCFMHelper
     // Update review status
     function flutter_update_review($request)
     {
+        $request = FlutterValidator::cleanText($request);
         global $WCFM, $WCFMmp, $wpdb;
 
         $reviewid = absint($request["id"]);
@@ -1844,6 +1860,7 @@ class VendorAdminWCFMHelper
     /// CREATE ///
     public function vendor_admin_create_product($request, $user_id)
     {
+        $request = FlutterValidator::cleanText($request);
         $user = get_userdata($user_id);
         $isSeller =
             in_array("seller", $user->roles) ||
@@ -2246,6 +2263,7 @@ class VendorAdminWCFMHelper
     /// UPDATE ///
     public function vendor_admin_update_product($request, $user_id)
     {
+        $request = FlutterValidator::cleanText($request);
         $id = isset($request["id"]) ? absint($request["id"]) : 0;
         if (isset($request["id"])) {
             $product = $this->get_product_item($id);
@@ -2681,6 +2699,7 @@ class VendorAdminWCFMHelper
     /// DELETE ///
     public function vendor_admin_delete_product($request, $user_id)
     {
+        $request = FlutterValidator::cleanText($request);
         /// Validate product ID
         $id = isset($request["id"]) ? absint($request["id"]) : 0;
         if (isset($request["id"])) {
@@ -2751,6 +2770,8 @@ class VendorAdminWCFMHelper
 
     public function wcfmd_delivery_boy_assigned($request, $vendor_id)
     {
+        $request = FlutterValidator::cleanText($request);
+
         global $WCFM, $WCFMmp, $WCFMu, $WCFMd, $wpdb;
 
         $order_id = $request["wcfm_tracking_order_id"];
@@ -3053,6 +3074,7 @@ class VendorAdminWCFMHelper
 
     public function get_delivery_users($name)
     {
+        $request = FlutterValidator::cleanText($name);
         global $wpdb;
         $results = [];
         $table_name = $wpdb->prefix . "users";

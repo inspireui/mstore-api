@@ -123,9 +123,16 @@ class VendorAdminWooHelper
     /// GET FUNCTIONS
     public function flutter_get_products($request, $user_id)
     {
-
+        $request = FlutterValidator::cleanText($request);
         $page = isset($request["page"]) ? $request["page"] : 1;
         $limit = isset($request["per_page"]) ? $request["per_page"] : 10;
+        if(!is_numeric($page)){
+            $page = 1;
+        }
+        if(!is_numeric($limit)){
+            $limit = 10;
+        }
+
         $terms = array(
             'post_type' => 'product',
             'posts_per_page' => $limit,
@@ -242,6 +249,7 @@ class VendorAdminWooHelper
 
     public function flutter_get_orders($request, $user_id)
     {
+        $request = FlutterValidator::cleanText($request);
         global $wpdb;
         $api = new WC_REST_Orders_V1_Controller();
         $results = [];
@@ -249,10 +257,16 @@ class VendorAdminWooHelper
         $per_page = 10;
 
         if (isset($request['page'])) {
-            $page = $request['page'];
+            $page = FlutterValidator::cleanText($request['page']);
+            if(!is_numeric($page)){
+                $page = 1;
+            }
         }
         if (isset($request['per_page'])) {
-            $per_page = $request['per_page'];
+            $per_page = FlutterValidator::cleanText($request['per_page']);
+            if(!is_numeric($per_page)){
+                $per_page = 10;
+            }
         }
         $page = ($page - 1) * $per_page;
 
@@ -345,6 +359,7 @@ class VendorAdminWooHelper
 
     public function flutter_update_order_status($request, $user_id)
     {
+        $request = FlutterValidator::cleanText($request);
 
         $order_id = absint($request['order_id']);
         $order_status = $request['order_status'];
@@ -635,6 +650,8 @@ class VendorAdminWooHelper
 /// CREATE ///
     public function vendor_admin_create_product($request, $user_id)
     {
+        $request = FlutterValidator::cleanText($request);
+        
         $user = get_userdata($user_id);
         $isSeller = in_array("shop_staff", $user->roles) || in_array("shop_manager", $user->roles) || in_array("seller", $user->roles) || in_array("editor", $user->roles) || in_array("administrator", $user->roles);
 
@@ -981,6 +998,8 @@ class VendorAdminWooHelper
 /// UPDATE ///
     public function vendor_admin_update_product($request, $user_id)
     {
+        $request = FlutterValidator::cleanText($request);
+
         $id = isset($request['id']) ? absint($request['id']) : 0;
         if (isset($request['id'])) {
             $product = $this->get_product_item($id);
@@ -1321,6 +1340,8 @@ class VendorAdminWooHelper
 /// DELETE ///
     public function vendor_admin_delete_product($request, $user_id)
     {
+        $request = FlutterValidator::cleanText($request);
+
         $user = get_userdata($user_id);
         $isSeller = in_array("shop_staff", $user->roles) || in_array("shop_manager", $user->roles) || in_array("seller", $user->roles) || in_array("editor", $user->roles) || in_array("administrator", $user->roles);
         if (!$isSeller) {

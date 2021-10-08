@@ -124,8 +124,14 @@ class VendorAdminDokanHelper
     public function flutter_get_products($request, $user_id)
     {
         global $woocommerce, $wpdb;
-        $page = isset($request["page"]) ? $request["page"] : 1;
-        $limit = isset($request["per_page"]) ? $request["per_page"] : 10;
+        $page = isset($request["page"]) ? FlutterValidator::cleanText($request["page"])  : 1;
+        $limit = isset($request["per_page"]) ? FlutterValidator::cleanText($request["per_page"]) : 10;
+        if(!is_numeric($page)){
+            $page = 1;
+        }
+        if(!is_numeric($limit)){
+            $limit = 10;
+        }
         if ($page >= 1) {
             $page = ($page - 1) * $limit;
         }
@@ -136,7 +142,7 @@ class VendorAdminDokanHelper
         $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_author` = $vendor_id AND `$table_name`.`post_type` = 'product'";
 
         if (isset($request['search'])) {
-            $search = $request['search'];
+            $search = FlutterValidator::cleanText($request['search']);
             $search = "%$search%";
             $sql .= " AND (`$table_name`.`post_content` LIKE '$search' OR `$table_name`.`post_title` LIKE '$search' OR `$table_name`.`post_excerpt` LIKE '$search')";
         }
@@ -241,12 +247,17 @@ class VendorAdminDokanHelper
         $api = new WC_REST_Orders_V1_Controller();
         $page = 1;
         $per_page = 10;
-
         if (isset($request['page'])) {
-            $page = $request['page'];
+            $page = FlutterValidator::cleanText($request['page']);
+            if(!is_numeric($page)){
+                $page = 1;
+            }
         }
         if (isset($request['per_page'])) {
-            $per_page = $request['per_page'];
+            $per_page = FlutterValidator::cleanText($request['per_page']);
+            if(!is_numeric($per_page)){
+                $per_page = 10;
+            }
         }
         $page = ($page - 1) * $per_page;
 
@@ -257,11 +268,11 @@ class VendorAdminDokanHelper
             $sql = "SELECT * FROM " . $table_name . " WHERE seller_id = $user_id";
 
             if (isset($request['status'])) {
-                $status = $request['status'];
+                $status = FlutterValidator::cleanText($request['status']);
                 $sql .= " AND order_status = 'wc-$status'";
             }
             if (isset($request['search'])) {
-                $search = $request['search'];
+                $search = FlutterValidator::cleanText($request['search']);
                 $sql .= " AND order_id LIKE '$search%'";
             }
             $sql .= " GROUP BY $table_name.`order_id` ORDER BY $table_name.`order_id` DESC LIMIT $per_page OFFSET $page";
@@ -344,9 +355,10 @@ class VendorAdminDokanHelper
     {
         global $WCFM;
 
-        $order_id = absint($request['order_id']);
-        $order_status = $request['order_status'];
-        if (!dokan_is_seller_has_order($user_id, $order_id)) {
+        $order_id = FlutterValidator::cleanText($request['order_id']);
+        $order_status = FlutterValidator::cleanText($request['order_status']);
+        
+        if (!dokan_is_seller_has_order($user_id, $order_id) || !is_numeric($order_id)) {
             return new WP_REST_Response(array(
                 'status' => 'success',
                 'response' => []
@@ -613,8 +625,14 @@ class VendorAdminDokanHelper
         global $WCFM, $wpdb;
         $wcfm_messages;
         if (isset($request['per_page']) && $request['per_page']) {
-            $limit = absint($request['per_page']);
-            $offset = absint($request['page']);
+            $limit = FlutterValidator::cleanText($request['per_page']);
+            $offset = FlutterValidator::cleanText($request['page']);
+            if(!is_numeric($offset)){
+                $offset = 1;
+            }
+            if(!is_numeric($limit)){
+                $limit = 10;
+            }
             $offset = ($offset - 1) * $limit;
             $message_to = apply_filters('wcfm_message_author', $user_id);
 
@@ -646,30 +664,51 @@ class VendorAdminDokanHelper
         $isSeller = in_array("seller", $user->roles) || in_array("wcfm_vendor", $user->roles);
 
         $requestStatus = "draft";
-        if ($request["status"] != null) {
-            $requestStatus = $request["status"];
+        if (isset($request["status"])) {
+            $requestStatus = FlutterValidator::cleanText($request["status"]);
         }
+
+        $name = FlutterValidator::cleanText($request["name"]);
+        $description = FlutterValidator::cleanText($request["description"]);
+        $short_description = FlutterValidator::cleanText($request["short_description"]);
+        $featured_image = FlutterValidator::cleanText($request['featuredImage']);
+        $product_images = FlutterValidator::cleanText($request['images']);
+        $type = FlutterValidator::cleanText($request['type']);
+        $tags = FlutterValidator::cleanText($request['tags']);
+        $featured = FlutterValidator::cleanText($request['featured']);
+        $regular_price = FlutterValidator::cleanText($request['regular_price']);
+        $sale_price = FlutterValidator::cleanText($request['sale_price']);
+        $date_on_sale_from = FlutterValidator::cleanText($request['date_on_sale_from']);
+        $date_on_sale_from_gmt = FlutterValidator::cleanText($request['date_on_sale_from_gmt']);
+        $date_on_sale_to = FlutterValidator::cleanText($request['date_on_sale_to']);
+        $date_on_sale_to_gmt = FlutterValidator::cleanText($request['date_on_sale_to_gmt']);
+        $in_stock = FlutterValidator::cleanText($request['in_stock']);
+        $stock_quantity = FlutterValidator::cleanText($request['stock_quantity']);
+        $manage_stock  = FlutterValidator::cleanText($request['manage_stock']);
+        $backorders = FlutterValidator::cleanText($request['backorders']);
+        $categories = FlutterValidator::cleanText($request['categories']);
+        $productAttributes = FlutterValidator::cleanText($request['productAttributes']);
+        $variations = FlutterValidator::cleanText($request['variations']);      
+        $inventory_delta = FlutterValidator::cleanText($request['inventory_delta']);      
+
+        $count = 1;
 
         if ($isSeller) {
             $args = array(
                 'post_author' => $user_id,
-                'post_content' => $request["description"],
+                'post_content' => $description,
                 'post_status' => $requestStatus, // (Draft | Pending | Publish)
-                'post_title' => $request["name"],
+                'post_title' => $name,
                 'post_parent' => '',
                 'post_type' => "product"
             );
             // Create a simple WooCommerce product
             $post_id = wp_insert_post($args);
             $product = wc_get_product($post_id);
-
-            $featured_image = $request['featuredImage'];
-            $product_images = $request['images'];
-            $count = 1;
-
-            if ($product->get_type() != $request['type']) {
+           
+            if ($product->get_type() != $type) {
                 // Get the correct product classname from the new product type
-                $product_classname = WC_Product_Factory::get_product_classname($product->get_id(), $request['type']);
+                $product_classname = WC_Product_Factory::get_product_classname($product->get_id(), $type);
 
                 // Get the new product object from the correct classname
                 $product = new $product_classname($product->get_id());
@@ -677,7 +716,7 @@ class VendorAdminDokanHelper
 
             }
 
-            $tags = $request['tags'];
+            
             if (isset($featured_image)) {
                 if (!empty($featured_image)) {
                     if ($this->http_check($featured_image)) {
@@ -720,12 +759,12 @@ class VendorAdminDokanHelper
 
             /// Set attributes to product
             if (isset($product) && !is_wp_error($product)) {
-                if (isset($request['name'])) {
-                    $product->set_name(wp_filter_post_kses($request['name']));
+                if (isset($name)) {
+                    $product->set_name(wp_filter_post_kses($name));
                 }
                 // Featured Product.
-                if (isset($request['featured'])) {
-                    $product->set_featured($request['featured']);
+                if (isset($featured)) {
+                    $product->set_featured(FlutterValidator::cleanText($featured));
                 }
                 // SKU.
                 if (isset($request['sku'])) {
@@ -745,41 +784,41 @@ class VendorAdminDokanHelper
                     $product->set_price('');
                 } else {
                     // Regular Price.
-                    if (isset($request['regular_price'])) {
-                        $product->set_regular_price($request['regular_price']);
+                    if (isset($regular_price)) {
+                        $product->set_regular_price($regular_price);
                     }
                     // Sale Price.
-                    if (isset($request['sale_price']) && !empty($request['sale_price'])) {
-                        $product->set_sale_price($request['sale_price']);
+                    if (isset($sale_price) && !empty($sale_price)) {
+                        $product->set_sale_price($sale_price);
                     }
-                    if (isset($request['date_on_sale_from'])) {
-                        $product->set_date_on_sale_from($request['date_on_sale_from']);
+                    if (isset($date_on_sale_from)) {
+                        $product->set_date_on_sale_from($date_on_sale_from);
                     }
-                    if (isset($request['date_on_sale_from_gmt'])) {
-                        $product->set_date_on_sale_from($request['date_on_sale_from_gmt'] ? strtotime($request['date_on_sale_from_gmt']) : null);
-                    }
-
-                    if (isset($request['date_on_sale_to'])) {
-                        $product->set_date_on_sale_to($request['date_on_sale_to']);
+                    if (isset($date_on_sale_from_gmt)) {
+                        $product->set_date_on_sale_from($date_on_sale_from_gmt ? strtotime($date_on_sale_from_gmt) : null);
                     }
 
-                    if (isset($request['date_on_sale_to_gmt'])) {
-                        $product->set_date_on_sale_to($request['date_on_sale_to_gmt'] ? strtotime($request['date_on_sale_to_gmt']) : null);
+                    if (isset($date_on_sale_to)) {
+                        $product->set_date_on_sale_to($date_on_sale_to);
+                    }
+
+                    if (isset($date_on_sale_to_gmt)) {
+                        $product->set_date_on_sale_to($date_on_sale_to_gmt ? strtotime($date_on_sale_to_gmt) : null);
                     }
 
                 }
 
                 // Description
-                if (isset($request['description'])) {
-                    $product->set_description(strip_tags($request['description']));
+                if (isset($description)) {
+                    $product->set_description($description));
                 }
-                if (isset($request['short_description'])) {
-                    $product->set_description(strip_tags($request['short_description']));
+                if (isset($short_description)) {
+                    $product->set_description($short_description));
                 }
 
                 // Stock status.
-                if (isset($request['in_stock'])) {
-                    $stock_status = true === $request['in_stock'] ? 'instock' : 'outofstock';
+                if (isset($in_stock) && is_bool($in_stock)) {
+                    $stock_status = true === $in_stock ? 'instock' : 'outofstock';
                 } else {
                     $stock_status = $product->get_stock_status();
                 }
@@ -787,13 +826,13 @@ class VendorAdminDokanHelper
                 // Stock data.
                 if ('yes' === get_option('woocommerce_manage_stock')) {
                     // Manage stock.
-                    if (isset($request['manage_stock'])) {
-                        $product->set_manage_stock($request['manage_stock']);
+                    if (isset($manage_stock)) {
+                        $product->set_manage_stock($manage_stock);
                     }
 
                     // Backorders.
-                    if (isset($request['backorders'])) {
-                        $product->set_backorders($request['backorders']);
+                    if (isset($backorders)) {
+                        $product->set_backorders($backorders);
                     }
 
                     if ($product->is_type('grouped')) {
@@ -813,11 +852,11 @@ class VendorAdminDokanHelper
                         }
 
                         // Stock quantity.
-                        if (isset($request['stock_quantity'])) {
-                            $product->set_stock_quantity(wc_stock_amount($request['stock_quantity']));
-                        } elseif (isset($request['inventory_delta'])) {
+                        if (isset($stock_quantity)) {
+                            $product->set_stock_quantity(wc_stock_amount($stock_quantity));
+                        } elseif (isset($inventory_delta)) {
                             $stock_quantity = wc_stock_amount($product->get_stock_quantity());
-                            $stock_quantity += wc_stock_amount($request['inventory_delta']);
+                            $stock_quantity += wc_stock_amount($inventory_delta);
                             $product->set_stock_quantity(wc_stock_amount($stock_quantity));
                         }
                     } else {
@@ -843,9 +882,9 @@ class VendorAdminDokanHelper
                 }
 
                 //Description
-                $product->set_short_description($request['short_description']);
-                $product->set_description($request['description']);
-                $attribute_json = json_decode($request['productAttributes'], true);
+                $product->set_short_description($short_description);
+                $product->set_description($description);
+                $attribute_json = json_decode($productAttributes, true);
                 $pro_attributes = array();
                 foreach ($attribute_json as $key => $value) {
                     if ($value['isActive']) {
@@ -877,7 +916,7 @@ class VendorAdminDokanHelper
 
                 if ($product->get_type() == 'variable') {
 
-                    $variations_arr = json_decode($request['variations'], true);
+                    $variations_arr = json_decode($variations, true);
                     foreach ($variations_arr as $variation) {
                         if ($variation['variation_id'] != -1) {
                             foreach ($variation['attributes'] as $key => $value) {
@@ -978,8 +1017,8 @@ class VendorAdminDokanHelper
     public function vendor_admin_update_product($request, $user_id)
     {
 
-        $id = isset($request['id']) ? absint($request['id']) : 0;
-        if (isset($request['id'])) {
+        $id = isset($request['id']) ? $request['id'] : 0;
+        if (isset($id) && is_numeric($id)) {
             $product = $this->get_product_item($id);
         } else {
             return $this->sendError("request_failed", "Invalid data", 400);
@@ -994,24 +1033,45 @@ class VendorAdminDokanHelper
             return $this->sendError("unauthorized", "You are not allow to do this", 401);
         }
 
-        if ($product->get_type() != $request['type']) {
+
+        $name = FlutterValidator::cleanText($request["name"]);
+        $description = FlutterValidator::cleanText($request["description"]);
+        $short_description = FlutterValidator::cleanText($request["short_description"]);
+        $featured_image = FlutterValidator::cleanText($request['featuredImage']);
+        $product_images = FlutterValidator::cleanText($request['images']);
+        $type = FlutterValidator::cleanText($request['type']);
+        $tags = FlutterValidator::cleanText($request['tags']);
+        $featured = FlutterValidator::cleanText($request['featured']);
+        $regular_price = FlutterValidator::cleanText($request['regular_price']);
+        $sale_price = FlutterValidator::cleanText($request['sale_price']);
+        $date_on_sale_from = FlutterValidator::cleanText($request['date_on_sale_from']);
+        $date_on_sale_from_gmt = FlutterValidator::cleanText($request['date_on_sale_from_gmt']);
+        $date_on_sale_to = FlutterValidator::cleanText($request['date_on_sale_to']);
+        $date_on_sale_to_gmt = FlutterValidator::cleanText($request['date_on_sale_to_gmt']);
+        $in_stock = FlutterValidator::cleanText($request['in_stock']);
+        $stock_quantity = FlutterValidator::cleanText($request['stock_quantity']);
+        $manage_stock  = FlutterValidator::cleanText($request['manage_stock']);
+        $backorders = FlutterValidator::cleanText($request['backorders']);
+        $categories = FlutterValidator::cleanText($request['categories']);
+        $productAttributes = FlutterValidator::cleanText($request['productAttributes']);
+        $variations = FlutterValidator::cleanText($request['variations']);      
+        $inventory_delta = FlutterValidator::cleanText($request['inventory_delta']);     
+        $status = FlutterValidator::cleanText($request['status']);     
+         
+        $count = 1;
+        if ($product->get_type() != $type) {
             // Get the correct product classname from the new product type
-            $product_classname = WC_Product_Factory::get_product_classname($product->get_id(), $request['type']);
+            $product_classname = WC_Product_Factory::get_product_classname($product->get_id(), $type);
 
             // Get the new product object from the correct classname
             $product = new $product_classname($product->get_id());
             $product->save();
         }
 
-        $tags = $request['tags'];
         if (isset($tags)) {
             $tags = array_filter(explode(',', $tags));
             wp_set_object_terms($product->get_id(), $tags, 'product_tag');
         }
-
-        $featured_image = $request['featuredImage'];
-        $product_images = $request['images'];
-        $count = 1;
 
         if (isset($featured_image)) {
             if (!empty($featured_image)) {
@@ -1050,12 +1110,12 @@ class VendorAdminDokanHelper
 
         /// Set attributes to product
         if (isset($product) && !is_wp_error($product)) {
-            if (isset($request['name'])) {
-                $product->set_name(wp_filter_post_kses($request['name']));
+            if (isset($name)) {
+                $product->set_name(wp_filter_post_kses($name));
             }
             // Featured Product.
-            if (isset($request['featured'])) {
-                $product->set_featured($request['featured']);
+            if (isset($featured)) {
+                $product->set_featured($featured);
             }
             // SKU.
             if (isset($request['sku'])) {
@@ -1063,7 +1123,7 @@ class VendorAdminDokanHelper
             }
 
             // Sales and prices.
-            $product->set_status($request['status']);
+            $product->set_status($status);
 
             if (in_array($product->get_type(), array(
                 'variable',
@@ -1076,42 +1136,42 @@ class VendorAdminDokanHelper
                 $product->set_price('');
             } else {
                 // Regular Price.
-                if (isset($request['regular_price'])) {
-                    $product->set_regular_price($request['regular_price']);
+                if (isset($regular_price)) {
+                    $product->set_regular_price($regular_price);
                 }
                 // Sale Price.
-                if (isset($request['sale_price']) && !empty($request['sale_price'])) {
-                    $product->set_sale_price($request['sale_price']);
+                if (isset($sale_price) && !empty($sale_price)) {
+                    $product->set_sale_price($sale_price);
                 }
-                if (isset($request['date_on_sale_from'])) {
-                    $product->set_date_on_sale_from($request['date_on_sale_from']);
+                if (isset($date_on_sale_from)) {
+                    $product->set_date_on_sale_from($date_on_sale_from);
                 }
-                if (isset($request['date_on_sale_from_gmt'])) {
-                    $product->set_date_on_sale_from($request['date_on_sale_from_gmt'] ? strtotime($request['date_on_sale_from_gmt']) : null);
-                }
-
-                if (isset($request['date_on_sale_to'])) {
-                    $product->set_date_on_sale_to($request['date_on_sale_to']);
+                if (isset($date_on_sale_from_gmt)) {
+                    $product->set_date_on_sale_from($date_on_sale_from_gmt ? strtotime($date_on_sale_from_gmt) : null);
                 }
 
-                if (isset($request['date_on_sale_to_gmt'])) {
-                    $product->set_date_on_sale_to($request['date_on_sale_to_gmt'] ? strtotime($request['date_on_sale_to_gmt']) : null);
+                if (isset($date_on_sale_to)) {
+                    $product->set_date_on_sale_to($date_on_sale_to);
+                }
+
+                if (isset($date_on_sale_to_gmt)) {
+                    $product->set_date_on_sale_to($date_on_sale_to_gmt ? strtotime($date_on_sale_to_gmt) : null);
                 }
 
             }
 
             // Description
-            if (isset($request['description'])) {
+            if (isset($description)) {
 
-                $product->set_description(strip_tags($request['description']));
+                $product->set_description(strip_tags($description));
             }
-            if (isset($request['short_description'])) {
-                $product->set_short_description(strip_tags($request['short_description']));
+            if (isset($short_description)) {
+                $product->set_short_description(strip_tags($short_description));
             }
 
             // Stock status.
-            if (isset($request['in_stock'])) {
-                $stock_status = true === $request['in_stock'] ? 'instock' : 'outofstock';
+            if (isset($in_stock)) {
+                $stock_status = true === $in_stock ? 'instock' : 'outofstock';
             } else {
                 $stock_status = $product->get_stock_status();
             }
@@ -1119,13 +1179,13 @@ class VendorAdminDokanHelper
             // Stock data.
             if ('yes' === get_option('woocommerce_manage_stock')) {
                 // Manage stock.
-                if (isset($request['manage_stock'])) {
-                    $product->set_manage_stock($request['manage_stock']);
+                if (isset($manage_stock)) {
+                    $product->set_manage_stock($manage_stock);
                 }
 
                 // Backorders.
-                if (isset($request['backorders'])) {
-                    $product->set_backorders($request['backorders']);
+                if (isset($backorders)) {
+                    $product->set_backorders($backorders);
                 }
 
                 if ($product->is_type('grouped')) {
@@ -1145,11 +1205,11 @@ class VendorAdminDokanHelper
                     }
 
                     // Stock quantity.
-                    if (isset($request['stock_quantity'])) {
-                        $product->set_stock_quantity(wc_stock_amount($request['stock_quantity']));
+                    if (isset($stock_quantity)) {
+                        $product->set_stock_quantity(wc_stock_amount($stock_quantity));
                     } elseif (isset($request['inventory_delta'])) {
                         $stock_quantity = wc_stock_amount($product->get_stock_quantity());
-                        $stock_quantity += wc_stock_amount($request['inventory_delta']);
+                        $stock_quantity += wc_stock_amount($inventory_delta);
                         $product->set_stock_quantity(wc_stock_amount($stock_quantity));
                     }
                 } else {
@@ -1163,8 +1223,8 @@ class VendorAdminDokanHelper
             }
 
             //Assign categories
-            if (isset($request['categories'])) {
-                $categories = array_filter(explode(',', $request['categories']));
+            if (isset($categories)) {
+                $categories = array_filter(explode(',', $categories));
                 if (!empty($categories)) {
                     $categoryArray = array();
                     foreach ($categories as $index) {
@@ -1177,13 +1237,13 @@ class VendorAdminDokanHelper
             }
 
             //Description
-            $product->set_short_description($request['short_description']);
-            $product->set_description($request['description']);
+            $product->set_short_description($short_description);
+            $product->set_description($description);
             if (is_wp_error($product)) {
                 return $this->sendError("request_failed", "Bad data", 400);
             }
 
-            $attribute_json = json_decode($request['productAttributes'], true);
+            $attribute_json = json_decode($productAttributes, true);
             $pro_attributes = array();
             foreach ($attribute_json as $key => $value) {
                 if ($value['isActive']) {
@@ -1210,7 +1270,7 @@ class VendorAdminDokanHelper
 
             if ($product->is_type('variable')) {
 
-                $variations_arr = json_decode($request['variations'], true);
+                $variations_arr = json_decode($variations, true);
                 foreach ($variations_arr as $variation) {
                     if ($variation['variation_id'] != -1) {
                         foreach ($variation['attributes'] as $key => $value) {
@@ -1322,8 +1382,8 @@ class VendorAdminDokanHelper
     public function vendor_admin_delete_product($request, $user_id)
     {
         /// Validate product ID
-        $id = isset($request['id']) ? absint($request['id']) : 0;
-        if (isset($request['id'])) {
+        $id = isset($request['id']) ? $request['id'] : 0;
+        if (isset($request['id']) && is_numeric($id)) {
             $product = $this->get_product_item($id);
         } else {
             return $this->sendError("request_failed", "Invalid data", 400);

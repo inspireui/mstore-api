@@ -134,8 +134,12 @@ class DeliveryWCFMHelper
             $sql .= " WHERE 1=1";
             $sql .= " AND delivery_boy = {$user_id}";
             $sql .= " AND is_trashed = 0";
-            $order_id = $request['id'];
-            $sql .= " AND order_id = '{$order_id}'";
+            $order_id = FlutterValidator::cleanText($request['id']);
+            if(isset($order_id)){
+                if(is_numeric($order_id)){
+                    $sql .= " AND order_id = '{$order_id}'";
+                }
+            }
             $items = $wpdb->get_results($sql);
             if (!empty($items)) {
                 $vendor = new FlutterWCFMHelper();
@@ -211,10 +215,16 @@ class DeliveryWCFMHelper
             $page = 1;
             $per_page = 10;
             if (isset($request['page'])) {
-                $page = $request['page'];
+                $page = FlutterValidator::cleanText($request['page']);
+                if(!is_numeric($page)){
+                    $page = 1;
+                }
             }
             if (isset($request['per_page'])) {
-                $per_page = $request['per_page'];
+                $per_page = FlutterValidator::cleanText($request['per_page']);
+                if(!is_numeric($per_page)){
+                    $per_page = 10;
+                }
             }
             $page = ($page - 1) * $per_page;
             $table_name = $wpdb->prefix . "wcfm_delivery_orders";
@@ -223,11 +233,11 @@ class DeliveryWCFMHelper
             $sql .= " AND delivery_boy = {$user_id}";
             $sql .= " AND is_trashed = 0";
             if (isset($request['status']) && !empty($request['status'])) {
-                $status = $request['status'];
+                $status = FlutterValidator::cleanText($request['status']);
                 $sql .= " AND delivery_status = '{$status}'";
             }
             if (isset($request['search'])) {
-                $order_search = $request['search'];
+                $order_search = FlutterValidator::cleanText($request['search']);
                 $sql .= " AND $table_name.`order_id` LIKE '%{$order_search}%'";
             }
             $sql .= " GROUP BY $table_name.`order_id` ORDER BY $table_name.`order_id` DESC LIMIT $per_page OFFSET $page";
@@ -270,8 +280,20 @@ class DeliveryWCFMHelper
         global $WCFM, $wpdb;
         $wcfm_messages;
         if (isset($request['per_page']) && $request['per_page']) {
-            $limit = absint($request['per_page']);
-            $offset = absint($request['page']);
+            $limit = $request['per_page'];
+            $offset = $request['page'];
+            if (isset($offset)) {
+                $offset = FlutterValidator::cleanText($offset);
+                if(!is_numeric($offset)){
+                    $offset = 1;
+                }
+            }
+            if (isset($limit)) {
+                $limit = FlutterValidator::cleanText($limit);
+                if(!is_numeric($limit)){
+                    $limit = 10;
+                }
+            }
             $offset = ($offset - 1) * $limit;
             $message_to = $user_id;
 
@@ -300,11 +322,11 @@ class DeliveryWCFMHelper
     function update_delivery_profile($request, $user_id)
     {
         $is_pw_correct = true;
-        $pass = $request['password'];
-        $new_pass = $request['new_password'];
-        $first_name = $request['first_name'];
-        $last_name = $request['last_name'];
-        $phone = $request['phone'];
+        $pass = FlutterValidator::cleanText($request['password']);
+        $new_pass = FlutterValidator::cleanText($request['new_password']);
+        $first_name = FlutterValidator::cleanText($request['first_name']);
+        $last_name = FlutterValidator::cleanText($request['last_name']);
+        $phone = FlutterValidator::cleanText($request['phone']);
         $data = array('ID' => $user_id);
         if (isset($params->display_name)) {
             $user_update['first_name'] = $params->first_name;

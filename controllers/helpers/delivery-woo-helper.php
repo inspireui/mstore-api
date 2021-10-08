@@ -127,13 +127,19 @@ class DeliveryWooHelper
         $api = new WC_REST_Orders_V1_Controller();
 
         $order_id = $request['id'];
-        if (is_plugin_active('delivery-drivers-for-woocommerce/delivery-drivers-for-woocommerce.php')) {
-            $order = wc_get_order($order_id);
+        if(isset($order_id)){
+            $order_id = FlutterValidator::cleanText($order_id);
+            if(is_numeric($order_id)){
+                if (is_plugin_active('delivery-drivers-for-woocommerce/delivery-drivers-for-woocommerce.php')) {
+                    $order = wc_get_order($order_id);
+                    return new WP_REST_Response(array(
+                        'status' => 'success',
+                        'response' => $order,
+                    ), 200);
+                }
+            }
         }
-        return new WP_REST_Response(array(
-            'status' => 'success',
-            'response' => $order,
-        ), 200);
+        return sendError("invalid_parameters", "Invalid parameters", 400);
     }
 
 
@@ -170,10 +176,16 @@ class DeliveryWooHelper
             $page = 1;
             $per_page = 10;
             if (isset($request['page'])) {
-                $page = $request['page'];
+                $page = FlutterValidator::cleanText($request['page']);
+                if(!is_numeric($page)){
+                    $page = 1;
+                }
             }
             if (isset($request['per_page'])) {
-                $per_page = $request['per_page'];
+                $per_page = FlutterValidator::cleanText($request['per_page']);
+                if(!is_numeric($per_page)){
+                    $per_page = 10;
+                }
             }
             $page = ($page - 1) * $per_page;
             global $wpdb;
@@ -183,7 +195,7 @@ class DeliveryWooHelper
             $sql = "SELECT ID FROM {$table_1} INNER JOIN {$table_2} ON {$table_1}.ID = {$table_2}.post_id";
             $sql .= " WHERE `{$table_2}`.`meta_key` = 'ddwc_driver_id' AND `{$table_2}`.`meta_value` = {$user_id}";
             if (isset($request['status']) && !empty($request['status'])) {
-                $status = $request['status'];
+                $status = FlutterValidator::cleanText($request['status']);
                 if ($status == 'pending') {
                     $sql .= " AND (`{$table_1}`.`post_status` = 'wc-driver-assigned' OR `{$table_1}`.`post_status` = 'wc-out-for-delivery')";
                 }
@@ -194,7 +206,7 @@ class DeliveryWooHelper
                 $sql .= " AND (`{$table_1}`.`post_status` = 'wc-driver-assigned' OR `{$table_1}`.`post_status` = 'wc-out-for-delivery' OR `{$table_1}`.`post_status` = 'wc-completed')";
             }
             if (isset($request['search'])) {
-                $order_search = $request['search'];
+                $order_search = FlutterValidator::cleanText($request['search']);
                 $sql .= " AND $table_1.`ID` LIKE '%{$order_search}%'";
             }
             $sql .= " GROUP BY $table_1.`ID` ORDER BY $table_1.`ID` DESC LIMIT $per_page OFFSET $page";
@@ -245,8 +257,20 @@ class DeliveryWooHelper
         maybe_create_table($table_name, $sql);
         $messages = array();
         if (isset($request['per_page']) && $request['per_page']) {
-            $limit = absint($request['per_page']);
-            $offset = absint($request['page']);
+            $limit = $request['per_page'];
+            $offset = $request['page'];
+            if (isset($offset)) {
+                $offset = FlutterValidator::cleanText($offset);
+                if(!is_numeric($offset)){
+                    $offset = 1;
+                }
+            }
+            if (isset($limit)) {
+                $limit = FlutterValidator::cleanText($limit);
+                if(!is_numeric($limit)){
+                    $limit = 10;
+                }
+            }
             $offset = ($offset - 1) * $limit;
             $sql = "SELECT * FROM $table_name WHERE `{$table_name}`.`delivery_boy` = $user_id";
             $sql .= " ORDER BY `{$table_name}`.`id` DESC";
@@ -264,11 +288,11 @@ class DeliveryWooHelper
     function update_delivery_profile($request, $user_id)
     {
         $is_pw_correct = true;
-        $pass = $request['password'];
-        $new_pass = $request['new_password'];
-        $first_name = $request['first_name'];
-        $last_name = $request['last_name'];
-        $phone = $request['phone'];
+        $pass = FlutterValidator::cleanText($request['password']);
+        $new_pass = FlutterValidator::cleanText($request['new_password']);
+        $first_name = FlutterValidator::cleanText($request['first_name']);
+        $last_name = FlutterValidator::cleanText($request['last_name']);
+        $phone = FlutterValidator::cleanText($request['phone']);
         $data = array('ID' => $user_id);
         if (isset($params->display_name)) {
             $user_update['first_name'] = $params->first_name;
