@@ -368,7 +368,7 @@ class VendorAdminDokanHelper
         $order = wc_get_order($order_id);
         $order->update_status($order_status, '', true);
 
-        $note = $request['customer_note'];
+        $note = FlutterValidator::cleanText($request['customer_note']);
         if (!empty($note)) {
             $order->add_order_note($note, true, true);
         }
@@ -661,7 +661,7 @@ class VendorAdminDokanHelper
     public function vendor_admin_create_product($request, $user_id)
     {
         $user = get_userdata($user_id);
-        $isSeller = in_array("seller", $user->roles) || in_array("wcfm_vendor", $user->roles);
+        $isSeller = in_array("seller", $user->roles);
 
         $requestStatus = "draft";
         if (isset($request["status"])) {
@@ -764,7 +764,7 @@ class VendorAdminDokanHelper
                 }
                 // Featured Product.
                 if (isset($featured)) {
-                    $product->set_featured(FlutterValidator::cleanText($featured));
+                    $product->set_featured($featured);
                 }
                 // SKU.
                 if (isset($request['sku'])) {
@@ -870,8 +870,8 @@ class VendorAdminDokanHelper
                 }
 
                 //Assign categories
-                if (isset($request['categories'])) {
-                    $categories = array_filter(explode(',', $request['categories']));
+                if (isset($categories)) {
+                    $categories = array_filter(explode(',', $categories));
                     if (!empty($categories)) {
                         $categoryArray = array();
                         foreach ($categories as $index) {

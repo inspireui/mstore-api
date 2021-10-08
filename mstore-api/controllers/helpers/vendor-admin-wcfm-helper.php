@@ -172,30 +172,30 @@ class VendorAdminWCFMHelper
 
     public function update_vendor_profile($request, $user_id)
     {
-        $data = json_decode( FlutterValidator::cleanText($request), true);
+        $data = json_decode( $request, true);
         $vendor_data = get_user_meta($user_id, "wcfmmp_profile_settings", true);
         if (is_string($vendor_data)) {
             $vendor_data = [];
         }
-        $vendor_data["store_name"] = $data["store_name"];
-        $vendor_data["store_slug"] = $data["store_slug"];
+        $vendor_data["store_name"] =  FlutterValidator::cleanText($data["store_name"]);
+        $vendor_data["store_slug"] =  FlutterValidator::cleanText($data["store_slug"]);
         wp_update_user(array(
             'ID' => $user_id,
-            'user_nicename' => $data["store_slug"]
+            'user_nicename' =>  FlutterValidator::cleanText($data["store_slug"])
         ));
-        $vendor_data["wcfmmp_store_name"] = $data["store_name"];
-        update_user_meta($user_id, 'store_name', $data["store_name"]);
-        update_user_meta($user_id, 'wcfmmp_store_name', $data["store_name"]);
+        $vendor_data["wcfmmp_store_name"] =  FlutterValidator::cleanText($data["store_name"]);
+        update_user_meta($user_id, 'store_name',  FlutterValidator::cleanText($data["store_name"]));
+        update_user_meta($user_id, 'wcfmmp_store_name',  FlutterValidator::cleanText($data["store_name"]));
 
 
-        $vendor_data["store_email"] = $data["store_email"];
-        $vendor_data["phone"] = $data["phone"];
+        $vendor_data["store_email"] =  FlutterValidator::cleanText($data["store_email"]);
+        $vendor_data["phone"] =  FlutterValidator::cleanText($data["phone"]);
 
         $count = 0;
 
         if (isset($data["logo"])) {
             $img_id = $this->upload_image_from_mobile(
-                $data["logo"],
+                FlutterValidator::cleanText($data["logo"]),
                 $count,
                 $user_id
             );
@@ -205,7 +205,7 @@ class VendorAdminWCFMHelper
 
         if (isset($data["mobile_banner"])) {
             $img_id = $this->upload_image_from_mobile(
-                $data["mobile_banner"],
+                FlutterValidator::cleanText($data["mobile_banner"]),
                 $count,
                 $user_id
             );
@@ -215,7 +215,7 @@ class VendorAdminWCFMHelper
 
         if (isset($data["banner"]) && isset($data["banner_type"])) {
             $img_id = $this->upload_image_from_mobile(
-                $data["banner"],
+                FlutterValidator::cleanText($data["banner"]),
                 $count,
                 $user_id
             );
@@ -229,67 +229,66 @@ class VendorAdminWCFMHelper
             foreach ($data["banner_slider"] as $item) {
                 if ($item["type"] == "asset") {
                     $img_id = $this->upload_image_from_mobile(
-                        $item["image"],
+                        FlutterValidator::cleanText($item["image"]),
                         $count,
                         $user_id
                     );
                 }
                 if ($item["type"] == "url") {
-                    $img_id = attachment_url_to_postid($item["image"]);
+                    $img_id = attachment_url_to_postid( FlutterValidator::cleanText($item["image"]));
                 }
                 $vendor_data["banner_slider"][] = [
                     "image" => $img_id,
-                    "link" => $item["link"],
+                    "link" =>  FlutterValidator::cleanText($item["link"]),
                 ];
             }
-            $vendor_data["banner_type"] = $data["banner_type"];
+            $vendor_data["banner_type"] =  FlutterValidator::cleanText($data["banner_type"]);
         }
 
         if (isset($data["video"]) && isset($data["banner_type"])) {
-            $vendor_data["banner_video"] = $data["video"];
-            $vendor_data["banner_type"] = $data["banner_type"];
+            $vendor_data["banner_video"] =  FlutterValidator::cleanText($data["video"]);
+            $vendor_data["banner_type"] =  FlutterValidator::cleanText($data["banner_type"]);
         }
 
         if (isset($data["list_banner"]) && isset($data["list_banner_type"])) {
             $img_id = $this->upload_image_from_mobile(
-                $data["list_banner"],
+                FlutterValidator::cleanText($data["list_banner"]),
                 $count,
                 $user_id
             );
             $count++;
             $vendor_data["list_banner"] = $img_id;
-            $vendor_data["list_banner_type"] = $data["list_banner_type"];
+            $vendor_data["list_banner_type"] =  FlutterValidator::cleanText($data["list_banner_type"]);
         }
 
         if (
             isset($data["list_banner_video"]) &&
             isset($data["list_banner_type"])
         ) {
-            $vendor_data["list_banner_video"] = $data["list_banner_video"];
-            $vendor_data["list_banner_type"] = $data["list_banner_type"];
+            $vendor_data["list_banner_video"] =  FlutterValidator::cleanText($data["list_banner_video"]);
+            $vendor_data["list_banner_type"] =  FlutterValidator::cleanText($data["list_banner_type"]);
         }
 
-        $vendor_data["shop_description"] = $data["shop_description"];
-        $vendor_data["_store_description"] = $data["shop_description"];
-        update_user_meta($user_id, '_store_description', $data["shop_description"]);
+        $vendor_data["shop_description"] =  FlutterValidator::cleanText($data["shop_description"]);
+        $vendor_data["_store_description"] =  FlutterValidator::cleanText($data["shop_description"]);
+        update_user_meta($user_id, '_store_description',  FlutterValidator::cleanText($data["shop_description"]));
 
 
-        $vendor_data["address"] = $data["address"];
+        $vendor_data["address"] =  FlutterValidator::cleanText($data["address"]);
 
-        $vendor_data["geolocation"]["store_location"] = $data["store_location"];
-        $vendor_data["geolocation"]["store_lat"] = $data["store_lat"];
-        $vendor_data["geolocation"]["store_lng"] = $data["store_lng"];
-        $vendor_data["store_location"] = $data["store_location"];
-        $vendor_data["store_lat"] = $data["store_lat"];
-        $vendor_data["store_lng"] = $data["store_lng"];
+        $vendor_data["geolocation"]["store_location"] =  FlutterValidator::cleanText($data["store_location"]);
+        $vendor_data["geolocation"]["store_lat"] =  FlutterValidator::cleanText($data["store_lat"]);
+        $vendor_data["geolocation"]["store_lng"] =  FlutterValidator::cleanText($data["store_lng"]);
+        $vendor_data["store_location"] =  FlutterValidator::cleanText($data["store_location"]);
+        $vendor_data["store_lat"] =  FlutterValidator::cleanText($data["store_lat"]);
+        $vendor_data["store_lng"] =  FlutterValidator::cleanText($data["store_lng"]);
 
-        $vendor_data["store_hide_email"] = $data["store_hide_email"];
-        $vendor_data["store_hide_phone"] = $data["store_hide_phone"];
-        $vendor_data["store_hide_address"] = $data["store_hide_address"];
-        $vendor_data["store_hide_map"] = $data["store_hide_map"];
-        $vendor_data["store_hide_description"] =
-            $data["store_hide_description"];
-        $vendor_data["store_hide_policy"] = $data["store_hide_policy"];
+        $vendor_data["store_hide_email"] =  FlutterValidator::cleanText($data["store_hide_email"]);
+        $vendor_data["store_hide_phone"] =  FlutterValidator::cleanText($data["store_hide_phone"]);
+        $vendor_data["store_hide_address"] =  FlutterValidator::cleanText($data["store_hide_address"]);
+        $vendor_data["store_hide_map"] =  FlutterValidator::cleanText($data["store_hide_map"]);
+        $vendor_data["store_hide_description"] = FlutterValidator::cleanText($data["store_hide_description"]);
+        $vendor_data["store_hide_policy"] =  FlutterValidator::cleanText($data["store_hide_policy"];
 
         update_user_meta($user_id, "wcfmmp_profile_settings", $vendor_data);
 
@@ -305,7 +304,6 @@ class VendorAdminWCFMHelper
     public function flutter_get_products($request, $user_id)
     {
         global $woocommerce, $wpdb;
-        $request = FlutterValidator::cleanText($request);
         $page = isset($request["page"]) ? FlutterValidator::cleanText($request["page"])  : 1;
         $limit = isset($request["per_page"]) ? FlutterValidator::cleanText($request["per_page"]) : 10;
         if(!is_numeric($page)){
@@ -326,7 +324,7 @@ class VendorAdminWCFMHelper
         $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_author` = $vendor_id AND `$table_name`.`post_type` = 'product'";
 
         if (isset($request["search"])) {
-            $search = $request["search"];
+            $search =  FlutterValidator::cleanText($request["search"]);
             $search = "%$search%";
             $sql .= " AND (`$table_name`.`post_content` LIKE '$search' OR `$table_name`.`post_title` LIKE '$search' OR `$table_name`.`post_excerpt` LIKE '$search')";
         }
@@ -477,17 +475,17 @@ class VendorAdminWCFMHelper
                 "SELECT * FROM " . $table_name . " WHERE vendor_id = $user_id AND is_trashed != 1";
 
             if (isset($request["status"])) {
-                $status = $request["status"];
+                $status =  FlutterValidator::cleanText($request["status"]);
                 $sql .= " AND order_status = '$status'";
             }
             if (isset($request["search"])) {
-                $search = $request["search"];
+                $search =  FlutterValidator::cleanText($request["search"]);
                 $sql .= " AND order_id LIKE '$search%'";
             }
             if (isset($request['name'])) {
                 $results = [];
                 $table_name2 = $wpdb->prefix . "users";
-                $name = $request['name'];
+                $name =  FlutterValidator::cleanText($request['name']);
                 $sql2 = "SELECT {$table_name2}.ID";
                 $sql2 .= " FROM {$table_name2}";
                 $sql2 .= " WHERE {$table_name2}.display_name LIKE '%$name%'";
@@ -714,17 +712,23 @@ class VendorAdminWCFMHelper
 
     public function flutter_update_order_status($request, $user_id)
     {
-        $request = FlutterValidator::cleanText($request);
         global $WCFM;
 
-        $order_id = absint($request["order_id"]);
-        $order_status = $request["order_status"];
+        $order_id = FlutterValidator::cleanText($request['order_id']);
+        $order_status = FlutterValidator::cleanText($request['order_status']);
+
+        if (!is_numeric($order_id)) {
+            return new WP_REST_Response(array(
+                'status' => 'success',
+                'response' => []
+            ), 200);
+        }
 
         $order = wc_get_order($order_id);
         $order->update_status($order_status, "", true);
         $shop_name = get_user_by("ID", $user_id)->display_name;
 
-        $note = $request["customer_note"];
+        $note =FlutterValidator::cleanText($request["customer_note"]);
         if (!empty($note)) {
             $order->add_order_note($note, true, true);
         }
@@ -802,13 +806,24 @@ class VendorAdminWCFMHelper
 
     public function flutter_get_reviews($request, $user_id)
     {
-        $request = FlutterValidator::cleanText($request);
         global $WCFM, $wpdb, $WCFMmp;
 
         $vendor_id = $user_id;
 
-        $length = FlutterValidator::cleanText($request["per_page"]);
-        $offset = FlutterValidator::cleanText($request["page"]);
+        $length = 10;
+        $offset = 1;
+        if (isset($request['page'])) {
+            $offset = FlutterValidator::cleanText($request['page']);
+            if(!is_numeric($offset)){
+                $offset = 1;
+            }
+        }
+        if (isset($request['per_page'])) {
+            $length = FlutterValidator::cleanText($request['per_page']);
+            if(!is_numeric($length)){
+                $length = 10;
+            }
+        }
         $offset = ($offset - 1) * $length;
 
         $the_orderby = !empty($request["orderby"])
@@ -861,11 +876,13 @@ class VendorAdminWCFMHelper
     // Update review status
     function flutter_update_review($request)
     {
-        $request = FlutterValidator::cleanText($request);
         global $WCFM, $WCFMmp, $wpdb;
+        $reviewid = FlutterValidator::cleanText($request["id"]);
+        $status = FlutterValidator::cleanText($request["status"]);
 
-        $reviewid = absint($request["id"]);
-        $status = absint($request["status"]);
+        if(!is_numeric($reviewid) || !is_numeric($status)){
+            return;
+        }
 
         $wcfm_review_categories = get_wcfm_marketplace_active_review_categories();
 
@@ -1815,8 +1832,14 @@ class VendorAdminWCFMHelper
         global $WCFM, $wpdb;
         $wcfm_messages;
         if (isset($request["per_page"]) && $request["per_page"]) {
-            $limit = absint($request["per_page"]);
-            $offset = absint($request["page"]);
+            $limit = FlutterValidator::cleanText($request['per_page']);
+            $offset = FlutterValidator::cleanText($request['page']);
+            if(!is_numeric($offset)){
+                $offset = 1;
+            }
+            if(!is_numeric($limit)){
+                $limit = 10;
+            }
             $offset = ($offset - 1) * $limit;
             $message_to = apply_filters("wcfm_message_author", $user_id);
 
@@ -1860,23 +1883,45 @@ class VendorAdminWCFMHelper
     /// CREATE ///
     public function vendor_admin_create_product($request, $user_id)
     {
-        $request = FlutterValidator::cleanText($request);
         $user = get_userdata($user_id);
-        $isSeller =
-            in_array("seller", $user->roles) ||
-            in_array("wcfm_vendor", $user->roles);
+        $isSeller = in_array("wcfm_vendor", $user->roles);
 
         $requestStatus = "draft";
         if ($request["status"] != null) {
-            $requestStatus = $request["status"];
+            $requestStatus = FlutterValidator::cleanText($request["status"]);
         }
+
+        $name = FlutterValidator::cleanText($request["name"]);
+        $description = FlutterValidator::cleanText($request["description"]);
+        $short_description = FlutterValidator::cleanText($request["short_description"]);
+        $featured_image = FlutterValidator::cleanText($request['featuredImage']);
+        $product_images = FlutterValidator::cleanText($request['images']);
+        $type = FlutterValidator::cleanText($request['type']);
+        $tags = FlutterValidator::cleanText($request['tags']);
+        $featured = FlutterValidator::cleanText($request['featured']);
+        $regular_price = FlutterValidator::cleanText($request['regular_price']);
+        $sale_price = FlutterValidator::cleanText($request['sale_price']);
+        $date_on_sale_from = FlutterValidator::cleanText($request['date_on_sale_from']);
+        $date_on_sale_from_gmt = FlutterValidator::cleanText($request['date_on_sale_from_gmt']);
+        $date_on_sale_to = FlutterValidator::cleanText($request['date_on_sale_to']);
+        $date_on_sale_to_gmt = FlutterValidator::cleanText($request['date_on_sale_to_gmt']);
+        $in_stock = FlutterValidator::cleanText($request['in_stock']);
+        $stock_quantity = FlutterValidator::cleanText($request['stock_quantity']);
+        $manage_stock  = FlutterValidator::cleanText($request['manage_stock']);
+        $backorders = FlutterValidator::cleanText($request['backorders']);
+        $categories = FlutterValidator::cleanText($request['categories']);
+        $productAttributes = FlutterValidator::cleanText($request['productAttributes']);
+        $variations = FlutterValidator::cleanText($request['variations']);      
+        $inventory_delta = FlutterValidator::cleanText($request['inventory_delta']);      
+
+        $count = 1;
 
         if ($isSeller) {
             $args = [
                 "post_author" => $user_id,
-                "post_content" => $request["description"],
+                "post_content" => $description,
                 "post_status" => $requestStatus, // (Draft | Pending | Publish)
-                "post_title" => $request["name"],
+                "post_title" => $name,
                 "post_parent" => "",
                 "post_type" => "product",
             ];
@@ -1884,23 +1929,17 @@ class VendorAdminWCFMHelper
             $post_id = wp_insert_post($args);
             $product = wc_get_product($post_id);
 
-            $featured_image = $request["featuredImage"];
-            $product_images = $request["images"];
-            $count = 1;
-
             if ($product->get_type() != $request["type"]) {
                 // Get the correct product classname from the new product type
                 $product_classname = WC_Product_Factory::get_product_classname(
                     $product->get_id(),
-                    $request["type"]
+                    $type
                 );
 
                 // Get the new product object from the correct classname
                 $product = new $product_classname($product->get_id());
                 $product->save();
             }
-
-            $tags = $request["tags"];
             if (isset($featured_image)) {
                 if (!empty($featured_image)) {
                     if ($this->http_check($featured_image)) {
@@ -1954,12 +1993,12 @@ class VendorAdminWCFMHelper
 
             /// Set attributes to product
             if (isset($product) && !is_wp_error($product)) {
-                if (isset($request["name"])) {
-                    $product->set_name(wp_filter_post_kses($request["name"]));
+                if (isset($name)) {
+                    $product->set_name(wp_filter_post_kses($name));
                 }
                 // Featured Product.
-                if (isset($request["featured"])) {
-                    $product->set_featured($request["featured"]);
+                if (isset($featured)) {
+                    $product->set_featured($featured);
                 }
                 // SKU.
                 if (isset($request["sku"])) {
@@ -1980,63 +2019,42 @@ class VendorAdminWCFMHelper
                     $product->set_date_on_sale_from("");
                     $product->set_price("");
                 } else {
-                    // Regular Price.
-                    if (isset($request["regular_price"])) {
-                        $product->set_regular_price($request["regular_price"]);
+                      // Regular Price.
+                      if (isset($regular_price)) {
+                        $product->set_regular_price($regular_price);
                     }
                     // Sale Price.
-                    if (
-                        isset($request["sale_price"]) &&
-                        !empty($request["sale_price"])
-                    ) {
-                        $product->set_sale_price($request["sale_price"]);
+                    if (isset($sale_price) && !empty($sale_price)) {
+                        $product->set_sale_price($sale_price);
                     }
-                    if (isset($request["date_on_sale_from"])) {
-                        $product->set_date_on_sale_from(
-                            $request["date_on_sale_from"]
-                        );
+                    if (isset($date_on_sale_from)) {
+                        $product->set_date_on_sale_from($date_on_sale_from);
                     }
-                    if (isset($request["date_on_sale_from_gmt"])) {
-                        $product->set_date_on_sale_from(
-                            $request["date_on_sale_from_gmt"]
-                                ? strtotime($request["date_on_sale_from_gmt"])
-                                : null
-                        );
+                    if (isset($date_on_sale_from_gmt)) {
+                        $product->set_date_on_sale_from($date_on_sale_from_gmt ? strtotime($date_on_sale_from_gmt) : null);
                     }
 
-                    if (isset($request["date_on_sale_to"])) {
-                        $product->set_date_on_sale_to(
-                            $request["date_on_sale_to"]
-                        );
+                    if (isset($date_on_sale_to)) {
+                        $product->set_date_on_sale_to($date_on_sale_to);
                     }
 
-                    if (isset($request["date_on_sale_to_gmt"])) {
-                        $product->set_date_on_sale_to(
-                            $request["date_on_sale_to_gmt"]
-                                ? strtotime($request["date_on_sale_to_gmt"])
-                                : null
-                        );
+                    if (isset($date_on_sale_to_gmt)) {
+                        $product->set_date_on_sale_to($date_on_sale_to_gmt ? strtotime($date_on_sale_to_gmt) : null);
                     }
+
                 }
 
                 // Description
-                if (isset($request["description"])) {
-                    $product->set_description(
-                        strip_tags($request["description"])
-                    );
+                if (isset($description)) {
+                    $product->set_description($description));
                 }
-                if (isset($request["short_description"])) {
-                    $product->set_description(
-                        strip_tags($request["short_description"])
-                    );
+                if (isset($short_description)) {
+                    $product->set_description($short_description));
                 }
 
                 // Stock status.
-                if (isset($request["in_stock"])) {
-                    $stock_status =
-                        true === $request["in_stock"]
-                            ? "instock"
-                            : "outofstock";
+                if (isset($in_stock) && is_bool($in_stock)) {
+                    $stock_status = true === $in_stock ? 'instock' : 'outofstock';
                 } else {
                     $stock_status = $product->get_stock_status();
                 }
@@ -2044,13 +2062,13 @@ class VendorAdminWCFMHelper
                 // Stock data.
                 if ("yes" === get_option("woocommerce_manage_stock")) {
                     // Manage stock.
-                    if (isset($request["manage_stock"])) {
-                        $product->set_manage_stock($request["manage_stock"]);
+                    if (isset($manage_stock)) {
+                        $product->set_manage_stock($manage_stock);
                     }
 
                     // Backorders.
-                    if (isset($request["backorders"])) {
-                        $product->set_backorders($request["backorders"]);
+                    if (isset($backorders)) {
+                        $product->set_backorders($backorders);
                     }
 
                     if ($product->is_type("grouped")) {
@@ -2065,25 +2083,17 @@ class VendorAdminWCFMHelper
                         $product->set_stock_status("instock");
                     } elseif ($product->get_manage_stock()) {
                         // Stock status is always determined by children so sync later.
-                        if (!$product->is_type("variable")) {
+                        if (!$product->is_type('variable')) {
                             $product->set_stock_status($stock_status);
                         }
 
                         // Stock quantity.
-                        if (isset($request["stock_quantity"])) {
-                            $product->set_stock_quantity(
-                                wc_stock_amount($request["stock_quantity"])
-                            );
-                        } elseif (isset($request["inventory_delta"])) {
-                            $stock_quantity = wc_stock_amount(
-                                $product->get_stock_quantity()
-                            );
-                            $stock_quantity += wc_stock_amount(
-                                $request["inventory_delta"]
-                            );
-                            $product->set_stock_quantity(
-                                wc_stock_amount($stock_quantity)
-                            );
+                        if (isset($stock_quantity)) {
+                            $product->set_stock_quantity(wc_stock_amount($stock_quantity));
+                        } elseif (isset($inventory_delta)) {
+                            $stock_quantity = wc_stock_amount($product->get_stock_quantity());
+                            $stock_quantity += wc_stock_amount($inventory_delta);
+                            $product->set_stock_quantity(wc_stock_amount($stock_quantity));
                         }
                     } else {
                         // Don't manage stock.
@@ -2096,12 +2106,10 @@ class VendorAdminWCFMHelper
                 }
 
                 //Assign categories
-                if (isset($request["categories"])) {
-                    $categories = array_filter(
-                        explode(",", $request["categories"])
-                    );
+                if (isset($categories)) {
+                    $categories = array_filter(explode(',', $categories));
                     if (!empty($categories)) {
-                        $categoryArray = [];
+                        $categoryArray = array();
                         foreach ($categories as $index) {
                             $categoryArray[] = absint($index);
                         }
@@ -2109,13 +2117,11 @@ class VendorAdminWCFMHelper
                     }
                 }
 
+
                 //Description
-                $product->set_short_description($request["short_description"]);
-                $product->set_description($request["description"]);
-                $attribute_json = json_decode(
-                    $request["productAttributes"],
-                    true
-                );
+                $product->set_short_description($short_description);
+                $product->set_description($description);
+                $attribute_json = json_decode($productAttributes, true);
                 $pro_attributes = [];
                 foreach ($attribute_json as $key => $value) {
                     if ($value["isActive"]) {
@@ -2149,7 +2155,7 @@ class VendorAdminWCFMHelper
                 $product->save();
 
                 if ($product->get_type() == "variable") {
-                    $variations_arr = json_decode($request["variations"], true);
+                    $variations_arr = json_decode($variations, true);
                     foreach ($variations_arr as $variation) {
                         // Creating the product variation
                         $variation_post = [
@@ -2263,9 +2269,8 @@ class VendorAdminWCFMHelper
     /// UPDATE ///
     public function vendor_admin_update_product($request, $user_id)
     {
-        $request = FlutterValidator::cleanText($request);
-        $id = isset($request["id"]) ? absint($request["id"]) : 0;
-        if (isset($request["id"])) {
+        $id = isset($request['id']) ? $request['id'] : 0;
+        if (isset($id) && is_numeric($id)) {
             $product = $this->get_product_item($id);
         } else {
             return $this->sendError("request_failed", "Invalid data", 400);
@@ -2282,27 +2287,48 @@ class VendorAdminWCFMHelper
             );
         }
 
-        if ($product->get_type() != $request["type"]) {
+        $name = FlutterValidator::cleanText($request["name"]);
+        $description = FlutterValidator::cleanText($request["description"]);
+        $short_description = FlutterValidator::cleanText($request["short_description"]);
+        $featured_image = FlutterValidator::cleanText($request['featuredImage']);
+        $product_images = FlutterValidator::cleanText($request['images']);
+        $type = FlutterValidator::cleanText($request['type']);
+        $tags = FlutterValidator::cleanText($request['tags']);
+        $featured = FlutterValidator::cleanText($request['featured']);
+        $regular_price = FlutterValidator::cleanText($request['regular_price']);
+        $sale_price = FlutterValidator::cleanText($request['sale_price']);
+        $date_on_sale_from = FlutterValidator::cleanText($request['date_on_sale_from']);
+        $date_on_sale_from_gmt = FlutterValidator::cleanText($request['date_on_sale_from_gmt']);
+        $date_on_sale_to = FlutterValidator::cleanText($request['date_on_sale_to']);
+        $date_on_sale_to_gmt = FlutterValidator::cleanText($request['date_on_sale_to_gmt']);
+        $in_stock = FlutterValidator::cleanText($request['in_stock']);
+        $stock_quantity = FlutterValidator::cleanText($request['stock_quantity']);
+        $manage_stock  = FlutterValidator::cleanText($request['manage_stock']);
+        $backorders = FlutterValidator::cleanText($request['backorders']);
+        $categories = FlutterValidator::cleanText($request['categories']);
+        $productAttributes = FlutterValidator::cleanText($request['productAttributes']);
+        $variations = FlutterValidator::cleanText($request['variations']);      
+        $inventory_delta = FlutterValidator::cleanText($request['inventory_delta']);     
+        $status = FlutterValidator::cleanText($request['status']);     
+        $count = 1;
+
+        if ($product->get_type() != $type) {
             // Get the correct product classname from the new product type
             $product_classname = WC_Product_Factory::get_product_classname(
                 $product->get_id(),
-                $request["type"]
+                $type
             );
 
             // Get the new product object from the correct classname
             $product = new $product_classname($product->get_id());
             $product->save();
         }
-
-        $tags = $request["tags"];
         if (isset($tags)) {
             $tags = array_filter(explode(",", $tags));
             wp_set_object_terms($product->get_id(), $tags, "product_tag");
         }
 
-        $featured_image = $request["featuredImage"];
-        $product_images = $request["images"];
-        $count = 1;
+    
 
         if (isset($featured_image)) {
             if (!empty($featured_image)) {
@@ -2348,20 +2374,20 @@ class VendorAdminWCFMHelper
 
         /// Set attributes to product
         if (isset($product) && !is_wp_error($product)) {
-            if (isset($request["name"])) {
-                $product->set_name(wp_filter_post_kses($request["name"]));
+            if (isset($name)) {
+                $product->set_name(wp_filter_post_kses($name));
             }
             // Featured Product.
-            if (isset($request["featured"])) {
-                $product->set_featured($request["featured"]);
+            if (isset($featured)) {
+                $product->set_featured($featured);
             }
             // SKU.
-            if (isset($request["sku"])) {
-                $product->set_sku(wc_clean($request["sku"]));
+            if (isset($request['sku'])) {
+                $product->set_sku(wc_clean($request['sku']));
             }
 
             // Sales and prices.
-            $product->set_status($request["status"]);
+            $product->set_status($status);
 
             if (in_array($product->get_type(), ["variable", "grouped"], true)) {
                 $product->set_regular_price("");
@@ -2371,56 +2397,41 @@ class VendorAdminWCFMHelper
                 $product->set_price("");
             } else {
                 // Regular Price.
-                if (isset($request["regular_price"])) {
-                    $product->set_regular_price($request["regular_price"]);
+                if (isset($regular_price)) {
+                    $product->set_regular_price($regular_price);
                 }
                 // Sale Price.
-                if (
-                    isset($request["sale_price"]) &&
-                    !empty($request["sale_price"])
-                ) {
-                    $product->set_sale_price($request["sale_price"]);
+                if (isset($sale_price) && !empty($sale_price)) {
+                    $product->set_sale_price($sale_price);
                 }
-                if (isset($request["date_on_sale_from"])) {
-                    $product->set_date_on_sale_from(
-                        $request["date_on_sale_from"]
-                    );
+                if (isset($date_on_sale_from)) {
+                    $product->set_date_on_sale_from($date_on_sale_from);
                 }
-                if (isset($request["date_on_sale_from_gmt"])) {
-                    $product->set_date_on_sale_from(
-                        $request["date_on_sale_from_gmt"]
-                            ? strtotime($request["date_on_sale_from_gmt"])
-                            : null
-                    );
+                if (isset($date_on_sale_from_gmt)) {
+                    $product->set_date_on_sale_from($date_on_sale_from_gmt ? strtotime($date_on_sale_from_gmt) : null);
                 }
 
-                if (isset($request["date_on_sale_to"])) {
-                    $product->set_date_on_sale_to($request["date_on_sale_to"]);
+                if (isset($date_on_sale_to)) {
+                    $product->set_date_on_sale_to($date_on_sale_to);
                 }
 
-                if (isset($request["date_on_sale_to_gmt"])) {
-                    $product->set_date_on_sale_to(
-                        $request["date_on_sale_to_gmt"]
-                            ? strtotime($request["date_on_sale_to_gmt"])
-                            : null
-                    );
+                if (isset($date_on_sale_to_gmt)) {
+                    $product->set_date_on_sale_to($date_on_sale_to_gmt ? strtotime($date_on_sale_to_gmt) : null);
                 }
             }
 
             // Description
-            if (isset($request["description"])) {
-                $product->set_description(strip_tags($request["description"]));
+            if (isset($description)) {
+
+                $product->set_description(strip_tags($description));
             }
-            if (isset($request["short_description"])) {
-                $product->set_short_description(
-                    strip_tags($request["short_description"])
-                );
+            if (isset($short_description)) {
+                $product->set_short_description(strip_tags($short_description));
             }
 
             // Stock status.
-            if (isset($request["in_stock"])) {
-                $stock_status =
-                    true === $request["in_stock"] ? "instock" : "outofstock";
+            if (isset($in_stock)) {
+                $stock_status = true === $in_stock ? 'instock' : 'outofstock';
             } else {
                 $stock_status = $product->get_stock_status();
             }
@@ -2428,13 +2439,13 @@ class VendorAdminWCFMHelper
             // Stock data.
             if ("yes" === get_option("woocommerce_manage_stock")) {
                 // Manage stock.
-                if (isset($request["manage_stock"])) {
-                    $product->set_manage_stock($request["manage_stock"]);
+                if (isset($manage_stock)) {
+                    $product->set_manage_stock($manage_stock);
                 }
 
                 // Backorders.
-                if (isset($request["backorders"])) {
-                    $product->set_backorders($request["backorders"]);
+                if (isset($backorders)) {
+                    $product->set_backorders($backorders);
                 }
 
                 if ($product->is_type("grouped")) {
@@ -2454,20 +2465,12 @@ class VendorAdminWCFMHelper
                     }
 
                     // Stock quantity.
-                    if (isset($request["stock_quantity"])) {
-                        $product->set_stock_quantity(
-                            wc_stock_amount($request["stock_quantity"])
-                        );
-                    } elseif (isset($request["inventory_delta"])) {
-                        $stock_quantity = wc_stock_amount(
-                            $product->get_stock_quantity()
-                        );
-                        $stock_quantity += wc_stock_amount(
-                            $request["inventory_delta"]
-                        );
-                        $product->set_stock_quantity(
-                            wc_stock_amount($stock_quantity)
-                        );
+                    if (isset($stock_quantity)) {
+                        $product->set_stock_quantity(wc_stock_amount($stock_quantity));
+                    } elseif (isset($request['inventory_delta'])) {
+                        $stock_quantity = wc_stock_amount($product->get_stock_quantity());
+                        $stock_quantity += wc_stock_amount($inventory_delta);
+                        $product->set_stock_quantity(wc_stock_amount($stock_quantity));
                     }
                 } else {
                     // Don't manage stock.
@@ -2480,29 +2483,27 @@ class VendorAdminWCFMHelper
             }
 
             //Assign categories
-            if (isset($request["categories"])) {
-                $categories = array_filter(
-                    explode(",", $request["categories"])
-                );
+            if (isset($categories)) {
+                $categories = array_filter(explode(',', $categories));
                 if (!empty($categories)) {
-                    $categoryArray = [];
+                    $categoryArray = array();
                     foreach ($categories as $index) {
                         $categoryArray[] = absint($index);
                     }
                     $product->set_category_ids($categoryArray);
                 } else {
-                    $product->set_category_ids([]);
+                    $product->set_category_ids(array());
                 }
             }
 
             //Description
-            $product->set_short_description($request["short_description"]);
-            $product->set_description($request["description"]);
+            $product->set_short_description($short_description);
+            $product->set_description($description);
             if (is_wp_error($product)) {
                 return $this->sendError("request_failed", "Bad data", 400);
             }
 
-            $attribute_json = json_decode($request["productAttributes"], true);
+            $attribute_json = json_decode($productAttributes, true);
             $pro_attributes = [];
             foreach ($attribute_json as $key => $value) {
                 if ($value["isActive"]) {
@@ -2530,7 +2531,7 @@ class VendorAdminWCFMHelper
             $product->save();
 
             if ($product->is_type("variable")) {
-                $variations_arr = json_decode($request["variations"], true);
+                $variations_arr = json_decode($variations, true);
                 foreach ($variations_arr as $variation) {
                     if ($variation["variation_id"] != -1) {
                         foreach ($variation["slugs"] as $key => $value) {
@@ -2699,10 +2700,9 @@ class VendorAdminWCFMHelper
     /// DELETE ///
     public function vendor_admin_delete_product($request, $user_id)
     {
-        $request = FlutterValidator::cleanText($request);
         /// Validate product ID
-        $id = isset($request["id"]) ? absint($request["id"]) : 0;
-        if (isset($request["id"])) {
+        $id = isset($request['id']) ? $request['id'] : 0;
+        if (isset($request['id']) && is_numeric($id)) {
             $product = $this->get_product_item($id);
         } else {
             return $this->sendError("request_failed", "Invalid data", 400);
@@ -2770,22 +2770,20 @@ class VendorAdminWCFMHelper
 
     public function wcfmd_delivery_boy_assigned($request, $vendor_id)
     {
-        $request = FlutterValidator::cleanText($request);
-
         global $WCFM, $WCFMmp, $WCFMu, $WCFMd, $wpdb;
 
-        $order_id = $request["wcfm_tracking_order_id"];
-        $order_item_id = $request["wcfm_tracking_order_item_id"];
-        $wcfm_delivery_boy = $request["wcfm_delivery_boy"];
-        $product_id = $request["wcfm_tracking_product_id"];
+        $order_id = FlutterValidator::cleanText($request["wcfm_tracking_order_id"]);
+        $order_item_id = FlutterValidator::cleanText($request["wcfm_tracking_order_item_id"]);
+        $wcfm_delivery_boy = FlutterValidator::cleanText($request["wcfm_delivery_boy"]);
+        $product_id = FlutterValidator::cleanText($request["wcfm_tracking_product_id"]);
         $wcfm_tracking_data = [
-            "wcfm_tracking_code" => $request["wcfm_tracking_code"],
-            "wcfm_tracking_url" => $request["wcfm_tracking_url"],
-            "wcfm_tracking_order_id" => $request["wcfm_tracking_order_id"],
-            "wcfm_tracking_product_id" => $request["wcfm_tracking_product_id"],
+            "wcfm_tracking_code" => FlutterValidator::cleanText($request["wcfm_tracking_code"]),
+            "wcfm_tracking_url" => FlutterValidator::cleanText($request["wcfm_tracking_url"]),
+            "wcfm_tracking_order_id" => FlutterValidator::cleanText($request["wcfm_tracking_order_id"]),
+            "wcfm_tracking_product_id" => FlutterValidator::cleanText($request["wcfm_tracking_product_id"]),
             "wcfm_tracking_order_item_id" =>
-                $request["wcfm_tracking_order_item_id"],
-            "wcfm_delivery_boy" => $request["wcfm_delivery_boy"],
+            FlutterValidator::cleanText($request["wcfm_tracking_order_item_id"]),
+            "wcfm_delivery_boy" => FlutterValidator::cleanText($request["wcfm_delivery_boy"]),
         ];
 
         $wcfm_delivery_boy = absint($wcfm_delivery_boy);
@@ -3074,12 +3072,11 @@ class VendorAdminWCFMHelper
 
     public function get_delivery_users($name)
     {
-        $request = FlutterValidator::cleanText($name);
         global $wpdb;
         $results = [];
         $table_name = $wpdb->prefix . "users";
         $table_name2 = $wpdb->prefix . "usermeta";
-        $search = $name;
+        $search = FlutterValidator::cleanText($name);
         $sql = "SELECT {$table_name}.ID, {$table_name}.display_name";
         $sql .= " FROM {$table_name} INNER JOIN {$table_name2}";
         $sql .= " ON {$table_name}.ID = {$table_name2}.user_id";
