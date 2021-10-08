@@ -556,7 +556,7 @@ function prepare_checkout()
     }
 
     if (isset($_GET['cookie'])) {
-        $cookie = urldecode(base64_decode($_GET['cookie']));
+        $cookie = urldecode(base64_decode(FlutterValidator::cleanText($_GET['cookie'])));
         $userId = wp_validate_auth_cookie($cookie, 'logged_in');
         if ($userId !== false) {
             $user = get_userdata($userId);
