@@ -155,6 +155,8 @@ class DeliveryWCFMHelper
                     if (!is_null($image[0])) {
                         $order['line_items'][$i]['featured_image'] = $image[0];
                     }
+
+                    $item = [];
                     $vendor_data = $vendor->flutter_get_wcfm_stores_by_id($item[0]->vendor_id);
                     $order['wcfm_store'] = $vendor_data->data;
                 }
@@ -278,7 +280,7 @@ class DeliveryWCFMHelper
     function get_notification($request, $user_id)
     {
         global $WCFM, $wpdb;
-        $wcfm_messages;
+        $wcfm_messages = array();
         if (isset($request['per_page']) && $request['per_page']) {
             $limit = $request['per_page'];
             $offset = $request['page'];

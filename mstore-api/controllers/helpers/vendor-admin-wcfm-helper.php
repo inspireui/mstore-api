@@ -288,7 +288,7 @@ class VendorAdminWCFMHelper
         $vendor_data["store_hide_address"] =  FlutterValidator::cleanText($data["store_hide_address"]);
         $vendor_data["store_hide_map"] =  FlutterValidator::cleanText($data["store_hide_map"]);
         $vendor_data["store_hide_description"] = FlutterValidator::cleanText($data["store_hide_description"]);
-        $vendor_data["store_hide_policy"] =  FlutterValidator::cleanText($data["store_hide_policy"];
+        $vendor_data["store_hide_policy"] =  FlutterValidator::cleanText($data["store_hide_policy"]);
 
         update_user_meta($user_id, "wcfmmp_profile_settings", $vendor_data);
 
@@ -405,7 +405,7 @@ class VendorAdminWCFMHelper
 
                 foreach ($result as $variation) {
                     $p_varation = new WC_Product_Variation($variation->ID);
-                    $dataVariation;
+                    $dataVariation = array();
                     $dataVariation["variation_id"] = $p_varation->get_id();
                     $dataVariation["max_qty"] = $p_varation->get_stock_quantity();
                     $dataVariation["variation_is_active"] =
@@ -447,6 +447,7 @@ class VendorAdminWCFMHelper
 
     public function flutter_get_orders($request, $user_id)
     {
+        $profile_pic = [];
         $api = new WC_REST_Orders_V1_Controller();
         $results = [];
         if (
@@ -1830,7 +1831,7 @@ class VendorAdminWCFMHelper
     function get_notification_by_vendor($request, $user_id)
     {
         global $WCFM, $wpdb;
-        $wcfm_messages;
+        $wcfm_messages = array();
         if (isset($request["per_page"]) && $request["per_page"]) {
             $limit = FlutterValidator::cleanText($request['per_page']);
             $offset = FlutterValidator::cleanText($request['page']);
@@ -2046,10 +2047,10 @@ class VendorAdminWCFMHelper
 
                 // Description
                 if (isset($description)) {
-                    $product->set_description($description));
+                    $product->set_description($description);
                 }
                 if (isset($short_description)) {
-                    $product->set_description($short_description));
+                    $product->set_description($short_description);
                 }
 
                 // Stock status.
@@ -2237,7 +2238,7 @@ class VendorAdminWCFMHelper
 
                     foreach ($result as $variation) {
                         $p_varation = new WC_Product_Variation($variation->ID);
-                        $dataVariation;
+                        $dataVariation = array();
                         $dataVariation["variation_id"] = $p_varation->get_id();
                         $dataVariation["max_qty"] = $p_varation->get_stock_quantity();
                         $dataVariation["variation_is_active"] =
@@ -2670,7 +2671,7 @@ class VendorAdminWCFMHelper
 
                 foreach ($result as $variation) {
                     $p_varation = new WC_Product_Variation($variation->ID);
-                    $dataVariation;
+                    $dataVariation = array();
                     $dataVariation["variation_id"] = $p_varation->get_id();
                     $dataVariation["max_qty"] = $p_varation->get_stock_quantity();
                     $dataVariation["variation_is_active"] =
@@ -2983,6 +2984,8 @@ class VendorAdminWCFMHelper
                     $wcfm_messages
                 );
                 $deviceToken = get_user_meta($wcfm_delivery_boy, 'mstore_delivery_device_token', true);
+                $title= '';
+                $notification_message = '';
                 if (isset($serverKey) && $serverKey != false && isset($deviceToken) && $deviceToken != false) {
                     $body = ["notification" => ["title" => "You have new notification", "body" => $wcfm_messages, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], "data" => ["title" => $title, "body" => $notification_message, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], "to" => $deviceToken];
                     $headers = ["Authorization" => "key=" . $serverKey, 'Content-Type' => 'application/json; charset=utf-8'];
@@ -3033,6 +3036,8 @@ class VendorAdminWCFMHelper
                         $wcfm_messages
                     );
                     $deviceToken = get_user_meta($wcfm_delivery_boy, 'mstore_delivery_device_token', true);
+                    $title = '';
+                    $notification_message = '';
                     if (isset($serverKey) && $serverKey != false && isset($deviceToken) && $deviceToken != false) {
                         $body = ["notification" => ["title" => "You have new notification", "body" => $wcfm_messages, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], "data" => ["title" => $title, "body" => $notification_message, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], "to" => $deviceToken];
                         $headers = ["Authorization" => "key=" . $serverKey, 'Content-Type' => 'application/json; charset=utf-8'];

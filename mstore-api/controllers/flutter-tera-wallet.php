@@ -260,6 +260,7 @@ class FlutterTeraWallet extends FlutterBaseController
             $wallet_response = woo_wallet()->wallet->debit(get_current_user_id(), $order->get_total('edit'), apply_filters('woo_wallet_order_payment_description', __('For order payment #', 'woo-wallet') . $order->get_order_number(), $order));
 
             // Reduce stock levels
+            $order_id = $request['id'];
             wc_reduce_stock_levels($order_id);
 
             if ($wallet_response) {

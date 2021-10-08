@@ -208,7 +208,7 @@ class VendorAdminWooHelper
                     }
                     foreach ($result as $variation) {
                         $p_varation = new WC_Product_Variation($variation->ID);
-                        $dataVariation;
+                        $dataVariation = array();
                         $dataVariation['variation_id'] = $p_varation->get_id();
                         $dataVariation['max_qty'] = $p_varation->get_stock_quantity();
                         $dataVariation['variation_is_active'] = $p_varation->get_status() == 'publish';
@@ -809,10 +809,10 @@ class VendorAdminWooHelper
 
                 // Description
                 if (isset($description)) {
-                    $product->set_description($description));
+                    $product->set_description($description);
                 }
                 if (isset($short_description)) {
-                    $product->set_description($short_description));
+                    $product->set_description($short_description);
                 }
 
                 // Stock status.
@@ -995,7 +995,7 @@ class VendorAdminWooHelper
 
                     foreach ($result as $variation) {
                         $p_varation = new WC_Product_Variation($variation->ID);
-                        $dataVariation;
+                        $dataVariation = array();
                         $dataVariation['variation_id'] = $p_varation->get_id();
                         $dataVariation['max_qty'] = $p_varation->get_stock_quantity();
                         $dataVariation['variation_is_active'] = $p_varation->get_status() == 'publish';
@@ -1361,7 +1361,7 @@ class VendorAdminWooHelper
 
                 foreach ($result as $variation) {
                     $p_varation = new WC_Product_Variation($variation->ID);
-                    $dataVariation;
+                    $dataVariation = array();
                     $dataVariation['variation_id'] = $p_varation->get_id();
                     $dataVariation['max_qty'] = $p_varation->get_stock_quantity();
                     $dataVariation['variation_is_active'] = $p_varation->get_status() == 'publish';

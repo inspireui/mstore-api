@@ -397,10 +397,10 @@ class JSON_API_MStore_User_Controller
 
                     $user_name = strtolower($result['first_name'] . '.' . $result['last_name']);
 
+                    $i = 0;
                     while (username_exists($user_name)) {
                         $i++;
                         $user_name = strtolower($result['first_name'] . '.' . $result['last_name']) . '.' . $i;
-
                     }
 
                     $random_password = wp_generate_password($length = 12, $include_standard_special_chars = false);
@@ -546,6 +546,7 @@ class JSON_API_MStore_User_Controller
 
             if (!$user_id && $email_exists == false) {
 
+                $i = 0;
                 while (username_exists($user_name)) {
                     $i++;
                     $user_name = strtolower($user_name) . '.' . $i;
@@ -607,6 +608,7 @@ class JSON_API_MStore_User_Controller
 
             if (!$user_id && $email_exists == false) {
 
+                $i = 0;
                 while (username_exists($user_name)) {
                     $i++;
                     $user_name = strtolower($user_name) . '.' . $i;
@@ -638,7 +640,7 @@ class JSON_API_MStore_User_Controller
             $response['wp_user_id'] = $user_id;
             $response['cookie'] = $cookie;
             $response['user_login'] = $user_name;
-            $response['user'] = $result;
+//            $response['user'] = $result;
         }
 
         return $response;
@@ -674,6 +676,7 @@ class JSON_API_MStore_User_Controller
                     $user_name = $user->user_login;
                 }
 
+                $i = 0;
                 if (!$user_id && $email_exists == false) {
                     while (username_exists($user_name)) {
                         $i++;

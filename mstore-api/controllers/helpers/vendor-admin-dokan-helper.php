@@ -210,7 +210,7 @@ class VendorAdminDokanHelper
 
                 foreach ($result as $variation) {
                     $p_varation = new WC_Product_Variation($variation->ID);
-                    $dataVariation;
+                    $dataVariation = array();
                     $dataVariation['variation_id'] = $p_varation->get_id();
                     $dataVariation['max_qty'] = $p_varation->get_stock_quantity();
                     $dataVariation['variation_is_active'] = $p_varation->get_status() == 'publish';
@@ -446,6 +446,8 @@ class VendorAdminDokanHelper
     public function flutter_get_reviews($request, $user_id)
     {
         $store_id = $user_id;
+        $params['per_page'] = 10;
+        $params['page'] = 1;
 
         $status_filter = '';
         if (isset($request['status_type']) && ($request['status_type'] != '')) {
@@ -482,7 +484,7 @@ class VendorAdminDokanHelper
             } else {
                 $dokan_template_reviews = dokan_pro()->review;
                 $post_type = 'product';
-                $limit = (int)$params['per_page'];
+                $limit = (int) $params['per_page'];
                 $paged = (int)($params['page'] - 1) * $params['per_page'];
                 $status = '1';
                 $comments = $dokan_template_reviews->comment_query($store_id, $post_type, $limit, $status, $paged);
@@ -623,7 +625,7 @@ class VendorAdminDokanHelper
     function get_notification_by_vendor($request, $user_id)
     {
         global $WCFM, $wpdb;
-        $wcfm_messages;
+        $wcfm_messages = array();
         if (isset($request['per_page']) && $request['per_page']) {
             $limit = FlutterValidator::cleanText($request['per_page']);
             $offset = FlutterValidator::cleanText($request['page']);
@@ -810,10 +812,10 @@ class VendorAdminDokanHelper
 
                 // Description
                 if (isset($description)) {
-                    $product->set_description($description));
+                    $product->set_description($description);
                 }
                 if (isset($short_description)) {
-                    $product->set_description($short_description));
+                    $product->set_description($short_description);
                 }
 
                 // Stock status.
@@ -992,7 +994,7 @@ class VendorAdminDokanHelper
 
                     foreach ($result as $variation) {
                         $p_varation = new WC_Product_Variation($variation->ID);
-                        $dataVariation;
+                        $dataVariation = array();
                         $dataVariation['variation_id'] = $p_varation->get_id();
                         $dataVariation['max_qty'] = $p_varation->get_stock_quantity();
                         $dataVariation['variation_is_active'] = $p_varation->get_status() == 'publish';
@@ -1360,7 +1362,7 @@ class VendorAdminDokanHelper
 
                 foreach ($result as $variation) {
                     $p_varation = new WC_Product_Variation($variation->ID);
-                    $dataVariation;
+                    $dataVariation = array();
                     $dataVariation['variation_id'] = $p_varation->get_id();
                     $dataVariation['max_qty'] = $p_varation->get_stock_quantity();
                     $dataVariation['variation_is_active'] = $p_varation->get_status() == 'publish';
