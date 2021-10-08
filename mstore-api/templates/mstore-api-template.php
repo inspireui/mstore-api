@@ -10,11 +10,11 @@ function getValue(&$val, $default = '')
 
 $data = null;
 if (isset($_POST['order'])) {
-    $data = json_decode(urldecode(base64_decode($_POST['order'])), true);
+    $data = json_decode(urldecode(base64_decode(FlutterValidator::cleanText($_POST['order']))), true);
 } elseif (filter_has_var(INPUT_GET, 'order')) {
-    $data = filter_has_var(INPUT_GET, 'order') ? json_decode(urldecode(base64_decode(filter_input(INPUT_GET, 'order'))), true) : [];
+    $data = filter_has_var(INPUT_GET, 'order') ? json_decode(urldecode(base64_decode(FlutterValidator::cleanText(filter_input(INPUT_GET, 'order')))), true) : [];
 } elseif (filter_has_var(INPUT_GET, 'code')) {
-    $code = filter_input(INPUT_GET, 'code');
+    $code = FlutterValidator::cleanText(filter_input(INPUT_GET, 'code'));
     global $wpdb;
     $table_name = $wpdb->prefix . "mstore_checkout";
     $item = $wpdb->get_row("SELECT * FROM $table_name WHERE code = '$code'");
