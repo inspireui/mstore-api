@@ -155,7 +155,7 @@ class DeliveryWCFMHelper
                     if (!is_null($image[0])) {
                         $order['line_items'][$i]['featured_image'] = $image[0];
                     }
-                    $vendor_data = $vendor->flutter_get_wcfm_stores_by_id($item[0]->vendor_id);
+                    $vendor_data = $vendor->flutter_get_wcfm_stores_by_id($items[0]->vendor_id);
                     $order['wcfm_store'] = $vendor_data->data;
                 }
 

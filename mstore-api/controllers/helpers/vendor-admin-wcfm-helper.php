@@ -288,7 +288,7 @@ class VendorAdminWCFMHelper
         $vendor_data["store_hide_address"] =  FlutterValidator::cleanText($data["store_hide_address"]);
         $vendor_data["store_hide_map"] =  FlutterValidator::cleanText($data["store_hide_map"]);
         $vendor_data["store_hide_description"] = FlutterValidator::cleanText($data["store_hide_description"]);
-        $vendor_data["store_hide_policy"] =  FlutterValidator::cleanText($data["store_hide_policy"];
+        $vendor_data["store_hide_policy"] =  FlutterValidator::cleanText($data["store_hide_policy"]);
 
         update_user_meta($user_id, "wcfmmp_profile_settings", $vendor_data);
 
@@ -2046,10 +2046,10 @@ class VendorAdminWCFMHelper
 
                 // Description
                 if (isset($description)) {
-                    $product->set_description($description));
+                    $product->set_description($description);
                 }
                 if (isset($short_description)) {
-                    $product->set_description($short_description));
+                    $product->set_description($short_description);
                 }
 
                 // Stock status.
