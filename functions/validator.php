@@ -15,5 +15,9 @@ class FlutterValidator {
     public static function sanitizeEmail($value) {
         return sanitize_email($value);
     }
+
+    public static function escapeHtml($value) {
+        return esc_html($value);
+    }
 }
 ?>

@@ -25,7 +25,7 @@ if (!isset($verified) || $verified === "" || $verified === false) {
 
             if ($verified !== true) {
                 ?>
-                <p style="font-size: 16px;color: red;"><?php echo $verified ?></p>
+                <p style="font-size: 16px;color: red;"><?php echo FlutterValidator::escapeAttribute($verified); ?></p>
                 <?php
             } else {
                 ?>
@@ -73,7 +73,7 @@ if (isset($verified) && $verified == "1") {
         $limit = get_option("mstore_limit_product");
         ?>
         <div class="form-group" style="margin-top:10px;margin-bottom:40px">
-            <input type="number" value="<?php echo (!isset($limit) || $limit == false) ? 10 : $limit ?>"
+            <input type="number" value="<?php echo (!isset($limit) || $limit == false) ? 10 : FlutterValidator::escapeAttribute($limit) ?>"
                    class="mstore-update-limit-product">
         </div>
     </form>
@@ -171,7 +171,7 @@ if (isset($verified) && $verified == "1") {
                 foreach ($configs as $file) {
                     ?>
                     <tr>
-                        <td><?php echo $file; ?></td>
+                        <td><?php echo FlutterValidator::escapeAttribute($file); ?></td>
                         <td><a href="<?php echo FlutterValidator::escapeUrl($uploads_dir['baseurl'] . "/2000/01/" . $file); ?>" target="_blank">Download</a>
                             / <a data-id="<?php echo getLangCodeFromConfigFile($file); ?>" data-nonce="<?php echo wp_create_nonce('delete_config_json_file'); ?>" class="mstore-delete-json-file">Delete</a></td>
                     </tr>

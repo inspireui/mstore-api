@@ -74,8 +74,8 @@ class FlutterMembership extends FlutterBaseController
             $json = file_get_contents('php://input');
             $_POST = json_decode($json, TRUE);
             $_POST['ihc_user_add_edit_nonce'] = $nonce;
-            $_REQUEST['ihc_payment_gateway_radio'] = $_POST['ihc_payment_gateway_radio'];
-            $_REQUEST['ihc_payment_gateway'] = $_POST['ihc_payment_gateway'];
+            $_REQUEST['ihc_payment_gateway_radio'] = FlutterValidator::cleanText($_POST['ihc_payment_gateway_radio']);
+            $_REQUEST['ihc_payment_gateway'] = FlutterValidator::cleanText($_POST['ihc_payment_gateway']);
             $args = array(
                 'user_id' => false,
                 'type' => 'create',

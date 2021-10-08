@@ -138,11 +138,6 @@
     </style>
 </head>
 <body>
-<div id="mstore-api-builder-container" hidden="true">
-    <button type="button" class="mstore_button" name='btn_back'>Back</button>
-    <h4>MStore API Builder</h4> <br/>
-    <?php echo load_template(dirname(__FILE__) . '/admin/mstore-api-admin-builder.php'); ?>
-</div>
 
 <div id="mstore-api-settings-container">
     <h4>MStore API Settings</h4> <br/>

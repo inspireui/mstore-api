@@ -79,7 +79,7 @@ class MstoreCheckOut
                 $items = explode("\n", $note);
                 if (strpos($items[0], "URL:") !== false) {
                     $url = str_replace("URL:", "", $items[0]);
-                    echo '<iframe width="600" height="500" src="' . FlutterValidator::escapeUrl($url) . '"></iframe>';
+                    echo FlutterValidator::escapeHtml('<iframe width="600" height="500" src="' . FlutterValidator::escapeUrl($url) . '"></iframe>');
                 }
             }
         }
