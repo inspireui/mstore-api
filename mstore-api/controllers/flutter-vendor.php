@@ -1,5 +1,5 @@
 <?php
-require_once(__DIR__ . '/helpers/wcfm.php');
+require_once(__DIR__ . '/helpers/vendor-wcfm.php');
 require_once(__DIR__ . '/flutter-products.php');
 
 /*
