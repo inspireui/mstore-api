@@ -167,7 +167,7 @@ if (isset($verified) && $verified == "1") {
                     ?>
                     <tr>
                         <td><?php echo esc_attr($file); ?></td>
-                        <td><a href="<?php echo esc_url(FlutterUtils::get_json_file_path($file)); ?>" target="_blank">Download</a>
+                        <td><a href="<?php echo esc_url(FlutterUtils::get_json_file_url($file)); ?>" target="_blank">Download</a>
                             / <a data-id="<?php echo getLangCodeFromConfigFile($file); ?>" data-nonce="<?php echo wp_create_nonce('delete_config_json_file'); ?>" class="mstore-delete-json-file">Delete</a></td>
                     </tr>
                     <?php

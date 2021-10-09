@@ -130,14 +130,7 @@ class MstoreCheckOut
     function mstore_delete_json_file(){
         $id = sanitize_text_field($_REQUEST['id']);
         $nonce = sanitize_text_field($_REQUEST['nonce']);
-        if(strlen($id) == 2){
-            if (wp_verify_nonce($nonce, 'delete_config_json_file')) {
-                $filePath = FlutterUtils::get_json_file_path("config_".$id.".json");
-                unlink($filePath);
-                echo "success";
-                die();
-            }
-        }
+        FlutterUtils::delete_config_file($id, $nonce);
     }
 
     function mstore_update_limit_product()
