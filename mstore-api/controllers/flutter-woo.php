@@ -801,27 +801,11 @@ class FlutterWoo extends FlutterBaseController
 			return parent::sendError("invalid_file","You need to upload json file", 400);
 		}
 		
-		preg_match('/config_[a-z]{2}.json/', $file["name"], $output_array);
-		if (count($output_array) == 0) {
+        $errMsg = FlutterUtils::upload_file_by_admin($file);
+		if ($errMsg != null) {
 			return parent::sendError("invalid_file","You need to upload config_xx.json file", 400);
 		}
-		$fileContent = file_get_contents($file['tmp_name']);
-        $array = json_decode($fileContent, true);
-		if($array){
-			wp_upload_bits($file['name'], null, $fileContent); 
-			$uploads_dir   = wp_upload_dir();
-			$upload_dir = $uploads_dir["basedir"];
-			$upload_url = $uploads_dir["baseurl"];
-			$source      = $file['tmp_name'];
-			$destination = trailingslashit( $upload_dir ) . '2000/01/'.$file['name'];
-			if (!file_exists($upload_dir."/2000/01")) {
-			  mkdir($upload_dir."/2000/01", 0777, true);
-			}
-			move_uploaded_file($source, $destination);
-			return $upload_url."/2000/01/".$file['name'];
-		}else{
-			return parent::sendError("invalid_file","The config_xx.json file is invalid format", 400);
-		}
+        return FlutterUtils::get_json_file_path($file['name']);
 	}
 
     public function get_taxes($request)

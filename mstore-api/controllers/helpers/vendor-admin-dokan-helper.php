@@ -124,8 +124,8 @@ class VendorAdminDokanHelper
     public function flutter_get_products($request, $user_id)
     {
         global $woocommerce, $wpdb;
-        $page = isset($request["page"]) ? FlutterValidator::cleanText($request["page"])  : 1;
-        $limit = isset($request["per_page"]) ? FlutterValidator::cleanText($request["per_page"]) : 10;
+        $page = isset($request["page"]) ? sanitize_text_field($request["page"])  : 1;
+        $limit = isset($request["per_page"]) ? sanitize_text_field($request["per_page"]) : 10;
         if(!is_numeric($page)){
             $page = 1;
         }
@@ -142,7 +142,7 @@ class VendorAdminDokanHelper
         $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_author` = $vendor_id AND `$table_name`.`post_type` = 'product'";
 
         if (isset($request['search'])) {
-            $search = FlutterValidator::cleanText($request['search']);
+            $search = sanitize_text_field($request['search']);
             $search = "%$search%";
             $sql .= " AND (`$table_name`.`post_content` LIKE '$search' OR `$table_name`.`post_title` LIKE '$search' OR `$table_name`.`post_excerpt` LIKE '$search')";
         }
@@ -210,7 +210,7 @@ class VendorAdminDokanHelper
 
                 foreach ($result as $variation) {
                     $p_varation = new WC_Product_Variation($variation->ID);
-                    $dataVariation;
+                    $dataVariation = array();
                     $dataVariation['variation_id'] = $p_varation->get_id();
                     $dataVariation['max_qty'] = $p_varation->get_stock_quantity();
                     $dataVariation['variation_is_active'] = $p_varation->get_status() == 'publish';
@@ -248,13 +248,13 @@ class VendorAdminDokanHelper
         $page = 1;
         $per_page = 10;
         if (isset($request['page'])) {
-            $page = FlutterValidator::cleanText($request['page']);
+            $page = sanitize_text_field($request['page']);
             if(!is_numeric($page)){
                 $page = 1;
             }
         }
         if (isset($request['per_page'])) {
-            $per_page = FlutterValidator::cleanText($request['per_page']);
+            $per_page = sanitize_text_field($request['per_page']);
             if(!is_numeric($per_page)){
                 $per_page = 10;
             }
@@ -268,11 +268,11 @@ class VendorAdminDokanHelper
             $sql = "SELECT * FROM " . $table_name . " WHERE seller_id = $user_id";
 
             if (isset($request['status'])) {
-                $status = FlutterValidator::cleanText($request['status']);
+                $status = sanitize_text_field($request['status']);
                 $sql .= " AND order_status = 'wc-$status'";
             }
             if (isset($request['search'])) {
-                $search = FlutterValidator::cleanText($request['search']);
+                $search = sanitize_text_field($request['search']);
                 $sql .= " AND order_id LIKE '$search%'";
             }
             $sql .= " GROUP BY $table_name.`order_id` ORDER BY $table_name.`order_id` DESC LIMIT $per_page OFFSET $page";
@@ -355,8 +355,8 @@ class VendorAdminDokanHelper
     {
         global $WCFM;
 
-        $order_id = FlutterValidator::cleanText($request['order_id']);
-        $order_status = FlutterValidator::cleanText($request['order_status']);
+        $order_id = sanitize_text_field($request['order_id']);
+        $order_status = sanitize_text_field($request['order_status']);
         
         if (!dokan_is_seller_has_order($user_id, $order_id) || !is_numeric($order_id)) {
             return new WP_REST_Response(array(
@@ -368,7 +368,7 @@ class VendorAdminDokanHelper
         $order = wc_get_order($order_id);
         $order->update_status($order_status, '', true);
 
-        $note = FlutterValidator::cleanText($request['customer_note']);
+        $note = sanitize_text_field($request['customer_note']);
         if (!empty($note)) {
             $order->add_order_note($note, true, true);
         }
@@ -446,10 +446,12 @@ class VendorAdminDokanHelper
     public function flutter_get_reviews($request, $user_id)
     {
         $store_id = $user_id;
+        $params['per_page'] = 10;
+        $params['page'] = 1;
 
         $status_filter = '';
         if (isset($request['status_type']) && ($request['status_type'] != '')) {
-            $status_filter = FlutterValidator::cleanText($request['status_type']);
+            $status_filter = sanitize_text_field($request['status_type']);
         }
 
         if (dokan()->is_pro_exists()) {
@@ -482,7 +484,7 @@ class VendorAdminDokanHelper
             } else {
                 $dokan_template_reviews = dokan_pro()->review;
                 $post_type = 'product';
-                $limit = (int)$params['per_page'];
+                $limit = (int) $params['per_page'];
                 $paged = (int)($params['page'] - 1) * $params['per_page'];
                 $status = '1';
                 $comments = $dokan_template_reviews->comment_query($store_id, $post_type, $limit, $status, $paged);
@@ -536,8 +538,8 @@ class VendorAdminDokanHelper
                 $sql .= " AND MONTH( {$table_handler}.{$time} ) = MONTH( NOW() ) AND YEAR( {$table_handler}.{$time} ) = YEAR( CURDATE() )";
                 break;
             case 'custom':
-                $start_date = !empty($_GET['start_date']) ? FlutterValidator::cleanText($_GET['start_date']) : $start_date;
-                $end_date = !empty($_GET['end_date']) ? FlutterValidator::cleanText($_GET['end_date']) : $end_date;
+                $start_date = !empty($_GET['start_date']) ? sanitize_text_field($_GET['start_date']) : $start_date;
+                $end_date = !empty($_GET['end_date']) ? sanitize_text_field($_GET['end_date']) : $end_date;
                 if ($start_date) $start_date = wcfm_standard_date($start_date);
                 if ($end_date) $end_date = wcfm_standard_date($end_date);
                 $sql .= " AND DATE( {$table_handler}.{$time} ) BETWEEN '" . $start_date . "' AND '" . $end_date . "'";
@@ -623,10 +625,10 @@ class VendorAdminDokanHelper
     function get_notification_by_vendor($request, $user_id)
     {
         global $WCFM, $wpdb;
-        $wcfm_messages;
+        $wcfm_messages = array();
         if (isset($request['per_page']) && $request['per_page']) {
-            $limit = FlutterValidator::cleanText($request['per_page']);
-            $offset = FlutterValidator::cleanText($request['page']);
+            $limit = sanitize_text_field($request['per_page']);
+            $offset = sanitize_text_field($request['page']);
             if(!is_numeric($offset)){
                 $offset = 1;
             }
@@ -665,31 +667,31 @@ class VendorAdminDokanHelper
 
         $requestStatus = "draft";
         if (isset($request["status"])) {
-            $requestStatus = FlutterValidator::cleanText($request["status"]);
+            $requestStatus = sanitize_text_field($request["status"]);
         }
 
-        $name = FlutterValidator::cleanText($request["name"]);
-        $description = FlutterValidator::cleanText($request["description"]);
-        $short_description = FlutterValidator::cleanText($request["short_description"]);
-        $featured_image = FlutterValidator::cleanText($request['featuredImage']);
-        $product_images = FlutterValidator::cleanText($request['images']);
-        $type = FlutterValidator::cleanText($request['type']);
-        $tags = FlutterValidator::cleanText($request['tags']);
-        $featured = FlutterValidator::cleanText($request['featured']);
-        $regular_price = FlutterValidator::cleanText($request['regular_price']);
-        $sale_price = FlutterValidator::cleanText($request['sale_price']);
-        $date_on_sale_from = FlutterValidator::cleanText($request['date_on_sale_from']);
-        $date_on_sale_from_gmt = FlutterValidator::cleanText($request['date_on_sale_from_gmt']);
-        $date_on_sale_to = FlutterValidator::cleanText($request['date_on_sale_to']);
-        $date_on_sale_to_gmt = FlutterValidator::cleanText($request['date_on_sale_to_gmt']);
-        $in_stock = FlutterValidator::cleanText($request['in_stock']);
-        $stock_quantity = FlutterValidator::cleanText($request['stock_quantity']);
-        $manage_stock  = FlutterValidator::cleanText($request['manage_stock']);
-        $backorders = FlutterValidator::cleanText($request['backorders']);
-        $categories = FlutterValidator::cleanText($request['categories']);
-        $productAttributes = FlutterValidator::cleanText($request['productAttributes']);
-        $variations = FlutterValidator::cleanText($request['variations']);      
-        $inventory_delta = FlutterValidator::cleanText($request['inventory_delta']);      
+        $name = sanitize_text_field($request["name"]);
+        $description = sanitize_text_field($request["description"]);
+        $short_description = sanitize_text_field($request["short_description"]);
+        $featured_image = sanitize_text_field($request['featuredImage']);
+        $product_images = sanitize_text_field($request['images']);
+        $type = sanitize_text_field($request['type']);
+        $tags = sanitize_text_field($request['tags']);
+        $featured = sanitize_text_field($request['featured']);
+        $regular_price = sanitize_text_field($request['regular_price']);
+        $sale_price = sanitize_text_field($request['sale_price']);
+        $date_on_sale_from = sanitize_text_field($request['date_on_sale_from']);
+        $date_on_sale_from_gmt = sanitize_text_field($request['date_on_sale_from_gmt']);
+        $date_on_sale_to = sanitize_text_field($request['date_on_sale_to']);
+        $date_on_sale_to_gmt = sanitize_text_field($request['date_on_sale_to_gmt']);
+        $in_stock = sanitize_text_field($request['in_stock']);
+        $stock_quantity = sanitize_text_field($request['stock_quantity']);
+        $manage_stock  = sanitize_text_field($request['manage_stock']);
+        $backorders = sanitize_text_field($request['backorders']);
+        $categories = sanitize_text_field($request['categories']);
+        $productAttributes = sanitize_text_field($request['productAttributes']);
+        $variations = sanitize_text_field($request['variations']);      
+        $inventory_delta = sanitize_text_field($request['inventory_delta']);      
 
         $count = 1;
 
@@ -810,10 +812,10 @@ class VendorAdminDokanHelper
 
                 // Description
                 if (isset($description)) {
-                    $product->set_description($description));
+                    $product->set_description($description);
                 }
                 if (isset($short_description)) {
-                    $product->set_description($short_description));
+                    $product->set_description($short_description);
                 }
 
                 // Stock status.
@@ -992,7 +994,7 @@ class VendorAdminDokanHelper
 
                     foreach ($result as $variation) {
                         $p_varation = new WC_Product_Variation($variation->ID);
-                        $dataVariation;
+                        $dataVariation = array();
                         $dataVariation['variation_id'] = $p_varation->get_id();
                         $dataVariation['max_qty'] = $p_varation->get_stock_quantity();
                         $dataVariation['variation_is_active'] = $p_varation->get_status() == 'publish';
@@ -1034,29 +1036,29 @@ class VendorAdminDokanHelper
         }
 
 
-        $name = FlutterValidator::cleanText($request["name"]);
-        $description = FlutterValidator::cleanText($request["description"]);
-        $short_description = FlutterValidator::cleanText($request["short_description"]);
-        $featured_image = FlutterValidator::cleanText($request['featuredImage']);
-        $product_images = FlutterValidator::cleanText($request['images']);
-        $type = FlutterValidator::cleanText($request['type']);
-        $tags = FlutterValidator::cleanText($request['tags']);
-        $featured = FlutterValidator::cleanText($request['featured']);
-        $regular_price = FlutterValidator::cleanText($request['regular_price']);
-        $sale_price = FlutterValidator::cleanText($request['sale_price']);
-        $date_on_sale_from = FlutterValidator::cleanText($request['date_on_sale_from']);
-        $date_on_sale_from_gmt = FlutterValidator::cleanText($request['date_on_sale_from_gmt']);
-        $date_on_sale_to = FlutterValidator::cleanText($request['date_on_sale_to']);
-        $date_on_sale_to_gmt = FlutterValidator::cleanText($request['date_on_sale_to_gmt']);
-        $in_stock = FlutterValidator::cleanText($request['in_stock']);
-        $stock_quantity = FlutterValidator::cleanText($request['stock_quantity']);
-        $manage_stock  = FlutterValidator::cleanText($request['manage_stock']);
-        $backorders = FlutterValidator::cleanText($request['backorders']);
-        $categories = FlutterValidator::cleanText($request['categories']);
-        $productAttributes = FlutterValidator::cleanText($request['productAttributes']);
-        $variations = FlutterValidator::cleanText($request['variations']);      
-        $inventory_delta = FlutterValidator::cleanText($request['inventory_delta']);     
-        $status = FlutterValidator::cleanText($request['status']);     
+        $name = sanitize_text_field($request["name"]);
+        $description = sanitize_text_field($request["description"]);
+        $short_description = sanitize_text_field($request["short_description"]);
+        $featured_image = sanitize_text_field($request['featuredImage']);
+        $product_images = sanitize_text_field($request['images']);
+        $type = sanitize_text_field($request['type']);
+        $tags = sanitize_text_field($request['tags']);
+        $featured = sanitize_text_field($request['featured']);
+        $regular_price = sanitize_text_field($request['regular_price']);
+        $sale_price = sanitize_text_field($request['sale_price']);
+        $date_on_sale_from = sanitize_text_field($request['date_on_sale_from']);
+        $date_on_sale_from_gmt = sanitize_text_field($request['date_on_sale_from_gmt']);
+        $date_on_sale_to = sanitize_text_field($request['date_on_sale_to']);
+        $date_on_sale_to_gmt = sanitize_text_field($request['date_on_sale_to_gmt']);
+        $in_stock = sanitize_text_field($request['in_stock']);
+        $stock_quantity = sanitize_text_field($request['stock_quantity']);
+        $manage_stock  = sanitize_text_field($request['manage_stock']);
+        $backorders = sanitize_text_field($request['backorders']);
+        $categories = sanitize_text_field($request['categories']);
+        $productAttributes = sanitize_text_field($request['productAttributes']);
+        $variations = sanitize_text_field($request['variations']);      
+        $inventory_delta = sanitize_text_field($request['inventory_delta']);     
+        $status = sanitize_text_field($request['status']);     
          
         $count = 1;
         if ($product->get_type() != $type) {
@@ -1360,7 +1362,7 @@ class VendorAdminDokanHelper
 
                 foreach ($result as $variation) {
                     $p_varation = new WC_Product_Variation($variation->ID);
-                    $dataVariation;
+                    $dataVariation = array();
                     $dataVariation['variation_id'] = $p_varation->get_id();
                     $dataVariation['max_qty'] = $p_varation->get_stock_quantity();
                     $dataVariation['variation_is_active'] = $p_varation->get_status() == 'publish';

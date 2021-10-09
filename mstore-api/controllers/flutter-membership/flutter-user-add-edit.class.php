@@ -49,7 +49,7 @@ class FlutterUserAddEdit
          */
         ///////////////set payment gateway
         if (!empty($_REQUEST['ihc_payment_gateway'])) {
-            $this->payment_gateway = FlutterValidator::cleanText($_REQUEST['ihc_payment_gateway']);
+            $this->payment_gateway = sanitize_text_field($_REQUEST['ihc_payment_gateway']);
             $this->rewrite_payment_gateway = FALSE;
             if (isset($_REQUEST['ihc_payment_gateway_radio'])) {
                 unset($_REQUEST['ihc_payment_gateway_radio']);
@@ -98,7 +98,7 @@ class FlutterUserAddEdit
             $standard_level = '';
         }
         if (isset($_REQUEST['lid']) || $standard_level) {
-            $this->current_level = isset($_REQUEST['lid']) ? FlutterValidator::cleanText($_REQUEST['lid']) : $standard_level;
+            $this->current_level = isset($_REQUEST['lid']) ? sanitize_text_field($_REQUEST['lid']) : $standard_level;
         }
 
         if ($this->rewrite_payment_gateway && $this->current_level && ihc_is_magic_feat_active('level_restrict_payment')) {
@@ -405,8 +405,8 @@ class FlutterUserAddEdit
 
                     if (isset($_POST['stripeEmail']) && isset($_POST['stripeToken'])) {
                         //already have a token
-                        $str .= indeed_create_form_element(array('type' => 'hidden', 'name' => 'stripeToken', 'value' => FlutterValidator::cleanText($_POST['stripeToken'])));
-                        $str .= indeed_create_form_element(array('type' => 'hidden', 'name' => 'stripeEmail', 'value' => FlutterValidator::sanitizeEmail($_POST['stripeEmail'])));
+                        $str .= indeed_create_form_element(array('type' => 'hidden', 'name' => 'stripeToken', 'value' => sanitize_text_field($_POST['stripeToken'])));
+                        $str .= indeed_create_form_element(array('type' => 'hidden', 'name' => 'stripeEmail', 'value' => sanitize_email($_POST['stripeEmail'])));
                     } else {
                         if (!class_exists('ihcStripe')) {
                             require_once IHC_PATH . 'classes/PaymentGateways/ihcStripe.class.php';
@@ -619,7 +619,7 @@ class FlutterUserAddEdit
                 $this->user_data[$name] = '';
                 if (isset($_POST[$name])) {
                     /// prev value from submit form
-                    $this->user_data[$name] = FlutterValidator::cleanText($_POST[$name]);
+                    $this->user_data[$name] = sanitize_text_field($_POST[$name]);
                 } else if (isset($ihc_stored_form_values[$name])) {
                     /// prev value from submit form, before register with sm
                     $this->user_data[$name] = $ihc_stored_form_values[$name];
@@ -827,7 +827,7 @@ class FlutterUserAddEdit
                 if (isset($this->user_data[$v['name']]) && !empty($this->user_data[$v['name']])) {
                     $val = $this->user_data[$v['name']];
                 } elseif (isset($_POST[$v['name']])) {
-                    $val = FlutterValidator::cleanText($_POST[$v['name']]);
+                    $val = sanitize_text_field($_POST[$v['name']]);
                 }
                 if (empty($val) && $v['type'] == 'plain_text') { //maybe it's plain text
                     $val = $v['plain_text_value'];
@@ -891,7 +891,7 @@ class FlutterUserAddEdit
                 if (isset($this->user_data[$v['name']]) && !empty($this->user_data[$v['name']])) {
                     $val = $this->user_data[$v['name']];
                 } elseif (isset($_POST[$v['name']])) {
-                    $val = FlutterValidator::cleanText($_POST[$v['name']]);
+                    $val = sanitize_text_field($_POST[$v['name']]);
                 }
                 if (empty($val) && $v['type'] == 'plain_text') { //maybe it's plain text
                     $val = $v['plain_text_value'];
@@ -941,7 +941,7 @@ class FlutterUserAddEdit
                 if (isset($this->user_data[$v['name']]) && !empty($this->user_data[$v['name']])) {
                     $val = $this->user_data[$v['name']];
                 } elseif (isset($_POST[$v['name']])) {
-                    $val = FlutterValidator::cleanText($_POST[$v['name']]);
+                    $val = sanitize_text_field($_POST[$v['name']]);
                 }
                 if (empty($val) && $v['type'] == 'plain_text') { //maybe it's plain text
                     $val = $v['plain_text_value'];
@@ -992,7 +992,7 @@ class FlutterUserAddEdit
                 if (isset($this->user_data[$v['name']]) && !empty($this->user_data[$v['name']])) {
                     $val = $this->user_data[$v['name']];
                 } elseif (isset($_POST[$v['name']])) {
-                    $val = FlutterValidator::cleanText($_POST[$v['name']]);
+                    $val = sanitize_text_field($_POST[$v['name']]);
                 }
 
                 if (empty($val) && $v['type'] == 'plain_text') { //maybe it's plain text
@@ -1140,8 +1140,8 @@ class FlutterUserAddEdit
             do {
 
                 //======================== if price after discount is 0
-                $level_data = ihc_get_level_by_id(FlutterValidator::cleanText($_POST['lid']));
-                if (ihc_dont_pay_after_discount(FlutterValidator::cleanText($_POST['lid']), $this->coupon, $level_data)) {
+                $level_data = ihc_get_level_by_id(sanitize_text_field($_POST['lid']));
+                if (ihc_dont_pay_after_discount(sanitize_text_field($_POST['lid']), $this->coupon, $level_data)) {
                     //will continue in set_levels() method
                     break;
                 }
@@ -1153,7 +1153,7 @@ class FlutterUserAddEdit
                 switch ($this->payment_gateway) {//ihcpay
                     case 'authorize':
                         /*************** AUTHORIZE *****************/
-                        if (!ihc_is_level_reccuring(FlutterValidator::cleanText($_POST['lid']))) {
+                        if (!ihc_is_level_reccuring(sanitize_text_field($_POST['lid']))) {
                             break;
                         }
                         global $ihc_pay_error;
@@ -1179,12 +1179,12 @@ class FlutterUserAddEdit
                             }
                             $current_year_a = date('y', indeed_get_unixtimestamp_with_timezone());
                             $current_month_a = date('m', indeed_get_unixtimestamp_with_timezone());
-                            $temp_string = (string)FlutterValidator::cleanText($_POST['ihcpay_card_expire']);
+                            $temp_string = (string)sanitize_text_field($_POST['ihcpay_card_expire']);
                             $post_month = $temp_string[0] . $temp_string[1];
                             $post_month = (int)$post_month;
                             $post_year = $temp_string[2] . $temp_string[3];
                             $post_year = (int)$post_year;
-                            $expiration_length = strlen(FlutterValidator::cleanText($_POST['ihcpay_card_expire']));
+                            $expiration_length = strlen(sanitize_text_field($_POST['ihcpay_card_expire']));
                             if ($expiration_length != 4) {
                                 $this->errors[] = $this->register_metas['ihc_register_err_req_fields'];
                                 $ihc_pay_error['wrong_expiration'] = esc_html__('Please enter the expiration date in the MMYY format', 'ihc');
@@ -1215,7 +1215,7 @@ class FlutterUserAddEdit
                                 $ihc_pay_error['invalid_card'] = esc_html__('Invalid card number', 'ihc');
                                 $pay_errors = 1;
                             }
-                            $card_number_length = strlen(FlutterValidator::cleanText($_POST['ihcpay_card_number']));
+                            $card_number_length = strlen(sanitize_text_field($_POST['ihcpay_card_number']));
                             if ($card_number_length < 13 || $card_number_length > 16) {
                                 $this->errors[] = $this->register_metas['ihc_register_err_req_fields'];
                                 $ihc_pay_error['invalid_card'] = esc_html__('Invalid card number', 'ihc');
@@ -1496,7 +1496,7 @@ class FlutterUserAddEdit
          * @param none
          * @return none
          */
-        $lid = (isset($_REQUEST['lid'])) ? FlutterValidator::cleanText($_REQUEST['lid']) : -1;
+        $lid = (isset($_REQUEST['lid'])) ? sanitize_text_field($_REQUEST['lid']) : -1;
         $lid = (int)$lid; /// let's be sure this is a number
         /****************** PUBLIC ******************/
         if (isset($lid) && $lid !== 'none' && $lid > -1) { //'lid' can be none in some older versions of plugin
@@ -1553,7 +1553,7 @@ class FlutterUserAddEdit
                                     $href .= '&ihc_coupon=' . $this->coupon;
                                 }
                                 if (!empty($_POST['ihc_country'])) {
-                                    $href .= '&ihc_country=' . FlutterValidator::escapeAttribute($_POST['ihc_country']);
+                                    $href .= '&ihc_country=' . esc_attr($_POST['ihc_country']);
                                 }
                                 if ($this->taxes_enabled) {
                                     $ihc_country = get_user_meta($this->user_id, 'ihc_country', TRUE);
@@ -1629,7 +1629,7 @@ class FlutterUserAddEdit
 
                                 /*************************** DYNAMIC PRICE ***************************/
                                 if (ihc_is_magic_feat_active('level_dynamic_price') && isset($_POST['ihc_dynamic_price'])) {
-                                    $temp_amount = FlutterValidator::cleanText($_POST['ihc_dynamic_price']);
+                                    $temp_amount = sanitize_text_field($_POST['ihc_dynamic_price']);
                                     if (ihc_check_dynamic_price_from_user($lid, $temp_amount)) {
                                         $bt_params['ihc_dynamic_price'] = $temp_amount;
                                         $dynamic_data['ihc_dynamic_price'] = $temp_amount;
@@ -1665,7 +1665,7 @@ class FlutterUserAddEdit
                                 $url = add_query_arg('ihc_state', $state, $url);
                             }
                             if (isset($_POST['ihc_dynamic_price'])) {
-                                $url = add_query_arg('ihc_dynamic_price', FlutterValidator::cleanText($_POST['ihc_dynamic_price']), $url);
+                                $url = add_query_arg('ihc_dynamic_price', sanitize_text_field($_POST['ihc_dynamic_price']), $url);
                             }
                             $this->insert_the_order();
                             wp_redirect($url);
@@ -1691,7 +1691,7 @@ class FlutterUserAddEdit
                                 $url_return = add_query_arg('ihc_state', $state, $url_return);
                             }
                             if (isset($_POST['ihc_dynamic_price'])) {
-                                $url_return = add_query_arg('ihc_dynamic_price', FlutterValidator::cleanText($_POST['ihc_dynamic_price']), $url_return);
+                                $url_return = add_query_arg('ihc_dynamic_price', sanitize_text_field($_POST['ihc_dynamic_price']), $url_return);
                             }
                             $this->insert_the_order();
                             wp_redirect($url_return);
@@ -1729,13 +1729,13 @@ class FlutterUserAddEdit
         /****************** PUBLIC ******************/
         if (isset($_POST['lid']) && $_POST['lid'] !== 'none' && $_POST['lid'] > -1) { //'lid' can be none in a older version
 
-            $this->handle_levels_assign(FlutterValidator::cleanText($_POST['lid']));
-            $level_data = ihc_get_level_by_id(FlutterValidator::cleanText($_POST['lid']));
+            $this->handle_levels_assign(sanitize_text_field($_POST['lid']));
+            $level_data = ihc_get_level_by_id(sanitize_text_field($_POST['lid']));
 
             //======================== if price after discount is 0
 
-            if (ihc_dont_pay_after_discount(FlutterValidator::cleanText($_POST['lid']), $this->coupon, $level_data, TRUE)) {
-                \Indeed\Ihc\UserSubscriptions::makeComplete($this->user_id, esc_sql(FlutterValidator::cleanText($_POST['lid'])));
+            if (ihc_dont_pay_after_discount(sanitize_text_field($_POST['lid']), $this->coupon, $level_data, TRUE)) {
+                \Indeed\Ihc\UserSubscriptions::makeComplete($this->user_id, esc_sql(sanitize_text_field($_POST['lid'])));
                 return;
             }
             //========================
@@ -1749,17 +1749,17 @@ class FlutterUserAddEdit
                                 /// SAVE THE ORDER
                                 $this->insert_the_order();
 
-                                $href = IHC_URL . 'classes/PaymentGateways/authorize_payment.php?lid=' . FlutterValidator::cleanText($_POST['lid']) . '&uid=' . $this->user_id;
+                                $href = IHC_URL . 'classes/PaymentGateways/authorize_payment.php?lid=' . sanitize_text_field($_POST['lid']) . '&uid=' . $this->user_id;
                                 if ($this->coupon) {
                                     $href .= '&ihc_coupon=' . $this->coupon;
                                 }
                                 if (!empty($_POST['ihc_country']) && $this->taxes_enabled) {
-                                    $href .= '&ihc_country=' . FlutterValidator::cleanText($_POST['ihc_country']);
+                                    $href .= '&ihc_country=' . sanitize_text_field($_POST['ihc_country']);
                                     $state = get_user_meta($this->user_id, 'ihc_state', TRUE);
                                     $href .= '&ihc_state=' . $state;
                                 }
                                 if (isset($_POST['ihc_dynamic_price'])) {
-                                    $href .= "&ihc_dynamic_price=" . FlutterValidator::cleanText($_POST['ihc_dynamic_price']);
+                                    $href .= "&ihc_dynamic_price=" . sanitize_text_field($_POST['ihc_dynamic_price']);
                                 }
                                 wp_redirect($href);
                                 exit();
@@ -1775,11 +1775,11 @@ class FlutterUserAddEdit
                             /// SAVE THE ORDER
                             $this->insert_the_order();
                             if (!empty($_POST['ihc_country']) && $this->taxes_enabled) {
-                                $ihc_country = FlutterValidator::cleanText($_POST['ihc_country']);
+                                $ihc_country = sanitize_text_field($_POST['ihc_country']);
                             } else {
                                 $ihc_country = FALSE;
                             }
-                            ihc_twocheckout_submit($this->user_id, FlutterValidator::cleanText($_POST['lid']), $this->coupon, $ihc_country);
+                            ihc_twocheckout_submit($this->user_id, sanitize_text_field($_POST['lid']), $this->coupon, $ihc_country);
                         }
                         break;
                     case 'bank_transfer':
@@ -1806,13 +1806,13 @@ class FlutterUserAddEdit
                         if (ihc_check_payment_available('braintree')) {
                             $post_data = $_POST;
                             $post_data['uid'] = $this->user_id;
-                            $post_data['lid'] = FlutterValidator::cleanText($_POST['lid']);
+                            $post_data['lid'] = sanitize_text_field($_POST['lid']);
                             $post_data['ihc_coupon'] = $this->coupon;
                             if (!empty($post_data['ihc_country']) && !$this->taxes_enabled) {
                                 unset($post_data['ihc_country']);
                             }
                             if (isset($_POST['ihc_dynamic_price'])) {
-                                $post_data['ihc_dynamic_price'] = FlutterValidator::cleanText($_POST['ihc_dynamic_price']);
+                                $post_data['ihc_dynamic_price'] = sanitize_text_field($_POST['ihc_dynamic_price']);
                             }
                             if (version_compare(phpversion(), '7.2', '>=')) {
                                 // braintree v2
@@ -1843,9 +1843,9 @@ class FlutterUserAddEdit
          * @param none
          * @return none
          */
-        $lid = (empty($_POST['lid'])) ? FALSE : FlutterValidator::cleanText($_POST['lid']);
+        $lid = (empty($_POST['lid'])) ? FALSE : sanitize_text_field($_POST['lid']);
         if ($lid === FALSE) {
-            $lid = (empty($_GET['lid'])) ? FALSE : FlutterValidator::cleanText($_GET['lid']);
+            $lid = (empty($_GET['lid'])) ? FALSE : sanitize_text_field($_GET['lid']);
         }
 
         if (!empty($this->user_id) && $lid !== FALSE) {
@@ -1855,7 +1855,7 @@ class FlutterUserAddEdit
 
             /*************************** DYNAMIC PRICE ***************************/
             if (ihc_is_magic_feat_active('level_dynamic_price') && isset($_POST['ihc_dynamic_price'])) {
-                $temp_amount = FlutterValidator::cleanText($_POST['ihc_dynamic_price']);
+                $temp_amount = sanitize_text_field($_POST['ihc_dynamic_price']);
                 if (ihc_check_dynamic_price_from_user($lid, $temp_amount)) {
                     $amount = $temp_amount;
                 }
@@ -1885,12 +1885,12 @@ class FlutterUserAddEdit
             }
             /// TAXES
             if (!empty($_POST['ihc_country'])) {
-                $ihc_country = FlutterValidator::cleanText($_POST['ihc_country']);
+                $ihc_country = sanitize_text_field($_POST['ihc_country']);
             } else {
                 $ihc_country = get_user_meta($this->user_id, 'ihc_country', TRUE);
             }
             if (!empty($_POST['ihc_state'])) {
-                $state = FlutterValidator::cleanText($_POST['ihc_state']);
+                $state = sanitize_text_field($_POST['ihc_state']);
             } else {
                 $state = get_user_meta($this->user_id, 'ihc_state', TRUE);
                 if ($state == FALSE) {
@@ -2027,7 +2027,7 @@ class FlutterUserAddEdit
         }
 
         if ($this->type == 'create') {
-            $url = apply_filters('ihc_register_redirect_filter', $url, $this->user_id, (isset($_POST['lid'])) ? FlutterValidator::cleanText($_POST['lid']) : 0);
+            $url = apply_filters('ihc_register_redirect_filter', $url, $this->user_id, (isset($_POST['lid'])) ? sanitize_text_field($_POST['lid']) : 0);
         }
 
 
@@ -2035,11 +2035,11 @@ class FlutterUserAddEdit
             /// bt redirect only to same page
             $bt_params = array('ihc_register' => $q_arg,
                 'ihcbt' => 'true',
-                'ihc_lid' => FlutterValidator::cleanText($_POST['lid']),
+                'ihc_lid' => sanitize_text_field($_POST['lid']),
                 'ihc_uid' => $this->user_id
             );
             if ($this->coupon) {
-                $coupon_data = ihc_check_coupon($this->coupon, FlutterValidator::cleanText($_POST['lid']));
+                $coupon_data = ihc_check_coupon($this->coupon, sanitize_text_field($_POST['lid']));
                 if ($coupon_data) {
                     if ($coupon_data['discount_type'] == 'percentage') {
                         $bt_params['cp'] = $coupon_data['discount_value'];
@@ -2052,10 +2052,10 @@ class FlutterUserAddEdit
 
             //country
             if (!empty($_POST['ihc_country'])) {
-                $bt_params['ihc_country'] = FlutterValidator::cleanText($_POST['ihc_country']);
+                $bt_params['ihc_country'] = sanitize_text_field($_POST['ihc_country']);
             }
             if (!empty($_POST['ihc_state'])) {
-                $bt_params['ihc_state'] = FlutterValidator::cleanText($_POST['ihc_state']);
+                $bt_params['ihc_state'] = sanitize_text_field($_POST['ihc_state']);
             }
             $url = add_query_arg($bt_params, $url);
         } else {
@@ -2077,31 +2077,31 @@ class FlutterUserAddEdit
         if ($this->is_public) {
             if (!empty($_GET['ihc_fb'])) {
                 $ihc_register_sm_value = 'fb';
-                $ihc_sm_value = FlutterValidator::cleanText($_GET['ihc_fb']);
+                $ihc_sm_value = sanitize_text_field($_GET['ihc_fb']);
                 $ihc_sm_name = 'ihc_fb';
             } else if (!empty($_GET['ihc_tw'])) {
                 $ihc_register_sm_value = 'tw';
-                $ihc_sm_value = FlutterValidator::cleanText($_GET['ihc_tw']);
+                $ihc_sm_value = sanitize_text_field($_GET['ihc_tw']);
                 $ihc_sm_name = 'ihc_tw';
             } else if (!empty($_GET['ihc_in'])) {
                 $ihc_register_sm_value = 'in';
-                $ihc_sm_value = FlutterValidator::cleanText($_GET['ihc_in']);
+                $ihc_sm_value = sanitize_text_field($_GET['ihc_in']);
                 $ihc_sm_name = 'ihc_in';
             } else if (!empty($_GET['ihc_tbr'])) {
                 $ihc_register_sm_value = 'tbr';
-                $ihc_sm_value = FlutterValidator::cleanText($_GET['ihc_tbr']);
+                $ihc_sm_value = sanitize_text_field($_GET['ihc_tbr']);
                 $ihc_sm_name = 'ihc_tbr';
             } else if (!empty($_GET['ihc_ig'])) {
                 $ihc_register_sm_value = 'ig';
-                $ihc_sm_value = FlutterValidator::cleanText($_GET['ihc_ig']);
+                $ihc_sm_value = sanitize_text_field($_GET['ihc_ig']);
                 $ihc_sm_name = 'ihc_ig';
             } else if (!empty($_GET['ihc_vk'])) {
                 $ihc_register_sm_value = 'vk';
-                $ihc_sm_value = FlutterValidator::cleanText($_GET['ihc_vk']);
+                $ihc_sm_value = sanitize_text_field($_GET['ihc_vk']);
                 $ihc_sm_name = 'ihc_vk';
             } else if (!empty($_GET['ihc_goo'])) {
                 $ihc_register_sm_value = 'goo';
-                $ihc_sm_value = FlutterValidator::cleanText($_GET['ihc_goo']);
+                $ihc_sm_value = sanitize_text_field($_GET['ihc_goo']);
                 $ihc_sm_name = 'ihc_goo';
             }
             if (!empty($ihc_register_sm_value) && !empty($ihc_sm_value) && !empty($ihc_sm_name)) {
@@ -2128,7 +2128,7 @@ class FlutterUserAddEdit
             }
 
             //add social key to current register_fields array
-            $name = 'ihc_' . FlutterValidator::cleanText($_POST['ihc_sm_register']);
+            $name = 'ihc_' . sanitize_text_field($_POST['ihc_sm_register']);
             $this->register_fields[] = array('name' => $name);
 
         }
@@ -2172,15 +2172,15 @@ class FlutterUserAddEdit
         $lid = isset($_POST['lid']) ? esc_sql($_POST['lid']) : '';
         if ($lid === '' && isset($_GET['lid'])) {
             // in some rare cases ( payment for ulp course ), the level id is found in GET
-            $lid = FlutterValidator::cleanText($_GET['lid']);
+            $lid = sanitize_text_field($_GET['lid']);
         }
         $options = array(
             'uid' => $this->user_id,
             'lid' => $lid,
             'ihc_coupon' => $this->coupon,
-            'ihc_country' => esc_sql((isset($_POST['ihc_country'])) ? FlutterValidator::cleanText($_POST['ihc_country']) : ''),
+            'ihc_country' => esc_sql((isset($_POST['ihc_country'])) ? sanitize_text_field($_POST['ihc_country']) : ''),
             'ihc_state' => get_user_meta($this->user_id, 'ihc_state', true),
-            'ihc_dynamic_price' => esc_sql((isset($_POST['ihc_dynamic_price'])) ? FlutterValidator::cleanText($_POST['ihc_dynamic_price']) : ''),
+            'ihc_dynamic_price' => esc_sql((isset($_POST['ihc_dynamic_price'])) ? sanitize_text_field($_POST['ihc_dynamic_price']) : ''),
             'defaultRedirect' => '',
             'is_register' => $this->type == 'create' ? true : false,
         );

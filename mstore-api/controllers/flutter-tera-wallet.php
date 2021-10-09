@@ -198,7 +198,7 @@ class FlutterTeraWallet extends FlutterBaseController
             wp_set_current_user($user_id);
             $_POST['woo_wallet_transfer_user_id'] = $user->id;
             $_POST['woo_wallet_transfer_amount'] = $params['amount'];
-            $_POST['woo_wallet_transfer_note'] = FlutterValidator::cleanText($params['note']);
+            $_POST['woo_wallet_transfer_note'] = sanitize_text_field($params['note']);
             $_POST['woo_wallet_transfer'] = wp_create_nonce('woo_wallet_transfer');
 
 
@@ -260,6 +260,7 @@ class FlutterTeraWallet extends FlutterBaseController
             $wallet_response = woo_wallet()->wallet->debit(get_current_user_id(), $order->get_total('edit'), apply_filters('woo_wallet_order_payment_description', __('For order payment #', 'woo-wallet') . $order->get_order_number(), $order));
 
             // Reduce stock levels
+            $order_id = $request['id'];
             wc_reduce_stock_levels($order_id);
 
             if ($wallet_response) {

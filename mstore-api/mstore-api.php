@@ -24,7 +24,7 @@ include_once plugin_dir_path(__FILE__) . "controllers/flutter-vendor-admin.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-woo.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-delivery.php";
 include_once plugin_dir_path(__FILE__) . "functions/index.php";
-include_once plugin_dir_path(__FILE__) . "functions/validator.php";
+include_once plugin_dir_path(__FILE__) . "functions/utils.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-membership/index.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-tera-wallet.php";
 
@@ -58,8 +58,6 @@ class MstoreCheckOut
             add_filter('woocommerce_is_checkout', '__return_true');
         }
 
-        include_once plugin_dir_path(__FILE__) . "controllers/mstore-home.php";
-
         add_action('wp_print_scripts', array($this, 'handle_received_order_page'));
 
         //add meta box shipping location in order detail
@@ -79,7 +77,7 @@ class MstoreCheckOut
                 $items = explode("\n", $note);
                 if (strpos($items[0], "URL:") !== false) {
                     $url = str_replace("URL:", "", $items[0]);
-                    echo FlutterValidator::escapeHtml('<iframe width="600" height="500" src="' . FlutterValidator::escapeUrl($url) . '"></iframe>');
+                    echo esc_html('<iframe width="600" height="500" src="' . esc_url($url) . '"></iframe>');
                 }
             }
         }
@@ -128,17 +126,9 @@ class MstoreCheckOut
     }
 
     function mstore_delete_json_file(){
-        $id = FlutterValidator::cleanText($_REQUEST['id']);
-        $nonce = FlutterValidator::cleanText($_REQUEST['nonce']);
-        if(strlen($id) == 2){
-            if (wp_verify_nonce($nonce, 'delete_config_json_file')) {
-                $uploads_dir   = wp_upload_dir();
-                $filePath = trailingslashit( $uploads_dir["basedir"] )."/2000/01/config_".$id.".json";
-                unlink($filePath);
-                echo "success";
-                die();
-            }
-        }
+        $id = sanitize_text_field($_REQUEST['id']);
+        $nonce = sanitize_text_field($_REQUEST['nonce']);
+        FlutterUtils::delete_config_file($id, $nonce);
     }
 
     function mstore_update_limit_product()
@@ -151,31 +141,31 @@ class MstoreCheckOut
 
     function mstore_update_firebase_server_key()
     {
-        $serverKey = FlutterValidator::cleanText($_REQUEST['serverKey']);
+        $serverKey = sanitize_text_field($_REQUEST['serverKey']);
         update_option("mstore_firebase_server_key", $serverKey);
     }
 
     function mstore_update_new_order_title()
     {
-        $title = FlutterValidator::cleanText($_REQUEST['title']);
+        $title = sanitize_text_field($_REQUEST['title']);
         update_option("mstore_new_order_title", $title);
     }
 
     function mstore_update_new_order_message()
     {
-        $message = FlutterValidator::cleanText($_REQUEST['message']);
+        $message = sanitize_text_field($_REQUEST['message']);
         update_option("mstore_new_order_message", $message);
     }
 
     function mstore_update_status_order_title()
     {
-        $title = FlutterValidator::cleanText($_REQUEST['title']);
+        $title = sanitize_text_field($_REQUEST['title']);
         update_option("mstore_status_order_title", $title);
     }
 
     function mstore_update_status_order_message()
     {
-        $message = FlutterValidator::cleanText($_REQUEST['message']);
+        $message = sanitize_text_field($_REQUEST['message']);
         update_option("mstore_status_order_message", $message);
     }
 
@@ -255,14 +245,6 @@ function load_mstore_templater()
     )->register();
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Define for the API User wrapper which is based on json api user plugin
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-add_filter('json_api_controllers', 'registerJsonApiController');
-add_filter('json_api_mstore_user_controller_path', 'setMstoreUserControllerPath');
-add_action('init', 'json_apiCheckAuthCookie', 100);
-
 //custom rest api
 function mstore_users_routes()
 {
@@ -303,43 +285,6 @@ function mstore_init()
     load_template(dirname(__FILE__) . '/templates/mstore-api-admin-page.php');
 }
 
-function registerJsonApiController($aControllers)
-{
-    $aControllers[] = 'Mstore_User';
-    return $aControllers;
-}
-
-function setMstoreUserControllerPath()
-{
-    return plugin_dir_path(__FILE__) . '/controllers/mstore-user.php';
-}
-
-function json_apiCheckAuthCookie()
-{
-    global $json_api;
-
-    if (isset($json_api->query) && $json_api->query->cookie) {
-        $user_id = wp_validate_auth_cookie($json_api->query->cookie, 'logged_in');
-        if ($user_id) {
-            $user = get_userdata($user_id);
-            wp_set_current_user($user->ID, $user->user_login);
-        }
-    }
-}
-
-
-/**
- * Register the mstore caching endpoints so they will be cached.
- */
-function wprc_add_mstore_endpoints($allowed_endpoints)
-{
-    if (!isset($allowed_endpoints['mstore/v1']) || !in_array('cache', $allowed_endpoints['mstore/v1'])) {
-        $allowed_endpoints['mstore/v1'][] = 'cache';
-    }
-    return $allowed_endpoints;
-}
-
-add_filter('wp_rest_cache/allowed_endpoints', 'wprc_add_mstore_endpoints', 10, 1);
 add_filter('woocommerce_rest_prepare_product_variation_object', 'custom_woocommerce_rest_prepare_product_variation_object', 20, 3);
 add_filter('woocommerce_rest_prepare_product_object', 'custom_change_product_response', 20, 3);
 
@@ -380,7 +325,7 @@ function prepare_checkout()
 
     if (isset($_GET['mobile']) && isset($_GET['code'])) {
 
-        $code = FlutterValidator::cleanText($_GET['code']);
+        $code = sanitize_text_field($_GET['code']);
         global $wpdb;
         $table_name = $wpdb->prefix . "mstore_checkout";
         $item = $wpdb->get_row("SELECT * FROM $table_name WHERE code = '$code'");
@@ -548,7 +493,7 @@ function prepare_checkout()
             WC()->session->set('chosen_payment_method', $data['payment_method']);
         }
         if (isset($data['customer_note']) && !empty($data['customer_note'])) {
-            $_POST["order_comments"] = FlutterValidator::cleanText($data['customer_note']);
+            $_POST["order_comments"] = sanitize_text_field($data['customer_note']);
             $checkout_fields = WC()->checkout->__get("checkout_fields");
             $checkout_fields["order"] = ["order_comments" => ["type" => "textarea", "class" => [], "label" => "Order notes", "placeholder" => "Notes about your order, e.g. special notes for delivery."]];
             WC()->checkout->__set("checkout_fields", $checkout_fields);
@@ -556,7 +501,7 @@ function prepare_checkout()
     }
 
     if (isset($_GET['cookie'])) {
-        $cookie = urldecode(base64_decode(FlutterValidator::cleanText($_GET['cookie'])));
+        $cookie = urldecode(base64_decode(sanitize_text_field($_GET['cookie'])));
         $userId = wp_validate_auth_cookie($cookie, 'logged_in');
         if ($userId !== false) {
             $user = get_userdata($userId);

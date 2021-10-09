@@ -6,14 +6,14 @@ class FlutterWCFMHelper
     {
         global $WCFM, $WCFMmp, $wpdb, $wcfmmp_radius_lat, $wcfmmp_radius_lng, $wcfmmp_radius_range;
 
-        $search_term = $request->get_param('search') ? FlutterValidator::cleanText($request->get_param('search')) : '';
-        $search_category = $request->get_param('wcfmmp_store_category') ? FlutterValidator::cleanText($request->get_param('wcfmmp_store_category')) : '';
+        $search_term = $request->get_param('search') ? sanitize_text_field($request->get_param('search')) : '';
+        $search_category = $request->get_param('wcfmmp_store_category') ? sanitize_text_field($request->get_param('wcfmmp_store_category')) : '';
         $paged = $request->get_param('page') ? absint($request->get_param('page')) : 1;
         $per_page = $request->get_param('per_page') ? absint($request->get_param('per_page')) : 10;
-        $includes = $request->get_param('includes') ? FlutterValidator::cleanText($request->get_param('includes')) : '';
-        $excludes = $request->get_param('excludes') ? FlutterValidator::cleanText($request->get_param('excludes')) : '';
-        $has_product = $request->get_param('has_product') ? FlutterValidator::cleanText($request->get_param('has_product')) : '';
-        $units = $request->get_param('units') ? FlutterValidator::cleanText($request->get_param('units')) : 'metric';
+        $includes = $request->get_param('includes') ? sanitize_text_field($request->get_param('includes')) : '';
+        $excludes = $request->get_param('excludes') ? sanitize_text_field($request->get_param('excludes')) : '';
+        $has_product = $request->get_param('has_product') ? sanitize_text_field($request->get_param('has_product')) : '';
+        $units = $request->get_param('units') ? sanitize_text_field($request->get_param('units')) : 'metric';
 
         $search_data = array();
 
@@ -318,15 +318,15 @@ class FlutterWCFMHelper
 
         $vendor_id = $user_id;
 
-        $length = FlutterValidator::cleanText($request['per_page']);
-        $offset = FlutterValidator::cleanText($request['page']);
+        $length = sanitize_text_field($request['per_page']);
+        $offset = sanitize_text_field($request['page']);
 
-        $the_orderby = !empty($request['orderby']) ? FlutterValidator::cleanText($request['orderby']) : 'ID';
+        $the_orderby = !empty($request['orderby']) ? sanitize_text_field($request['orderby']) : 'ID';
         $the_order = (!empty($request['order']) && 'asc' === $request['order']) ? 'ASC' : 'DESC';
 
         $status_filter = '';
         if (isset($request['status_type']) && ($request['status_type'] != '')) {
-            $status_filter = FlutterValidator::cleanText($request['status_type']);
+            $status_filter = sanitize_text_field($request['status_type']);
             if ($status_filter == 'approved') {
                 $status_filter = ' AND `approved` = 1';
             } elseif ($status_filter == 'pending') {
@@ -486,8 +486,8 @@ class FlutterWCFMHelper
                 $sql .= " AND MONTH( {$table_handler}.{$time} ) = MONTH( NOW() )";
                 break;
             case 'custom' :
-                $start_date = !empty($_GET['start_date']) ? FlutterValidator::cleanText($_GET['start_date']) : $start_date;
-                $end_date = !empty($_GET['end_date']) ? FlutterValidator::cleanText($_GET['end_date']) : $end_date;
+                $start_date = !empty($_GET['start_date']) ? sanitize_text_field($_GET['start_date']) : $start_date;
+                $end_date = !empty($_GET['end_date']) ? sanitize_text_field($_GET['end_date']) : $end_date;
                 if ($start_date) $start_date = wcfm_standard_date($start_date);
                 if ($end_date) $end_date = wcfm_standard_date($end_date);
                 $sql .= " AND DATE( {$table_handler}.{$time} ) BETWEEN '" . $start_date . "' AND '" . $end_date . "'";
@@ -554,26 +554,26 @@ class FlutterWCFMHelper
                                     $_product_id = wc_get_order_item_meta($key, '_product_id', true);
                                     $_variation_id = wc_get_order_item_meta($key, '_variation_id', true);
                                     if (in_array($_product_id, $valid_items) || in_array($_variation_id, $valid_items)) {
-                                        $gross_sales += (float)FlutterValidator::cleanText($line_item->get_total());
+                                        $gross_sales += (float)sanitize_text_field($line_item->get_total());
                                         if (version_compare(WCV_VERSION, '2.0.0', '<')) {
                                             if (WC_Vendors::$pv_options->get_option('give_tax')) {
-                                                $gross_sales += (float)FlutterValidator::cleanText($line_item->get_total_tax());
+                                                $gross_sales += (float)sanitize_text_field($line_item->get_total_tax());
                                             }
                                         } else {
                                             if (get_option('wcvendors_vendor_give_taxes')) {
-                                                $gross_sales += (float)FlutterValidator::cleanText($line_item->get_total_tax());
+                                                $gross_sales += (float)sanitize_text_field($line_item->get_total_tax());
                                             }
                                         }
                                     }
                                 } elseif (in_array($line_item->get_variation_id(), $valid_items) || in_array($line_item->get_product_id(), $valid_items)) {
-                                    $gross_sales += (float)FlutterValidator::cleanText($line_item->get_total());
+                                    $gross_sales += (float)sanitize_text_field($line_item->get_total());
                                     if (version_compare(WCV_VERSION, '2.0.0', '<')) {
                                         if (WC_Vendors::$pv_options->get_option('give_tax')) {
-                                            $gross_sales += (float)FlutterValidator::cleanText($line_item->get_total_tax());
+                                            $gross_sales += (float)sanitize_text_field($line_item->get_total_tax());
                                         }
                                     } else {
                                         if (get_option('wcvendors_vendor_give_taxes')) {
-                                            $gross_sales += (float)FlutterValidator::cleanText($line_item->get_total_tax());
+                                            $gross_sales += (float)sanitize_text_field($line_item->get_total_tax());
                                         }
                                     }
                                 }
@@ -615,9 +615,9 @@ class FlutterWCFMHelper
                     if ($net_sale_whole_week->order_item_id) {
                         try {
                             $line_item = new WC_Order_Item_Product($net_sale_whole_week->order_item_id);
-                            $gross_sales += (float)FlutterValidator::cleanText($line_item->get_total());
+                            $gross_sales += (float)sanitize_text_field($line_item->get_total());
                             if ($WCMp->vendor_caps->vendor_payment_settings('give_tax')) {
-                                $gross_sales += (float)FlutterValidator::cleanText($line_item->get_total_tax());
+                                $gross_sales += (float)sanitize_text_field($line_item->get_total_tax());
                                 $gross_sales += (float)$net_sale_whole_week->shipping_tax_amount;
                             }
                             if ($WCMp->vendor_caps->vendor_payment_settings('give_shipping')) {
@@ -692,7 +692,7 @@ class FlutterWCFMHelper
             if (!empty($gross_sales_whole_week)) {
                 foreach ($gross_sales_whole_week as $net_sale_whole_week) {
                     $gross_commission_ids[] = $net_sale_whole_week->ID;
-                    $gross_total_refund_amount += (float)FlutterValidator::cleanText($net_sale_whole_week->refunded_amount);
+                    $gross_total_refund_amount += (float)sanitize_text_field($net_sale_whole_week->refunded_amount);
                 }
 
                 if (!empty($gross_commission_ids)) {
