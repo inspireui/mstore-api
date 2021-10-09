@@ -58,8 +58,6 @@ class MstoreCheckOut
             add_filter('woocommerce_is_checkout', '__return_true');
         }
 
-        include_once plugin_dir_path(__FILE__) . "controllers/mstore-home.php";
-
         add_action('wp_print_scripts', array($this, 'handle_received_order_page'));
 
         //add meta box shipping location in order detail
@@ -247,14 +245,6 @@ function load_mstore_templater()
     )->register();
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Define for the API User wrapper which is based on json api user plugin
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-add_filter('json_api_controllers', 'registerJsonApiController');
-add_filter('json_api_mstore_user_controller_path', 'setMstoreUserControllerPath');
-add_action('init', 'json_apiCheckAuthCookie', 100);
-
 //custom rest api
 function mstore_users_routes()
 {
@@ -295,43 +285,6 @@ function mstore_init()
     load_template(dirname(__FILE__) . '/templates/mstore-api-admin-page.php');
 }
 
-function registerJsonApiController($aControllers)
-{
-    $aControllers[] = 'Mstore_User';
-    return $aControllers;
-}
-
-function setMstoreUserControllerPath()
-{
-    return plugin_dir_path(__FILE__) . '/controllers/mstore-user.php';
-}
-
-function json_apiCheckAuthCookie()
-{
-    global $json_api;
-
-    if (isset($json_api->query) && $json_api->query->cookie) {
-        $user_id = wp_validate_auth_cookie($json_api->query->cookie, 'logged_in');
-        if ($user_id) {
-            $user = get_userdata($user_id);
-            wp_set_current_user($user->ID, $user->user_login);
-        }
-    }
-}
-
-
-/**
- * Register the mstore caching endpoints so they will be cached.
- */
-function wprc_add_mstore_endpoints($allowed_endpoints)
-{
-    if (!isset($allowed_endpoints['mstore/v1']) || !in_array('cache', $allowed_endpoints['mstore/v1'])) {
-        $allowed_endpoints['mstore/v1'][] = 'cache';
-    }
-    return $allowed_endpoints;
-}
-
-add_filter('wp_rest_cache/allowed_endpoints', 'wprc_add_mstore_endpoints', 10, 1);
 add_filter('woocommerce_rest_prepare_product_variation_object', 'custom_woocommerce_rest_prepare_product_variation_object', 20, 3);
 add_filter('woocommerce_rest_prepare_product_object', 'custom_change_product_response', 20, 3);
 
