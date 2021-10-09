@@ -24,7 +24,7 @@ include_once plugin_dir_path(__FILE__) . "controllers/flutter-vendor-admin.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-woo.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-delivery.php";
 include_once plugin_dir_path(__FILE__) . "functions/index.php";
-include_once plugin_dir_path(__FILE__) . "functions/validator.php";
+include_once plugin_dir_path(__FILE__) . "functions/utils.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-membership/index.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-tera-wallet.php";
 
@@ -79,7 +79,7 @@ class MstoreCheckOut
                 $items = explode("\n", $note);
                 if (strpos($items[0], "URL:") !== false) {
                     $url = str_replace("URL:", "", $items[0]);
-                    echo FlutterValidator::escapeHtml('<iframe width="600" height="500" src="' . FlutterValidator::escapeUrl($url) . '"></iframe>');
+                    echo esc_html('<iframe width="600" height="500" src="' . esc_url($url) . '"></iframe>');
                 }
             }
         }
@@ -128,12 +128,11 @@ class MstoreCheckOut
     }
 
     function mstore_delete_json_file(){
-        $id = FlutterValidator::cleanText($_REQUEST['id']);
-        $nonce = FlutterValidator::cleanText($_REQUEST['nonce']);
+        $id = sanitize_text_field($_REQUEST['id']);
+        $nonce = sanitize_text_field($_REQUEST['nonce']);
         if(strlen($id) == 2){
             if (wp_verify_nonce($nonce, 'delete_config_json_file')) {
-                $uploads_dir   = wp_upload_dir();
-                $filePath = trailingslashit( $uploads_dir["basedir"] )."/2000/01/config_".$id.".json";
+                $filePath = FlutterUtils::get_json_file_path("config_".$id.".json");
                 unlink($filePath);
                 echo "success";
                 die();
@@ -151,31 +150,31 @@ class MstoreCheckOut
 
     function mstore_update_firebase_server_key()
     {
-        $serverKey = FlutterValidator::cleanText($_REQUEST['serverKey']);
+        $serverKey = sanitize_text_field($_REQUEST['serverKey']);
         update_option("mstore_firebase_server_key", $serverKey);
     }
 
     function mstore_update_new_order_title()
     {
-        $title = FlutterValidator::cleanText($_REQUEST['title']);
+        $title = sanitize_text_field($_REQUEST['title']);
         update_option("mstore_new_order_title", $title);
     }
 
     function mstore_update_new_order_message()
     {
-        $message = FlutterValidator::cleanText($_REQUEST['message']);
+        $message = sanitize_text_field($_REQUEST['message']);
         update_option("mstore_new_order_message", $message);
     }
 
     function mstore_update_status_order_title()
     {
-        $title = FlutterValidator::cleanText($_REQUEST['title']);
+        $title = sanitize_text_field($_REQUEST['title']);
         update_option("mstore_status_order_title", $title);
     }
 
     function mstore_update_status_order_message()
     {
-        $message = FlutterValidator::cleanText($_REQUEST['message']);
+        $message = sanitize_text_field($_REQUEST['message']);
         update_option("mstore_status_order_message", $message);
     }
 
@@ -380,7 +379,7 @@ function prepare_checkout()
 
     if (isset($_GET['mobile']) && isset($_GET['code'])) {
 
-        $code = FlutterValidator::cleanText($_GET['code']);
+        $code = sanitize_text_field($_GET['code']);
         global $wpdb;
         $table_name = $wpdb->prefix . "mstore_checkout";
         $item = $wpdb->get_row("SELECT * FROM $table_name WHERE code = '$code'");
@@ -548,7 +547,7 @@ function prepare_checkout()
             WC()->session->set('chosen_payment_method', $data['payment_method']);
         }
         if (isset($data['customer_note']) && !empty($data['customer_note'])) {
-            $_POST["order_comments"] = FlutterValidator::cleanText($data['customer_note']);
+            $_POST["order_comments"] = sanitize_text_field($data['customer_note']);
             $checkout_fields = WC()->checkout->__get("checkout_fields");
             $checkout_fields["order"] = ["order_comments" => ["type" => "textarea", "class" => [], "label" => "Order notes", "placeholder" => "Notes about your order, e.g. special notes for delivery."]];
             WC()->checkout->__set("checkout_fields", $checkout_fields);
@@ -556,7 +555,7 @@ function prepare_checkout()
     }
 
     if (isset($_GET['cookie'])) {
-        $cookie = urldecode(base64_decode(FlutterValidator::cleanText($_GET['cookie'])));
+        $cookie = urldecode(base64_decode(sanitize_text_field($_GET['cookie'])));
         $userId = wp_validate_auth_cookie($cookie, 'logged_in');
         if ($userId !== false) {
             $user = get_userdata($userId);

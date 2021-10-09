@@ -123,8 +123,8 @@ class VendorAdminWooHelper
     /// GET FUNCTIONS
     public function flutter_get_products($request, $user_id)
     {
-        $page = isset($request["page"]) ? FlutterValidator::cleanText($request["page"])  : 1;
-        $limit = isset($request["per_page"]) ? FlutterValidator::cleanText($request["per_page"]) : 10;
+        $page = isset($request["page"]) ? sanitize_text_field($request["page"])  : 1;
+        $limit = isset($request["per_page"]) ? sanitize_text_field($request["per_page"]) : 10;
         if(!is_numeric($page)){
             $page = 1;
         }
@@ -139,7 +139,7 @@ class VendorAdminWooHelper
 
         // Added search product feature
         if (isset($request['search'])) {
-            $terms['s'] = FlutterValidator::cleanText($request['search']);
+            $terms['s'] = sanitize_text_field($request['search']);
         }
 
         $loop = new WP_Query($terms);
@@ -254,13 +254,13 @@ class VendorAdminWooHelper
         $per_page = 10;
 
         if (isset($request['page'])) {
-            $page = FlutterValidator::cleanText($request['page']);
+            $page = sanitize_text_field($request['page']);
             if(!is_numeric($page)){
                 $page = 1;
             }
         }
         if (isset($request['per_page'])) {
-            $per_page = FlutterValidator::cleanText($request['per_page']);
+            $per_page = sanitize_text_field($request['per_page']);
             if(!is_numeric($per_page)){
                 $per_page = 10;
             }
@@ -271,11 +271,11 @@ class VendorAdminWooHelper
         $sql = "SELECT * FROM " . $table_name . " WHERE post_type LIKE 'shop_order'";
 
         if (isset($request['status'])) {
-            $status = FlutterValidator::cleanText($request['status']);
+            $status = sanitize_text_field($request['status']);
             $sql .= " AND post_status = 'wc-$status'";
         }
         if (isset($request['search'])) {
-            $search = FlutterValidator::cleanText($request['search']);
+            $search = sanitize_text_field($request['search']);
             $sql .= " AND ID LIKE '$search%'";
         }
         $sql .= " GROUP BY $table_name.`ID` ORDER BY $table_name.`ID` DESC LIMIT $per_page OFFSET $page";
@@ -356,8 +356,8 @@ class VendorAdminWooHelper
 
     public function flutter_update_order_status($request, $user_id)
     {
-        $order_id = FlutterValidator::cleanText($request['order_id']);
-        $order_status = FlutterValidator::cleanText($request['order_status']);
+        $order_id = sanitize_text_field($request['order_id']);
+        $order_status = sanitize_text_field($request['order_status']);
         if (!is_numeric($order_id)) {
             return new WP_REST_Response(array(
                 'status' => 'success',
@@ -368,7 +368,7 @@ class VendorAdminWooHelper
         $order = wc_get_order($order_id);
         $order->update_status($order_status, '', true);
         
-        $note = FlutterValidator::cleanText($request['customer_note']);
+        $note = sanitize_text_field($request['customer_note']);
         if (!empty($note)) {
             $order->add_order_note($note, true, true);
         }
@@ -657,31 +657,31 @@ class VendorAdminWooHelper
         
         $requestStatus = "draft";
         if ($request["status"] != null) {
-            $requestStatus = FlutterValidator::cleanText($request["status"]);
+            $requestStatus = sanitize_text_field($request["status"]);
         }
 
-        $name = FlutterValidator::cleanText($request["name"]);
-        $description = FlutterValidator::cleanText($request["description"]);
-        $short_description = FlutterValidator::cleanText($request["short_description"]);
-        $featured_image = FlutterValidator::cleanText($request['featuredImage']);
-        $product_images = FlutterValidator::cleanText($request['images']);
-        $type = FlutterValidator::cleanText($request['type']);
-        $tags = FlutterValidator::cleanText($request['tags']);
-        $featured = FlutterValidator::cleanText($request['featured']);
-        $regular_price = FlutterValidator::cleanText($request['regular_price']);
-        $sale_price = FlutterValidator::cleanText($request['sale_price']);
-        $date_on_sale_from = FlutterValidator::cleanText($request['date_on_sale_from']);
-        $date_on_sale_from_gmt = FlutterValidator::cleanText($request['date_on_sale_from_gmt']);
-        $date_on_sale_to = FlutterValidator::cleanText($request['date_on_sale_to']);
-        $date_on_sale_to_gmt = FlutterValidator::cleanText($request['date_on_sale_to_gmt']);
-        $in_stock = FlutterValidator::cleanText($request['in_stock']);
-        $stock_quantity = FlutterValidator::cleanText($request['stock_quantity']);
-        $manage_stock  = FlutterValidator::cleanText($request['manage_stock']);
-        $backorders = FlutterValidator::cleanText($request['backorders']);
-        $categories = FlutterValidator::cleanText($request['categories']);
-        $productAttributes = FlutterValidator::cleanText($request['productAttributes']);
-        $variations = FlutterValidator::cleanText($request['variations']);      
-        $inventory_delta = FlutterValidator::cleanText($request['inventory_delta']);      
+        $name = sanitize_text_field($request["name"]);
+        $description = sanitize_text_field($request["description"]);
+        $short_description = sanitize_text_field($request["short_description"]);
+        $featured_image = sanitize_text_field($request['featuredImage']);
+        $product_images = sanitize_text_field($request['images']);
+        $type = sanitize_text_field($request['type']);
+        $tags = sanitize_text_field($request['tags']);
+        $featured = sanitize_text_field($request['featured']);
+        $regular_price = sanitize_text_field($request['regular_price']);
+        $sale_price = sanitize_text_field($request['sale_price']);
+        $date_on_sale_from = sanitize_text_field($request['date_on_sale_from']);
+        $date_on_sale_from_gmt = sanitize_text_field($request['date_on_sale_from_gmt']);
+        $date_on_sale_to = sanitize_text_field($request['date_on_sale_to']);
+        $date_on_sale_to_gmt = sanitize_text_field($request['date_on_sale_to_gmt']);
+        $in_stock = sanitize_text_field($request['in_stock']);
+        $stock_quantity = sanitize_text_field($request['stock_quantity']);
+        $manage_stock  = sanitize_text_field($request['manage_stock']);
+        $backorders = sanitize_text_field($request['backorders']);
+        $categories = sanitize_text_field($request['categories']);
+        $productAttributes = sanitize_text_field($request['productAttributes']);
+        $variations = sanitize_text_field($request['variations']);      
+        $inventory_delta = sanitize_text_field($request['inventory_delta']);      
 
         $count = 1;
 
@@ -1033,29 +1033,29 @@ class VendorAdminWooHelper
             return $this->sendError("invalid_role", "You must be seller to update product", 401);
         }
 
-        $name = FlutterValidator::cleanText($request["name"]);
-        $description = FlutterValidator::cleanText($request["description"]);
-        $short_description = FlutterValidator::cleanText($request["short_description"]);
-        $featured_image = FlutterValidator::cleanText($request['featuredImage']);
-        $product_images = FlutterValidator::cleanText($request['images']);
-        $type = FlutterValidator::cleanText($request['type']);
-        $tags = FlutterValidator::cleanText($request['tags']);
-        $featured = FlutterValidator::cleanText($request['featured']);
-        $regular_price = FlutterValidator::cleanText($request['regular_price']);
-        $sale_price = FlutterValidator::cleanText($request['sale_price']);
-        $date_on_sale_from = FlutterValidator::cleanText($request['date_on_sale_from']);
-        $date_on_sale_from_gmt = FlutterValidator::cleanText($request['date_on_sale_from_gmt']);
-        $date_on_sale_to = FlutterValidator::cleanText($request['date_on_sale_to']);
-        $date_on_sale_to_gmt = FlutterValidator::cleanText($request['date_on_sale_to_gmt']);
-        $in_stock = FlutterValidator::cleanText($request['in_stock']);
-        $stock_quantity = FlutterValidator::cleanText($request['stock_quantity']);
-        $manage_stock  = FlutterValidator::cleanText($request['manage_stock']);
-        $backorders = FlutterValidator::cleanText($request['backorders']);
-        $categories = FlutterValidator::cleanText($request['categories']);
-        $productAttributes = FlutterValidator::cleanText($request['productAttributes']);
-        $variations = FlutterValidator::cleanText($request['variations']);      
-        $inventory_delta = FlutterValidator::cleanText($request['inventory_delta']);     
-        $status = FlutterValidator::cleanText($request['status']);     
+        $name = sanitize_text_field($request["name"]);
+        $description = sanitize_text_field($request["description"]);
+        $short_description = sanitize_text_field($request["short_description"]);
+        $featured_image = sanitize_text_field($request['featuredImage']);
+        $product_images = sanitize_text_field($request['images']);
+        $type = sanitize_text_field($request['type']);
+        $tags = sanitize_text_field($request['tags']);
+        $featured = sanitize_text_field($request['featured']);
+        $regular_price = sanitize_text_field($request['regular_price']);
+        $sale_price = sanitize_text_field($request['sale_price']);
+        $date_on_sale_from = sanitize_text_field($request['date_on_sale_from']);
+        $date_on_sale_from_gmt = sanitize_text_field($request['date_on_sale_from_gmt']);
+        $date_on_sale_to = sanitize_text_field($request['date_on_sale_to']);
+        $date_on_sale_to_gmt = sanitize_text_field($request['date_on_sale_to_gmt']);
+        $in_stock = sanitize_text_field($request['in_stock']);
+        $stock_quantity = sanitize_text_field($request['stock_quantity']);
+        $manage_stock  = sanitize_text_field($request['manage_stock']);
+        $backorders = sanitize_text_field($request['backorders']);
+        $categories = sanitize_text_field($request['categories']);
+        $productAttributes = sanitize_text_field($request['productAttributes']);
+        $variations = sanitize_text_field($request['variations']);      
+        $inventory_delta = sanitize_text_field($request['inventory_delta']);     
+        $status = sanitize_text_field($request['status']);     
         $count = 1;
 
 
@@ -1382,7 +1382,7 @@ class VendorAdminWooHelper
 /// DELETE ///
     public function vendor_admin_delete_product($request, $user_id)
     {
-        $request = FlutterValidator::cleanText($request);
+        $request = sanitize_text_field($request);
 
         $user = get_userdata($user_id);
         $isSeller = in_array("editor", $user->roles) || in_array("administrator", $user->roles);

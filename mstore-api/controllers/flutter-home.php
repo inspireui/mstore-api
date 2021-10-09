@@ -83,6 +83,24 @@ class FlutterHome extends WP_REST_Controller
         return get_option('mstore_purchase_code') === "1";
     }
 
+    private function get_config_file_path($lang){
+        if (!isset($lang)) {
+            $files = scandir(FlutterUtils::get_json_folder());
+            $configs = [];
+            foreach ($files as $file) {
+                if (strpos($file, "config") !== false && strpos($file, ".json") !== false) {
+                    $configs[] = $file;
+                }
+            }
+            if (!empty($configs)) {
+                return FlutterUtils::get_json_file_path($configs[0]);
+            } else {
+                return new WP_Error("existed_config", "Config file hasn't been uploaded yet.", array('status' => 400));
+            }
+        } else {
+            return FlutterUtils::get_json_file_path("config_" . $lang . ".json");
+        }
+    }
     /**
      * Get Home Data for caching
      *
@@ -93,26 +111,10 @@ class FlutterHome extends WP_REST_Controller
     public function get_home_data($request)
     {
         $api = new WC_REST_Products_Controller();
-        $lang = $request["lang"];
-        $uploads_dir = wp_upload_dir();
-        if (!isset($lang)) {
-            $folder = trailingslashit($uploads_dir["basedir"]) . "/2000/01";
-            $files = scandir($folder);
-            $configs = [];
-            foreach ($files as $file) {
-                if (strpos($file, "config") !== false && strpos($file, ".json") !== false) {
-                    $configs[] = $file;
-                }
-            }
-            if (!empty($configs)) {
-                $path = $uploads_dir["basedir"] . "/2000/01/" . $configs[0];
-            } else {
-                return new WP_Error("existed_config", "Config file hasn't been uploaded yet.", array('status' => 400));
-            }
-        } else {
-            $path = $uploads_dir["basedir"] . "/2000/01/config_" . $lang . ".json";
+        $path = $this->get_config_file_path(sanitize_text_field($request["lang"]));
+        if(is_wp_error($path)){
+            return $path;
         }
-
         if (file_exists($path)) {
             $fileContent = file_get_contents($path);
             $array = json_decode($fileContent, true);
@@ -215,24 +217,9 @@ class FlutterHome extends WP_REST_Controller
     public function get_widgets_data($request)
     {
         $api = new WC_REST_Products_Controller();
-        $lang = $request["lang"];
-        $uploads_dir = wp_upload_dir();
-        if (!isset($lang)) {
-            $folder = trailingslashit($uploads_dir["basedir"]) . "/2000/01";
-            $files = scandir($folder);
-            $configs = [];
-            foreach ($files as $file) {
-                if (strpos($file, "config") !== false && strpos($file, ".json") !== false) {
-                    $configs[] = $file;
-                }
-            }
-            if (!empty($configs)) {
-                $path = $uploads_dir["basedir"] . "/2000/01/" . $configs[0];
-            } else {
-                return new WP_Error("existed_config", "Config file hasn't been uploaded yet.", array('status' => 400));
-            }
-        } else {
-            $path = $uploads_dir["basedir"] . "/2000/01/config_" . $lang . ".json";
+        $path = $this->get_config_file_path(sanitize_text_field($request["lang"]));
+        if(is_wp_error($path)){
+            return $path;
         }
 
         if (file_exists($path)) {

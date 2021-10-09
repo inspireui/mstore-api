@@ -600,7 +600,7 @@ class FlutterVendorAdmin extends FlutterBaseController
 
     protected function authorize_user($token)
     {
-        $token = FlutterValidator::cleanText($token);
+        $token = sanitize_text_field($token);
         if (isset($token)) {
             $cookie = urldecode(base64_decode($token));
         } else {

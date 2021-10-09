@@ -147,7 +147,7 @@ class JSON_API_MStore_User_Controller
         if (!$emailReq) {
             $json_api->error("You must include 'email' var in your request. ");
         } else {
-            $email = FlutterValidator::sanitizeEmail($emailReq);
+            $email = sanitize_email($emailReq);
         }
 
         if ($secondsReq) {
@@ -222,12 +222,12 @@ class JSON_API_MStore_User_Controller
                     }
                     foreach ($dataRequest as $field => $value) {
                         if (in_array($field, $allowed_params)) {
-                            $user[$field] = trim(FlutterValidator::cleanText($value));
+                            $user[$field] = trim(sanitize_text_field($value));
                         }
 
                     }
 
-                    $user['role'] = $roleReq ? FlutterValidator::cleanText($roleReq) : get_option('default_role');
+                    $user['role'] = $roleReq ? sanitize_text_field($roleReq) : get_option('default_role');
                     $user_id = wp_insert_user($user);
 
                     /*Send e-mail to admin and new user -

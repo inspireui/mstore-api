@@ -177,25 +177,25 @@ class VendorAdminWCFMHelper
         if (is_string($vendor_data)) {
             $vendor_data = [];
         }
-        $vendor_data["store_name"] =  FlutterValidator::cleanText($data["store_name"]);
-        $vendor_data["store_slug"] =  FlutterValidator::cleanText($data["store_slug"]);
+        $vendor_data["store_name"] =  sanitize_text_field($data["store_name"]);
+        $vendor_data["store_slug"] =  sanitize_text_field($data["store_slug"]);
         wp_update_user(array(
             'ID' => $user_id,
-            'user_nicename' =>  FlutterValidator::cleanText($data["store_slug"])
+            'user_nicename' =>  sanitize_text_field($data["store_slug"])
         ));
-        $vendor_data["wcfmmp_store_name"] =  FlutterValidator::cleanText($data["store_name"]);
-        update_user_meta($user_id, 'store_name',  FlutterValidator::cleanText($data["store_name"]));
-        update_user_meta($user_id, 'wcfmmp_store_name',  FlutterValidator::cleanText($data["store_name"]));
+        $vendor_data["wcfmmp_store_name"] =  sanitize_text_field($data["store_name"]);
+        update_user_meta($user_id, 'store_name',  sanitize_text_field($data["store_name"]));
+        update_user_meta($user_id, 'wcfmmp_store_name',  sanitize_text_field($data["store_name"]));
 
 
-        $vendor_data["store_email"] =  FlutterValidator::cleanText($data["store_email"]);
-        $vendor_data["phone"] =  FlutterValidator::cleanText($data["phone"]);
+        $vendor_data["store_email"] =  sanitize_text_field($data["store_email"]);
+        $vendor_data["phone"] =  sanitize_text_field($data["phone"]);
 
         $count = 0;
 
         if (isset($data["logo"])) {
             $img_id = $this->upload_image_from_mobile(
-                FlutterValidator::cleanText($data["logo"]),
+                sanitize_text_field($data["logo"]),
                 $count,
                 $user_id
             );
@@ -205,7 +205,7 @@ class VendorAdminWCFMHelper
 
         if (isset($data["mobile_banner"])) {
             $img_id = $this->upload_image_from_mobile(
-                FlutterValidator::cleanText($data["mobile_banner"]),
+                sanitize_text_field($data["mobile_banner"]),
                 $count,
                 $user_id
             );
@@ -215,7 +215,7 @@ class VendorAdminWCFMHelper
 
         if (isset($data["banner"]) && isset($data["banner_type"])) {
             $img_id = $this->upload_image_from_mobile(
-                FlutterValidator::cleanText($data["banner"]),
+                sanitize_text_field($data["banner"]),
                 $count,
                 $user_id
             );
@@ -229,66 +229,66 @@ class VendorAdminWCFMHelper
             foreach ($data["banner_slider"] as $item) {
                 if ($item["type"] == "asset") {
                     $img_id = $this->upload_image_from_mobile(
-                        FlutterValidator::cleanText($item["image"]),
+                        sanitize_text_field($item["image"]),
                         $count,
                         $user_id
                     );
                 }
                 if ($item["type"] == "url") {
-                    $img_id = attachment_url_to_postid( FlutterValidator::cleanText($item["image"]));
+                    $img_id = attachment_url_to_postid( sanitize_text_field($item["image"]));
                 }
                 $vendor_data["banner_slider"][] = [
                     "image" => $img_id,
-                    "link" =>  FlutterValidator::cleanText($item["link"]),
+                    "link" =>  sanitize_text_field($item["link"]),
                 ];
             }
-            $vendor_data["banner_type"] =  FlutterValidator::cleanText($data["banner_type"]);
+            $vendor_data["banner_type"] =  sanitize_text_field($data["banner_type"]);
         }
 
         if (isset($data["video"]) && isset($data["banner_type"])) {
-            $vendor_data["banner_video"] =  FlutterValidator::cleanText($data["video"]);
-            $vendor_data["banner_type"] =  FlutterValidator::cleanText($data["banner_type"]);
+            $vendor_data["banner_video"] =  sanitize_text_field($data["video"]);
+            $vendor_data["banner_type"] =  sanitize_text_field($data["banner_type"]);
         }
 
         if (isset($data["list_banner"]) && isset($data["list_banner_type"])) {
             $img_id = $this->upload_image_from_mobile(
-                FlutterValidator::cleanText($data["list_banner"]),
+                sanitize_text_field($data["list_banner"]),
                 $count,
                 $user_id
             );
             $count++;
             $vendor_data["list_banner"] = $img_id;
-            $vendor_data["list_banner_type"] =  FlutterValidator::cleanText($data["list_banner_type"]);
+            $vendor_data["list_banner_type"] =  sanitize_text_field($data["list_banner_type"]);
         }
 
         if (
             isset($data["list_banner_video"]) &&
             isset($data["list_banner_type"])
         ) {
-            $vendor_data["list_banner_video"] =  FlutterValidator::cleanText($data["list_banner_video"]);
-            $vendor_data["list_banner_type"] =  FlutterValidator::cleanText($data["list_banner_type"]);
+            $vendor_data["list_banner_video"] =  sanitize_text_field($data["list_banner_video"]);
+            $vendor_data["list_banner_type"] =  sanitize_text_field($data["list_banner_type"]);
         }
 
-        $vendor_data["shop_description"] =  FlutterValidator::cleanText($data["shop_description"]);
-        $vendor_data["_store_description"] =  FlutterValidator::cleanText($data["shop_description"]);
-        update_user_meta($user_id, '_store_description',  FlutterValidator::cleanText($data["shop_description"]));
+        $vendor_data["shop_description"] =  sanitize_text_field($data["shop_description"]);
+        $vendor_data["_store_description"] =  sanitize_text_field($data["shop_description"]);
+        update_user_meta($user_id, '_store_description',  sanitize_text_field($data["shop_description"]));
 
 
-        $vendor_data["address"] =  FlutterValidator::cleanText($data["address"]);
+        $vendor_data["address"] =  sanitize_text_field($data["address"]);
 
-        $vendor_data["geolocation"]["store_location"] =  FlutterValidator::cleanText($data["store_location"]);
-        $vendor_data["geolocation"]["store_lat"] =  FlutterValidator::cleanText($data["store_lat"]);
-        $vendor_data["geolocation"]["store_lng"] =  FlutterValidator::cleanText($data["store_lng"]);
-        $vendor_data["store_location"] =  FlutterValidator::cleanText($data["store_location"]);
-        $vendor_data["store_lat"] =  FlutterValidator::cleanText($data["store_lat"]);
-        $vendor_data["store_lng"] =  FlutterValidator::cleanText($data["store_lng"]);
+        $vendor_data["geolocation"]["store_location"] =  sanitize_text_field($data["store_location"]);
+        $vendor_data["geolocation"]["store_lat"] =  sanitize_text_field($data["store_lat"]);
+        $vendor_data["geolocation"]["store_lng"] =  sanitize_text_field($data["store_lng"]);
+        $vendor_data["store_location"] =  sanitize_text_field($data["store_location"]);
+        $vendor_data["store_lat"] =  sanitize_text_field($data["store_lat"]);
+        $vendor_data["store_lng"] =  sanitize_text_field($data["store_lng"]);
 
-        $vendor_data["store_hide_email"] =  FlutterValidator::cleanText($data["store_hide_email"]);
-        $vendor_data["store_hide_phone"] =  FlutterValidator::cleanText($data["store_hide_phone"]);
-        $vendor_data["store_hide_address"] =  FlutterValidator::cleanText($data["store_hide_address"]);
-        $vendor_data["store_hide_map"] =  FlutterValidator::cleanText($data["store_hide_map"]);
-        $vendor_data["store_hide_description"] = FlutterValidator::cleanText($data["store_hide_description"]);
-        $vendor_data["store_hide_policy"] =  FlutterValidator::cleanText($data["store_hide_policy"]);
+        $vendor_data["store_hide_email"] =  sanitize_text_field($data["store_hide_email"]);
+        $vendor_data["store_hide_phone"] =  sanitize_text_field($data["store_hide_phone"]);
+        $vendor_data["store_hide_address"] =  sanitize_text_field($data["store_hide_address"]);
+        $vendor_data["store_hide_map"] =  sanitize_text_field($data["store_hide_map"]);
+        $vendor_data["store_hide_description"] = sanitize_text_field($data["store_hide_description"]);
+        $vendor_data["store_hide_policy"] =  sanitize_text_field($data["store_hide_policy"]);
 
         update_user_meta($user_id, "wcfmmp_profile_settings", $vendor_data);
 
@@ -304,8 +304,8 @@ class VendorAdminWCFMHelper
     public function flutter_get_products($request, $user_id)
     {
         global $woocommerce, $wpdb;
-        $page = isset($request["page"]) ? FlutterValidator::cleanText($request["page"])  : 1;
-        $limit = isset($request["per_page"]) ? FlutterValidator::cleanText($request["per_page"]) : 10;
+        $page = isset($request["page"]) ? sanitize_text_field($request["page"])  : 1;
+        $limit = isset($request["per_page"]) ? sanitize_text_field($request["per_page"]) : 10;
         if(!is_numeric($page)){
             $page = 1;
         }
@@ -324,7 +324,7 @@ class VendorAdminWCFMHelper
         $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_author` = $vendor_id AND `$table_name`.`post_type` = 'product'";
 
         if (isset($request["search"])) {
-            $search =  FlutterValidator::cleanText($request["search"]);
+            $search =  sanitize_text_field($request["search"]);
             $search = "%$search%";
             $sql .= " AND (`$table_name`.`post_content` LIKE '$search' OR `$table_name`.`post_title` LIKE '$search' OR `$table_name`.`post_excerpt` LIKE '$search')";
         }
@@ -459,13 +459,13 @@ class VendorAdminWCFMHelper
             $page = 1;
             $per_page = 10;
             if (isset($request['page'])) {
-                $page = FlutterValidator::cleanText($request['page']);
+                $page = sanitize_text_field($request['page']);
                 if(!is_numeric($page)){
                     $page = 1;
                 }
             }
             if (isset($request['per_page'])) {
-                $per_page = FlutterValidator::cleanText($request['per_page']);
+                $per_page = sanitize_text_field($request['per_page']);
                 if(!is_numeric($per_page)){
                     $per_page = 10;
                 }
@@ -476,17 +476,17 @@ class VendorAdminWCFMHelper
                 "SELECT * FROM " . $table_name . " WHERE vendor_id = $user_id AND is_trashed != 1";
 
             if (isset($request["status"])) {
-                $status =  FlutterValidator::cleanText($request["status"]);
+                $status =  sanitize_text_field($request["status"]);
                 $sql .= " AND order_status = '$status'";
             }
             if (isset($request["search"])) {
-                $search =  FlutterValidator::cleanText($request["search"]);
+                $search =  sanitize_text_field($request["search"]);
                 $sql .= " AND order_id LIKE '$search%'";
             }
             if (isset($request['name'])) {
                 $results = [];
                 $table_name2 = $wpdb->prefix . "users";
-                $name =  FlutterValidator::cleanText($request['name']);
+                $name =  sanitize_text_field($request['name']);
                 $sql2 = "SELECT {$table_name2}.ID";
                 $sql2 .= " FROM {$table_name2}";
                 $sql2 .= " WHERE {$table_name2}.display_name LIKE '%$name%'";
@@ -715,8 +715,8 @@ class VendorAdminWCFMHelper
     {
         global $WCFM;
 
-        $order_id = FlutterValidator::cleanText($request['order_id']);
-        $order_status = FlutterValidator::cleanText($request['order_status']);
+        $order_id = sanitize_text_field($request['order_id']);
+        $order_status = sanitize_text_field($request['order_status']);
 
         if (!is_numeric($order_id)) {
             return new WP_REST_Response(array(
@@ -729,7 +729,7 @@ class VendorAdminWCFMHelper
         $order->update_status($order_status, "", true);
         $shop_name = get_user_by("ID", $user_id)->display_name;
 
-        $note =FlutterValidator::cleanText($request["customer_note"]);
+        $note =sanitize_text_field($request["customer_note"]);
         if (!empty($note)) {
             $order->add_order_note($note, true, true);
         }
@@ -814,13 +814,13 @@ class VendorAdminWCFMHelper
         $length = 10;
         $offset = 1;
         if (isset($request['page'])) {
-            $offset = FlutterValidator::cleanText($request['page']);
+            $offset = sanitize_text_field($request['page']);
             if(!is_numeric($offset)){
                 $offset = 1;
             }
         }
         if (isset($request['per_page'])) {
-            $length = FlutterValidator::cleanText($request['per_page']);
+            $length = sanitize_text_field($request['per_page']);
             if(!is_numeric($length)){
                 $length = 10;
             }
@@ -828,7 +828,7 @@ class VendorAdminWCFMHelper
         $offset = ($offset - 1) * $length;
 
         $the_orderby = !empty($request["orderby"])
-            ? FlutterValidator::cleanText($request["orderby"])
+            ? sanitize_text_field($request["orderby"])
             : "ID";
         $the_order =
             !empty($request["order"]) && "asc" === $request["order"]
@@ -837,7 +837,7 @@ class VendorAdminWCFMHelper
 
         $status_filter = "";
         if (isset($request["status_type"]) && $request["status_type"] != "") {
-            $status_filter = FlutterValidator::cleanText($request["status_type"]);
+            $status_filter = sanitize_text_field($request["status_type"]);
             if ($status_filter == "approved") {
                 $status_filter = " AND `approved` = 1";
             } elseif ($status_filter == "pending") {
@@ -878,8 +878,8 @@ class VendorAdminWCFMHelper
     function flutter_update_review($request)
     {
         global $WCFM, $WCFMmp, $wpdb;
-        $reviewid = FlutterValidator::cleanText($request["id"]);
-        $status = FlutterValidator::cleanText($request["status"]);
+        $reviewid = sanitize_text_field($request["id"]);
+        $status = sanitize_text_field($request["status"]);
 
         if(!is_numeric($reviewid) || !is_numeric($status)){
             return;
@@ -1180,10 +1180,10 @@ class VendorAdminWCFMHelper
                 break;
             case "custom":
                 $start_date = !empty($_GET["start_date"])
-                    ? FlutterValidator::cleanText($_GET["start_date"])
+                    ? sanitize_text_field($_GET["start_date"])
                     : $start_date;
                 $end_date = !empty($_GET["end_date"])
-                    ? FlutterValidator::cleanText($_GET["end_date"])
+                    ? sanitize_text_field($_GET["end_date"])
                     : $end_date;
                 if ($start_date) {
                     $start_date = wcfm_standard_date($start_date);
@@ -1297,7 +1297,7 @@ class VendorAdminWCFMHelper
                                         in_array($_product_id, $valid_items) ||
                                         in_array($_variation_id, $valid_items)
                                     ) {
-                                        $gross_sales += (float)FlutterValidator::cleanText(
+                                        $gross_sales += (float)sanitize_text_field(
                                             $line_item->get_total()
                                         );
                                         if (
@@ -1312,7 +1312,7 @@ class VendorAdminWCFMHelper
                                                     "give_tax"
                                                 )
                                             ) {
-                                                $gross_sales += (float)FlutterValidator::cleanText(
+                                                $gross_sales += (float)sanitize_text_field(
                                                     $line_item->get_total_tax()
                                                 );
                                             }
@@ -1322,7 +1322,7 @@ class VendorAdminWCFMHelper
                                                     "wcvendors_vendor_give_taxes"
                                                 )
                                             ) {
-                                                $gross_sales += (float)FlutterValidator::cleanText(
+                                                $gross_sales += (float)sanitize_text_field(
                                                     $line_item->get_total_tax()
                                                 );
                                             }
@@ -1338,7 +1338,7 @@ class VendorAdminWCFMHelper
                                         $valid_items
                                     )
                                 ) {
-                                    $gross_sales += (float)FlutterValidator::cleanText(
+                                    $gross_sales += (float)sanitize_text_field(
                                         $line_item->get_total()
                                     );
                                     if (
@@ -1353,7 +1353,7 @@ class VendorAdminWCFMHelper
                                                 "give_tax"
                                             )
                                         ) {
-                                            $gross_sales += (float)FlutterValidator::cleanText(
+                                            $gross_sales += (float)sanitize_text_field(
                                                 $line_item->get_total_tax()
                                             );
                                         }
@@ -1363,7 +1363,7 @@ class VendorAdminWCFMHelper
                                                 "wcvendors_vendor_give_taxes"
                                             )
                                         ) {
-                                            $gross_sales += (float)FlutterValidator::cleanText(
+                                            $gross_sales += (float)sanitize_text_field(
                                                 $line_item->get_total_tax()
                                             );
                                         }
@@ -1428,7 +1428,7 @@ class VendorAdminWCFMHelper
                             $line_item = new WC_Order_Item_Product(
                                 $net_sale_whole_week->order_item_id
                             );
-                            $gross_sales += (float)FlutterValidator::cleanText(
+                            $gross_sales += (float)sanitize_text_field(
                                 $line_item->get_total()
                             );
                             if (
@@ -1436,7 +1436,7 @@ class VendorAdminWCFMHelper
                                     "give_tax"
                                 )
                             ) {
-                                $gross_sales += (float)FlutterValidator::cleanText(
+                                $gross_sales += (float)sanitize_text_field(
                                     $line_item->get_total_tax()
                                 );
                                 $gross_sales +=
@@ -1567,7 +1567,7 @@ class VendorAdminWCFMHelper
             if (!empty($gross_sales_whole_week)) {
                 foreach ($gross_sales_whole_week as $net_sale_whole_week) {
                     $gross_commission_ids[] = $net_sale_whole_week->ID;
-                    $gross_total_refund_amount += (float)FlutterValidator::cleanText(
+                    $gross_total_refund_amount += (float)sanitize_text_field(
                         $net_sale_whole_week->refunded_amount
                     );
                 }
@@ -1833,8 +1833,8 @@ class VendorAdminWCFMHelper
         global $WCFM, $wpdb;
         $wcfm_messages = array();
         if (isset($request["per_page"]) && $request["per_page"]) {
-            $limit = FlutterValidator::cleanText($request['per_page']);
-            $offset = FlutterValidator::cleanText($request['page']);
+            $limit = sanitize_text_field($request['per_page']);
+            $offset = sanitize_text_field($request['page']);
             if(!is_numeric($offset)){
                 $offset = 1;
             }
@@ -1889,31 +1889,31 @@ class VendorAdminWCFMHelper
 
         $requestStatus = "draft";
         if ($request["status"] != null) {
-            $requestStatus = FlutterValidator::cleanText($request["status"]);
+            $requestStatus = sanitize_text_field($request["status"]);
         }
 
-        $name = FlutterValidator::cleanText($request["name"]);
-        $description = FlutterValidator::cleanText($request["description"]);
-        $short_description = FlutterValidator::cleanText($request["short_description"]);
-        $featured_image = FlutterValidator::cleanText($request['featuredImage']);
-        $product_images = FlutterValidator::cleanText($request['images']);
-        $type = FlutterValidator::cleanText($request['type']);
-        $tags = FlutterValidator::cleanText($request['tags']);
-        $featured = FlutterValidator::cleanText($request['featured']);
-        $regular_price = FlutterValidator::cleanText($request['regular_price']);
-        $sale_price = FlutterValidator::cleanText($request['sale_price']);
-        $date_on_sale_from = FlutterValidator::cleanText($request['date_on_sale_from']);
-        $date_on_sale_from_gmt = FlutterValidator::cleanText($request['date_on_sale_from_gmt']);
-        $date_on_sale_to = FlutterValidator::cleanText($request['date_on_sale_to']);
-        $date_on_sale_to_gmt = FlutterValidator::cleanText($request['date_on_sale_to_gmt']);
-        $in_stock = FlutterValidator::cleanText($request['in_stock']);
-        $stock_quantity = FlutterValidator::cleanText($request['stock_quantity']);
-        $manage_stock  = FlutterValidator::cleanText($request['manage_stock']);
-        $backorders = FlutterValidator::cleanText($request['backorders']);
-        $categories = FlutterValidator::cleanText($request['categories']);
-        $productAttributes = FlutterValidator::cleanText($request['productAttributes']);
-        $variations = FlutterValidator::cleanText($request['variations']);      
-        $inventory_delta = FlutterValidator::cleanText($request['inventory_delta']);      
+        $name = sanitize_text_field($request["name"]);
+        $description = sanitize_text_field($request["description"]);
+        $short_description = sanitize_text_field($request["short_description"]);
+        $featured_image = sanitize_text_field($request['featuredImage']);
+        $product_images = sanitize_text_field($request['images']);
+        $type = sanitize_text_field($request['type']);
+        $tags = sanitize_text_field($request['tags']);
+        $featured = sanitize_text_field($request['featured']);
+        $regular_price = sanitize_text_field($request['regular_price']);
+        $sale_price = sanitize_text_field($request['sale_price']);
+        $date_on_sale_from = sanitize_text_field($request['date_on_sale_from']);
+        $date_on_sale_from_gmt = sanitize_text_field($request['date_on_sale_from_gmt']);
+        $date_on_sale_to = sanitize_text_field($request['date_on_sale_to']);
+        $date_on_sale_to_gmt = sanitize_text_field($request['date_on_sale_to_gmt']);
+        $in_stock = sanitize_text_field($request['in_stock']);
+        $stock_quantity = sanitize_text_field($request['stock_quantity']);
+        $manage_stock  = sanitize_text_field($request['manage_stock']);
+        $backorders = sanitize_text_field($request['backorders']);
+        $categories = sanitize_text_field($request['categories']);
+        $productAttributes = sanitize_text_field($request['productAttributes']);
+        $variations = sanitize_text_field($request['variations']);      
+        $inventory_delta = sanitize_text_field($request['inventory_delta']);      
 
         $count = 1;
 
@@ -2288,29 +2288,29 @@ class VendorAdminWCFMHelper
             );
         }
 
-        $name = FlutterValidator::cleanText($request["name"]);
-        $description = FlutterValidator::cleanText($request["description"]);
-        $short_description = FlutterValidator::cleanText($request["short_description"]);
-        $featured_image = FlutterValidator::cleanText($request['featuredImage']);
-        $product_images = FlutterValidator::cleanText($request['images']);
-        $type = FlutterValidator::cleanText($request['type']);
-        $tags = FlutterValidator::cleanText($request['tags']);
-        $featured = FlutterValidator::cleanText($request['featured']);
-        $regular_price = FlutterValidator::cleanText($request['regular_price']);
-        $sale_price = FlutterValidator::cleanText($request['sale_price']);
-        $date_on_sale_from = FlutterValidator::cleanText($request['date_on_sale_from']);
-        $date_on_sale_from_gmt = FlutterValidator::cleanText($request['date_on_sale_from_gmt']);
-        $date_on_sale_to = FlutterValidator::cleanText($request['date_on_sale_to']);
-        $date_on_sale_to_gmt = FlutterValidator::cleanText($request['date_on_sale_to_gmt']);
-        $in_stock = FlutterValidator::cleanText($request['in_stock']);
-        $stock_quantity = FlutterValidator::cleanText($request['stock_quantity']);
-        $manage_stock  = FlutterValidator::cleanText($request['manage_stock']);
-        $backorders = FlutterValidator::cleanText($request['backorders']);
-        $categories = FlutterValidator::cleanText($request['categories']);
-        $productAttributes = FlutterValidator::cleanText($request['productAttributes']);
-        $variations = FlutterValidator::cleanText($request['variations']);      
-        $inventory_delta = FlutterValidator::cleanText($request['inventory_delta']);     
-        $status = FlutterValidator::cleanText($request['status']);     
+        $name = sanitize_text_field($request["name"]);
+        $description = sanitize_text_field($request["description"]);
+        $short_description = sanitize_text_field($request["short_description"]);
+        $featured_image = sanitize_text_field($request['featuredImage']);
+        $product_images = sanitize_text_field($request['images']);
+        $type = sanitize_text_field($request['type']);
+        $tags = sanitize_text_field($request['tags']);
+        $featured = sanitize_text_field($request['featured']);
+        $regular_price = sanitize_text_field($request['regular_price']);
+        $sale_price = sanitize_text_field($request['sale_price']);
+        $date_on_sale_from = sanitize_text_field($request['date_on_sale_from']);
+        $date_on_sale_from_gmt = sanitize_text_field($request['date_on_sale_from_gmt']);
+        $date_on_sale_to = sanitize_text_field($request['date_on_sale_to']);
+        $date_on_sale_to_gmt = sanitize_text_field($request['date_on_sale_to_gmt']);
+        $in_stock = sanitize_text_field($request['in_stock']);
+        $stock_quantity = sanitize_text_field($request['stock_quantity']);
+        $manage_stock  = sanitize_text_field($request['manage_stock']);
+        $backorders = sanitize_text_field($request['backorders']);
+        $categories = sanitize_text_field($request['categories']);
+        $productAttributes = sanitize_text_field($request['productAttributes']);
+        $variations = sanitize_text_field($request['variations']);      
+        $inventory_delta = sanitize_text_field($request['inventory_delta']);     
+        $status = sanitize_text_field($request['status']);     
         $count = 1;
 
         if ($product->get_type() != $type) {
@@ -2773,18 +2773,18 @@ class VendorAdminWCFMHelper
     {
         global $WCFM, $WCFMmp, $WCFMu, $WCFMd, $wpdb;
 
-        $order_id = FlutterValidator::cleanText($request["wcfm_tracking_order_id"]);
-        $order_item_id = FlutterValidator::cleanText($request["wcfm_tracking_order_item_id"]);
-        $wcfm_delivery_boy = FlutterValidator::cleanText($request["wcfm_delivery_boy"]);
-        $product_id = FlutterValidator::cleanText($request["wcfm_tracking_product_id"]);
+        $order_id = sanitize_text_field($request["wcfm_tracking_order_id"]);
+        $order_item_id = sanitize_text_field($request["wcfm_tracking_order_item_id"]);
+        $wcfm_delivery_boy = sanitize_text_field($request["wcfm_delivery_boy"]);
+        $product_id = sanitize_text_field($request["wcfm_tracking_product_id"]);
         $wcfm_tracking_data = [
-            "wcfm_tracking_code" => FlutterValidator::cleanText($request["wcfm_tracking_code"]),
-            "wcfm_tracking_url" => FlutterValidator::cleanText($request["wcfm_tracking_url"]),
-            "wcfm_tracking_order_id" => FlutterValidator::cleanText($request["wcfm_tracking_order_id"]),
-            "wcfm_tracking_product_id" => FlutterValidator::cleanText($request["wcfm_tracking_product_id"]),
+            "wcfm_tracking_code" => sanitize_text_field($request["wcfm_tracking_code"]),
+            "wcfm_tracking_url" => sanitize_text_field($request["wcfm_tracking_url"]),
+            "wcfm_tracking_order_id" => sanitize_text_field($request["wcfm_tracking_order_id"]),
+            "wcfm_tracking_product_id" => sanitize_text_field($request["wcfm_tracking_product_id"]),
             "wcfm_tracking_order_item_id" =>
-            FlutterValidator::cleanText($request["wcfm_tracking_order_item_id"]),
-            "wcfm_delivery_boy" => FlutterValidator::cleanText($request["wcfm_delivery_boy"]),
+            sanitize_text_field($request["wcfm_tracking_order_item_id"]),
+            "wcfm_delivery_boy" => sanitize_text_field($request["wcfm_delivery_boy"]),
         ];
 
         $wcfm_delivery_boy = absint($wcfm_delivery_boy);
@@ -3081,7 +3081,7 @@ class VendorAdminWCFMHelper
         $results = [];
         $table_name = $wpdb->prefix . "users";
         $table_name2 = $wpdb->prefix . "usermeta";
-        $search = FlutterValidator::cleanText($name);
+        $search = sanitize_text_field($name);
         $sql = "SELECT {$table_name}.ID, {$table_name}.display_name";
         $sql .= " FROM {$table_name} INNER JOIN {$table_name2}";
         $sql .= " ON {$table_name}.ID = {$table_name2}.user_id";
