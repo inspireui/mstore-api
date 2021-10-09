@@ -148,12 +148,10 @@ if (isset($verified) && $verified == "1") {
     FlutterUtils::create_json_folder();
 
     $configs = [];
-    if (file_exists($folder)) {
-        $files = scandir($folder);
-        foreach ($files as $file) {
-            if (strpos($file, "config") > -1 && strpos($file, ".json") > -1) {
-                $configs[] = $file;
-            }
+    $files = scandir(FlutterUtils::get_json_folder());
+    foreach ($files as $file) {
+        if (strpos($file, "config") > -1 && strpos($file, ".json") > -1) {
+            $configs[] = $file;
         }
     }
     if (!empty($configs)) {

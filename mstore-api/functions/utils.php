@@ -4,7 +4,7 @@ class FlutterUtils {
 
     public static function create_json_folder(){
         $uploads_dir = wp_upload_dir();
-        $folder = trailingslashit($uploads_dir["basedir"]) . $folder_path;
+        $folder = trailingslashit($uploads_dir["basedir"]) . FlutterUtils::$folder_path;
         if (!file_exists($folder)) {
             mkdir($folder, 0777, true);
         }
@@ -12,7 +12,7 @@ class FlutterUtils {
 
     public static function get_json_folder(){
         $uploads_dir = wp_upload_dir();
-        $folder = trailingslashit($uploads_dir["basedir"]) . $folder_path;
+        $folder = trailingslashit($uploads_dir["basedir"]) . FlutterUtils::$folder_path;
         return $folder;
     }
 
