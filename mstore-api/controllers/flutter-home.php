@@ -85,13 +85,7 @@ class FlutterHome extends WP_REST_Controller
 
     private function get_config_file_path($lang){
         if (!isset($lang)) {
-            $files = scandir(FlutterUtils::get_json_folder());
-            $configs = [];
-            foreach ($files as $file) {
-                if (strpos($file, "config") !== false && strpos($file, ".json") !== false) {
-                    $configs[] = $file;
-                }
-            }
+            $configs = FlutterUtils::get_all_json_files();
             if (!empty($configs)) {
                 return FlutterUtils::get_json_file_path($configs[0]);
             } else {

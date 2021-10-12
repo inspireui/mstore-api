@@ -53,8 +53,6 @@ class MstoreCheckOut
             include_once plugin_dir_path(__FILE__) . "controllers/helpers/vendor-admin-dokan-helper.php";
         }
 
-        FlutterUtils::migrate_json_files();
-        
         $order = filter_has_var(INPUT_GET, 'code') && strlen(filter_input(INPUT_GET, 'code')) > 0 ? true : false;
         if ($order) {
             add_filter('woocommerce_is_checkout', '__return_true');

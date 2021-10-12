@@ -146,14 +146,7 @@ if (isset($verified) && $verified == "1") {
     </div>
     <?php
     FlutterUtils::create_json_folder();
-
-    $configs = [];
-    $files = scandir(FlutterUtils::get_json_folder());
-    foreach ($files as $file) {
-        if (strpos($file, "config") > -1 && strpos($file, ".json") > -1) {
-            $configs[] = $file;
-        }
-    }
+    $configs = FlutterUtils::get_all_json_files();
     if (!empty($configs)) {
         ?>
         <form action="" method="POST">
