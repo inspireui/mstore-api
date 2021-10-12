@@ -6,7 +6,7 @@ define("ACTIVE_TOKEN", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmb28iOiJiYXIiLCJ
 function verifyPurchaseCode($code)
 {
     $website = get_home_url();
-    $response = wp_remote_post(ACTIVE_API . "?token=" . ACTIVE_TOKEN, ["body" => ["code" => $code, "website" => $website, "plugin" => true]]);
+    $response = wp_remote_post(ACTIVE_API . "?token=" . ACTIVE_TOKEN, ["body" => ["code" => $code, "website" => $website, "plugin" => true], 'sslverify'   => false]);
     if (is_wp_error($response)) {
         return $response->get_error_message();
     }
