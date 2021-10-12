@@ -1,6 +1,7 @@
 <?php
 class FlutterUtils {
-    static $folder_path = '2000/01';
+    static $folder_path = 'flutter_config_files';
+    static $old_folder_path = '2000/01';
 
     public static function create_json_folder(){
         $uploads_dir = wp_upload_dir();
@@ -10,10 +11,18 @@ class FlutterUtils {
         }
     }
 
-    public static function get_json_folder(){
+    private static function get_folder_path($path){
         $uploads_dir = wp_upload_dir();
-        $folder = trailingslashit($uploads_dir["basedir"]) . FlutterUtils::$folder_path;
+        $folder = trailingslashit($uploads_dir["basedir"]) . $path;
         return realpath($folder);
+    }
+
+    public static function get_json_folder(){
+        return FlutterUtils::get_folder_path(FlutterUtils::$folder_path);
+    }
+
+    public static function get_old_json_folder(){
+        return FlutterUtils::get_folder_path(FlutterUtils::$old_folder_path);
     }
 
     public static function get_json_file_url($file_name){
@@ -24,6 +33,19 @@ class FlutterUtils {
 
     public static function get_json_file_path($file_name){
         return trailingslashit(FlutterUtils::get_json_folder()). $file_name;
+    }
+
+    public static function migrate_json_files(){
+        $files = scandir(FlutterUtils::get_old_json_folder());
+        foreach ($files as $file) {
+            if (strpos($file, "config") !== false && strpos($file, ".json") !== false) {
+                $old_path = trailingslashit(FlutterUtils::get_old_json_folder()). $file;
+                $new_path = FlutterUtils::get_json_file_path($file);
+                if (rename($old_path, $new_path)) {
+                    unlink($old_path); 
+                }
+            }
+        }
     }
 
     public static function upload_file_by_admin($file_to_upload) {
