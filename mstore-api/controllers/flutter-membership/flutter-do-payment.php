@@ -161,7 +161,7 @@ class FlutterDoPayment
         if (empty($this->returnUrl)) {
             return;
         }
-        wp_redirect($this->returnUrl);
+        wp_redirect(esc_url_raw($this->returnUrl));
         exit;
     }
 

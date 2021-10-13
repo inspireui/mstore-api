@@ -133,7 +133,7 @@ class MstoreCheckOut
 
     function mstore_update_limit_product()
     {
-        $limit = $_REQUEST['limit'];
+        $limit = sanitize_text_field($_REQUEST['limit']);
         if (is_numeric($limit)) {
             update_option("mstore_limit_product", intval($limit));
         }
@@ -511,7 +511,7 @@ function prepare_checkout()
                 if (isset($_GET['vendor_admin'])) {
                     global $wp;
                     $request = $wp->request;
-                    wp_redirect(home_url("/" . $request));
+                    wp_redirect(esc_url_raw(home_url("/" . $request)));
                     die;
                 }
             }

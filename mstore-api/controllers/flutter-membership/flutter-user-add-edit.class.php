@@ -1305,7 +1305,7 @@ class FlutterUserAddEdit
                             }
                             $current_year_a = date('y', indeed_get_unixtimestamp_with_timezone());
                             $current_month_a = date('m', indeed_get_unixtimestamp_with_timezone());
-                            $post_month = (int)$_POST['ihc_braintree_card_expire_month'];
+                            $post_month = (int)sanitize_text_field($_POST['ihc_braintree_card_expire_month']);
                             $post_year = (int)$_POST['ihc_braintree_card_expire_year'];
                             if ($post_month > 12) {
                                 $this->errors[] = $this->register_metas['ihc_register_err_req_fields'];
@@ -1418,9 +1418,9 @@ class FlutterUserAddEdit
         if ($this->type == 'create') {
             if (!empty($this->register_metas['ihc_register_new_user_role']) && $this->register_metas['ihc_register_new_user_role'] == 'pending_user') {
                 //PENDING
-                do_action('ihc_action_create_user_review_request', $this->user_id, (isset($_POST['lid'])) ? $_POST['lid'] : 0);
+                do_action('ihc_action_create_user_review_request', $this->user_id, (isset($_POST['lid'])) ? sanitize_text_field($_POST['lid']) : 0);
             } else {
-                do_action('ihc_action_create_user_register', $this->user_id, (isset($_POST['lid'])) ? $_POST['lid'] : 0);
+                do_action('ihc_action_create_user_register', $this->user_id, (isset($_POST['lid'])) ? sanitize_text_field($_POST['lid']) : 0);
             }
         } else {
             do_action('ihc_action_update_user', $this->user_id);
@@ -1430,7 +1430,7 @@ class FlutterUserAddEdit
         $redirectUrl = $this->set_levels();//USER LEVELS
         if (isset($redirectUrl)) {
             if ($this->payment_gateway == 'bank_transfer') {
-                return ["redirectUrl" => $redirectUrl, "bankInfo" => ihc_print_bank_transfer_order($this->user_id, $_POST['lid'])];
+                return ["redirectUrl" => $redirectUrl, "bankInfo" => ihc_print_bank_transfer_order($this->user_id,sanitize_text_field($_POST['lid']))];
             }
             return ["redirectUrl" => $redirectUrl];
         }
@@ -1438,10 +1438,10 @@ class FlutterUserAddEdit
         /// set the correct expire time for authorize recurring levels
         if (!empty($paid) && $this->payment_gateway == 'authorize') {//ihcpay
             //only authorize with recurring
-            $level_data = ihc_get_level_by_id($_POST['lid']);
+            $level_data = ihc_get_level_by_id(sanitize_text_field($_POST['lid']));
             if (isset($level_data['access_type']) && $level_data['access_type'] == 'regular_period') {
 
-                \Indeed\Ihc\UserSubscriptions::makeComplete($this->user_id, $_POST['lid']);
+                \Indeed\Ihc\UserSubscriptions::makeComplete($this->user_id,sanitize_text_field($_POST['lid']));
                 $this->insert_the_order('Completed');///Save Order
             }
         }
@@ -1462,7 +1462,7 @@ class FlutterUserAddEdit
          * @return none
          */
         if (empty($this->fields['user_login'])) {
-            $this->fields['user_login'] = (isset($_POST['user_email'])) ? $_POST['user_email'] : '';
+            $this->fields['user_login'] = (isset($_POST['user_email'])) ? sanitize_email($_POST['user_email']) : '';
         }
         if (empty($this->fields['user_pass'])) {
             $this->fields['user_pass'] = wp_generate_password(10);
@@ -1509,7 +1509,7 @@ class FlutterUserAddEdit
                     $this->handle_levels_assign($lid);
                     \Indeed\Ihc\UserSubscriptions::makeComplete($this->user_id, $lid);
                     if ($url_return) {
-                        wp_redirect($url_return);
+                        wp_redirect(esc_url_raw($url_return));
                         exit();
                     } else {
                         return;
@@ -1537,7 +1537,7 @@ class FlutterUserAddEdit
                                 //
                                 $this->insert_the_order();
 
-                                wp_redirect($url_return);
+                                wp_redirect(esc_url_raw($url_return));
                                 exit();
                             } else {
                                 $redirect_back = TRUE;
@@ -1553,7 +1553,7 @@ class FlutterUserAddEdit
                                     $href .= '&ihc_coupon=' . $this->coupon;
                                 }
                                 if (!empty($_POST['ihc_country'])) {
-                                    $href .= '&ihc_country=' . esc_attr($_POST['ihc_country']);
+                                    $href .= '&ihc_country=' . $_POST['ihc_country'];
                                 }
                                 if ($this->taxes_enabled) {
                                     $ihc_country = get_user_meta($this->user_id, 'ihc_country', TRUE);
@@ -1562,7 +1562,7 @@ class FlutterUserAddEdit
                                     $href .= '&ihc_state=' . $state;
                                 }
                                 $this->insert_the_order();
-                                wp_redirect($href);
+                                wp_redirect(esc_url_raw($href));
                                 exit();
                             } else {
                                 $redirect_back = TRUE;
@@ -1645,7 +1645,7 @@ class FlutterUserAddEdit
                                 Ihc_User_Logs::set_user_id($this->user_id);
                                 Ihc_User_Logs::set_level_id((isset($this->current_level)) ? $this->current_level : '');
                                 Ihc_User_Logs::write_log(esc_html__('Bank Transfer Payment: Start process.', 'ihc'), 'payments');
-                                wp_redirect($url);
+                                wp_redirect(esc_url_raw($url));
                                 exit();
                             }
                         } else {
@@ -1668,7 +1668,7 @@ class FlutterUserAddEdit
                                 $url = add_query_arg('ihc_dynamic_price', sanitize_text_field($_POST['ihc_dynamic_price']), $url);
                             }
                             $this->insert_the_order();
-                            wp_redirect($url);
+                            wp_redirect(esc_url_raw($url));
                             exit();
                         } else {
                             $redirect_back = TRUE;
@@ -1694,7 +1694,7 @@ class FlutterUserAddEdit
                                 $url_return = add_query_arg('ihc_dynamic_price', sanitize_text_field($_POST['ihc_dynamic_price']), $url_return);
                             }
                             $this->insert_the_order();
-                            wp_redirect($url_return);
+                            wp_redirect(esc_url_raw($url_return));
                             exit();
                         } else {
                             $redirect_back = TRUE;
@@ -1707,14 +1707,14 @@ class FlutterUserAddEdit
                         break;
                 }//end switch
                 if (!empty($redirect_back)) {
-                    wp_redirect($url_return);
+                    wp_redirect(esc_url_raw($url_return));
                     exit();
                 }
             } else {
                 /****************** FREE LEVEL ******************/
                 $this->handle_levels_assign($lid);
                 if ($url_return) {
-                    wp_redirect($url_return);
+                    wp_redirect(esc_url_raw($url_return));
                     exit();
                 }
             }
@@ -1761,7 +1761,7 @@ class FlutterUserAddEdit
                                 if (isset($_POST['ihc_dynamic_price'])) {
                                     $href .= "&ihc_dynamic_price=" . sanitize_text_field($_POST['ihc_dynamic_price']);
                                 }
-                                wp_redirect($href);
+                                wp_redirect(esc_url_raw($href));
                                 exit();
                             }
                         }
@@ -1795,7 +1795,7 @@ class FlutterUserAddEdit
                             Ihc_User_Logs::write_log(esc_html__('Bank Transfer Payment: Start process.', 'ihc'), 'payments');
                             $this->insert_the_order();
                             $dynamic_data = array('order_id' => $this->order_id);
-                            do_action('ihc_bank_transfer_charge', array_merge(['uid' => $this->user_id, 'lid' => $_POST['lid']], $dynamic_data));
+                            do_action('ihc_bank_transfer_charge', array_merge(['uid' => $this->user_id, 'lid' => sanitize_text_field($_POST['lid'])], $dynamic_data));
                             $this->bank_transfer_message = TRUE;
                         }
                         break;
@@ -2016,7 +2016,7 @@ class FlutterUserAddEdit
                 $url = ihc_get_redirect_link_by_label($redirect, $this->user_id);
                 if (strpos($url, IHC_PROTOCOL . $_SERVER['HTTP_HOST']) !== 0) {
                     //if it's a external custom redirect we don't want to add extra params in url, so let's redirect from here
-                    wp_redirect($url);
+                    wp_redirect(esc_url_raw($url));
                     exit();
                 }
             }
@@ -2066,7 +2066,7 @@ class FlutterUserAddEdit
             $url .= '#ihc_bt_success_msg';
         }
 
-        wp_redirect($url);
+        wp_redirect(esc_url_raw($url));
         exit();
     }
 
@@ -2145,7 +2145,7 @@ class FlutterUserAddEdit
     ////COUPONS
     public function set_coupon($coupon = '')
     {
-        $this->coupon = (isset($_POST['ihc_coupon'])) ? $_POST['ihc_coupon'] : $coupon;
+        $this->coupon = (isset($_POST['ihc_coupon'])) ? sanitize_text_field($_POST['ihc_coupon']) : $coupon;
         if ($this->coupon) {
             $this->coupon = str_replace(' ', '', $this->coupon);
             if (!empty($this->register_fields)) {
