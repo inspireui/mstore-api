@@ -274,7 +274,7 @@ class VendorAdminWCFMHelper
         update_user_meta($user_id, '_store_description',  sanitize_text_field($data["shop_description"]));
 
 
-        $vendor_data["address"] =  sanitize_text_field($data["address"]);
+        $vendor_data["address"] =  $data["address"];
 
         $vendor_data["geolocation"]["store_location"] =  sanitize_text_field($data["store_location"]);
         $vendor_data["geolocation"]["store_lat"] =  sanitize_text_field($data["store_lat"]);
