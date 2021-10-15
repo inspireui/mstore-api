@@ -296,12 +296,12 @@ function parseMetaDataForBookingProduct($product)
             if ($value["key"] == "staff_ids") {
                 $staffs = json_decode($value["value"], true);
                 if (count($staffs) > 0) {
-                    $meta_data["wc_appointments_field_staff"] = $staffs[0];
+                    $meta_data["wc_appointments_field_staff"] = sanitize_text_field($staffs[0]);
                 }
             } elseif ($value["key"] == "product_id") {
-                $meta_data["add-to-cart"] = $value["value"];
+                $meta_data["add-to-cart"] = sanitize_text_field($value["value"]);
             } else {
-                $meta_data[$value["key"]] = $value["value"];
+                $meta_data[$value["key"]] = sanitize_text_field($value["value"]);
             }
         }
         $_POST = $meta_data;
