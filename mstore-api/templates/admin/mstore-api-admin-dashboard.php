@@ -21,7 +21,7 @@ if (!isset($verified) || $verified === "" || $verified === false) {
     <form action="" enctype="multipart/form-data" method="post" style="margin-bottom:50px">
         <?php
         if (isset($_POST['but_verify'])) {
-            $verified = verifyPurchaseCode($_POST['code']);
+            $verified = verifyPurchaseCode(sanitize_text_field($_POST['code']));
 
             if ($verified !== true) {
                 ?>

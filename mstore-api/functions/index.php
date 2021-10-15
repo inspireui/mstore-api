@@ -6,7 +6,7 @@ define("ACTIVE_TOKEN", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmb28iOiJiYXIiLCJ
 function verifyPurchaseCode($code)
 {
     $website = get_home_url();
-    $response = wp_remote_post(ACTIVE_API . "?token=" . ACTIVE_TOKEN, ["body" => ["code" => $code, "website" => $website, "plugin" => true]]);
+    $response = wp_remote_post(ACTIVE_API . "?token=" . ACTIVE_TOKEN, ["body" => ["code" => $code, "website" => $website, "plugin" => true], 'sslverify'   => false]);
     if (is_wp_error($response)) {
         return $response->get_error_message();
     }
@@ -296,12 +296,12 @@ function parseMetaDataForBookingProduct($product)
             if ($value["key"] == "staff_ids") {
                 $staffs = json_decode($value["value"], true);
                 if (count($staffs) > 0) {
-                    $meta_data["wc_appointments_field_staff"] = $staffs[0];
+                    $meta_data["wc_appointments_field_staff"] = sanitize_text_field($staffs[0]);
                 }
             } elseif ($value["key"] == "product_id") {
-                $meta_data["add-to-cart"] = $value["value"];
+                $meta_data["add-to-cart"] = sanitize_text_field($value["value"]);
             } else {
-                $meta_data[$value["key"]] = $value["value"];
+                $meta_data[$value["key"]] = sanitize_text_field($value["value"]);
             }
         }
         $_POST = $meta_data;

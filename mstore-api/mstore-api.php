@@ -25,7 +25,6 @@ include_once plugin_dir_path(__FILE__) . "controllers/flutter-woo.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-delivery.php";
 include_once plugin_dir_path(__FILE__) . "functions/index.php";
 include_once plugin_dir_path(__FILE__) . "functions/utils.php";
-include_once plugin_dir_path(__FILE__) . "controllers/flutter-membership/index.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-tera-wallet.php";
 
 class MstoreCheckOut
@@ -133,7 +132,7 @@ class MstoreCheckOut
 
     function mstore_update_limit_product()
     {
-        $limit = $_REQUEST['limit'];
+        $limit = sanitize_text_field($_REQUEST['limit']);
         if (is_numeric($limit)) {
             update_option("mstore_limit_product", intval($limit));
         }
@@ -511,7 +510,7 @@ function prepare_checkout()
                 if (isset($_GET['vendor_admin'])) {
                     global $wp;
                     $request = $wp->request;
-                    wp_redirect(home_url("/" . $request));
+                    wp_redirect(esc_url_raw(home_url("/" . $request)));
                     die;
                 }
             }
