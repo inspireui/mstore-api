@@ -705,29 +705,7 @@ class FlutterVendor extends FlutterBaseController
 
     public function flutter_get_nearby_stores($request)
     {
-        if (is_plugin_active('dokan-lite/dokan.php') && is_plugin_active('dokan-pro/dokan-pro.php')) {
-            $queries_data = array();
-            parse_str($_SERVER['QUERY_STRING'], $queries_data);
-            $sellers = dokan_get_sellers(apply_filters('dokan_seller_listing_args', $queries_data, $_GET));
-            if ($sellers["count"] > 0) {
-                $data_objects = [];
-                $storeController = new WeDevs\Dokan\REST\StoreController();
-                foreach ($sellers["users"] as $user) {
-                    $vendor = dokan()->vendor->get($user->ID);
-                    $stores_data = $storeController->prepare_item_for_response($vendor, $request);
-                    $data_objects[] = $storeController->prepare_response_for_collection($stores_data);
-                }
-
-                $response = rest_ensure_response($data_objects);
-                $response = $storeController->format_collection_response($response, $request, dokan()->vendor->get_total());
-
-                return $response;
-            } else {
-                return [];
-            }
-        } else {
-            return parent::sendError("invalid_plugin", "Please install Dokan Lite and Dokan Pro plugin", 400);
-        }
+        return [];
     }
 
     public function flutter_get_reviews($request)

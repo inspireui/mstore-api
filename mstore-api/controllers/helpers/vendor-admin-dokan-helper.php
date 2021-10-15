@@ -120,6 +120,113 @@ class VendorAdminDokanHelper
         return array();
     }
 
+
+       /// GET FUNCTIONS
+       public function get_vendor_profile($user_id)
+       {
+           $vendor_data = get_user_meta($user_id, "wcfmmp_profile_settings", true);
+           if (is_string($vendor_data)) {
+               $vendor_data = [];
+           }
+           $vendor_data["logo"] = wp_get_attachment_image_src(
+               $vendor_data["gravatar"]
+           )[0];
+           $vendor_data["banner"] = wp_get_attachment_image_src(
+               $vendor_data["banner"]
+           )[0];
+           $vendor_data["mobile_banner"] = wp_get_attachment_image_src(
+               $vendor_data["mobile_banner"]
+           )[0];
+           $vendor_data["list_banner"] = wp_get_attachment_image_src(
+               $vendor_data["list_banner"]
+           )[0];
+           $data = [];
+           foreach ($vendor_data["banner_slider"] as $item) {
+               $image = wp_get_attachment_image_src($item["image"])[0];
+               $link = $item["link"];
+               $data[] = [
+                   "image" => $image,
+                   "link" => $link,
+               ];
+           }
+           $vendor_data["banner_slider"] = $data;
+           return new WP_REST_Response(
+               [
+                   "status" => "success",
+                   "response" => $vendor_data,
+               ],
+               200
+           );
+       }
+   
+       public function update_vendor_profile($request, $user_id)
+       {
+           $data = json_decode( $request, true);
+           $vendor_data = get_user_meta($user_id, "dokan_profile_settings", true);
+           if (is_string($vendor_data)) {
+               $vendor_data = [];
+           }
+
+           $store_name = sanitize_text_field($data["store_name"]);
+           $store_nicename = sanitize_text_field($data["store_slug"]);
+           $store_location = sanitize_text_field($data["store_location"]);
+           $store_lat = sanitize_text_field($data["store_lat"]);
+           $store_lng = sanitize_text_field($data["store_lng"]);
+           $phone =  sanitize_text_field($data["phone"]);
+           $store_email =  sanitize_text_field($data["store_email"]);
+
+           $vendor_data['store_name'] = $store_name;
+           $vendor_data['phone'] = $phone;   
+           $vendor_data['address'] =  $data['address'];
+           $vendor_data['location'] = $store_lat . ',' . $store_lng;
+           $vendor_data['find_address'] =  $store_location;
+           $vendor_data['email'] =  $store_email;
+
+           $count = 0;
+   
+           if (isset($data["logo"])) {
+               $img_id = $this->upload_image_from_mobile(
+                   $data["logo"],
+                   $count,
+                   $user_id
+               );
+               $count = $count + 1;
+               $vendor_data["gravatar"] = $img_id;
+           }
+
+           if (isset($data["banner"]) && isset($data["banner_type"])) {
+                $img_id = $this->upload_image_from_mobile(
+                    $data["banner"],
+                    $count,
+                    $user_id
+                );
+                $vendor_data["banner"] = $img_id;
+                $count++;
+            }
+        
+            if(isset($store_lng) && isset($store_lat) && isset($store_location)){
+                update_user_meta( $user_id, 'dokan_geo_latitude', $store_lat );
+                update_user_meta( $user_id, 'dokan_geo_longitude', $store_lng );
+                update_user_meta( $user_id, 'dokan_geo_address', $store_location);
+            }
+
+            wp_update_user(array(
+                'ID' => $user_id,
+                'user_nicename' => $store_nicename,
+            ));
+
+            update_user_meta( $user_id, 'dokan_profile_settings', $vendor_data );
+            update_user_meta( $user_id, 'dokan_store_name', $store_name);
+   
+            return new WP_REST_Response(
+               [
+                   "status" => "success",
+                   "response" => 1,
+               ],
+               200
+           );
+       }
+
     /// GET FUNCTIONS
     public function flutter_get_products($request, $user_id)
     {
