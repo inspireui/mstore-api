@@ -395,4 +395,10 @@ function customProductResponse($response, $object, $request)
 function getLangCodeFromConfigFile ($file) {
     return str_replace('config_', '', str_replace('.json', '',$file));
 }
+
+function generateCookieByUserId($user_id, $seconds = 1209600){
+    $expiration = time() + apply_filters('auth_cookie_expiration', $seconds, $user_id, true);
+    $cookie = wp_generate_auth_cookie($user_id, $expiration, 'logged_in');
+    return $cookie;
+}
 ?>
