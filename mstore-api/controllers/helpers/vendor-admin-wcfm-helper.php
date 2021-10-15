@@ -1178,26 +1178,6 @@ class VendorAdminWCFMHelper
             case "month":
                 $sql .= " AND MONTH( {$table_handler}.{$time} ) = MONTH( NOW() )";
                 break;
-            case "custom":
-                $start_date = !empty($_GET["start_date"])
-                    ? sanitize_text_field($_GET["start_date"])
-                    : $start_date;
-                $end_date = !empty($_GET["end_date"])
-                    ? sanitize_text_field($_GET["end_date"])
-                    : $end_date;
-                if ($start_date) {
-                    $start_date = wcfm_standard_date($start_date);
-                }
-                if ($end_date) {
-                    $end_date = wcfm_standard_date($end_date);
-                }
-                $sql .=
-                    " AND DATE( {$table_handler}.{$time} ) BETWEEN '" .
-                    $start_date .
-                    "' AND '" .
-                    $end_date .
-                    "'";
-                break;
             case "all":
                 break;
             case "7day":
