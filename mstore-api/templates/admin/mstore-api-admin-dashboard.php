@@ -141,6 +141,24 @@ if (isset($verified) && $verified == "1") {
     </form>
 
     <div class="thanks">
+        <p style="font-size: 16px;">This token is used for uploading the config files on FluxBuilder.</p>
+    </div>
+    <form action="" method="post">
+        <?php
+            if (isset($_POST['but_generate'])) {
+                $user = wp_get_current_user();
+                $cookie = generateCookieByUserId($user->ID);
+                ?>
+                <div class="form-group" style="margin-top:10px;margin-bottom:10px">
+                    <textarea class="mstore_input" style="height: 150px"><?php echo esc_attr($cookie) ?></textarea>
+                </div>
+                <?php
+            }
+            ?>
+        <button type="submit" class="mstore_button" name='but_generate'>Generate Token</button>
+    </form>
+    
+    <div class="thanks">
         <p style="font-size: 16px;">This setting help to speed up the mobile app performance, upload the config_xx.json
             from the common folder:</p>
     </div>

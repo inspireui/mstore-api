@@ -17,7 +17,6 @@ class FlutterWoo extends FlutterBaseController
      * @var string
      */
     protected $namespace = 'api/flutter_woo';
-    protected $namespace_oauth = 'wc-flutter-woo';
 
     /**
      * Register all routes releated with stores
@@ -95,12 +94,10 @@ class FlutterWoo extends FlutterBaseController
             array(
                 'methods' => WP_REST_Server::CREATABLE,
                 'callback' => array($this, 'upload_config_file'),
-                'permission_callback' => function () {
-                    return parent::checkApiPermission();
-                }
+                'permission_callback' => array($this, 'check_upload_file_permission'),
             ),
         );
-        register_rest_route($this->namespace_oauth, '/config-file', $config_file);
+        register_rest_route($this->namespace, '/config-file', $config_file);
 
         register_rest_route($this->namespace, '/taxes', array(
             array(
@@ -168,6 +165,22 @@ class FlutterWoo extends FlutterBaseController
                 }
             ),
         ));
+    }
+
+    function check_upload_file_permission($request){
+        $base_permission = parent::checkApiPermission();
+        if(!$base_permission){
+            return false;
+        }
+        $cookie = $request->get_header("User-Cookie");
+        if (isset($cookie) && $cookie != null) {
+            $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
+            if (!$user_id) {
+                return false;
+            }
+            return is_super_admin( $user_id );
+        }
+        return false;
     }
 
     /**
@@ -805,7 +818,7 @@ class FlutterWoo extends FlutterBaseController
 		if ($errMsg != null) {
 			return parent::sendError("invalid_file","You need to upload config_xx.json file", 400);
 		}
-        return FlutterUtils::get_json_file_path($file['name']);
+        return FlutterUtils::get_json_file_url($file['name']);
 	}
 
     public function get_taxes($request)

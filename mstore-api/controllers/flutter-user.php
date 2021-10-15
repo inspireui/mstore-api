@@ -379,8 +379,7 @@ class FlutterUserController extends FlutterBaseController
             }
         }
 
-        $expiration = time() + apply_filters('auth_cookie_expiration', $seconds, $user_id, true);
-        $cookie = wp_generate_auth_cookie($user_id, $expiration, 'logged_in');
+        $cookie = generateCookieByUserId($user_id,  $seconds);
 
         return array(
             "cookie" => $cookie,
@@ -468,9 +467,7 @@ class FlutterUserController extends FlutterBaseController
             wp_new_user_notification($user_id, '', '');
         }
 
-
-        $expiration = time() + apply_filters('auth_cookie_expiration', $seconds, $user_id, true);
-        $cookie = wp_generate_auth_cookie($user_id, $expiration, 'logged_in');
+        $cookie = generateCookieByUserId($user_id, $seconds);
 
         return array(
             "cookie" => $cookie,
@@ -577,8 +574,7 @@ class FlutterUserController extends FlutterBaseController
             return parent::sendError($user->get_error_code(), "Invalid username/email and/or password.", 401);
         }
 
-        $expiration = time() + apply_filters('auth_cookie_expiration', $seconds, $user->ID, true);
-        $cookie = wp_generate_auth_cookie($user->ID, $expiration, 'logged_in');
+        $cookie = generateCookieByUserId($user->ID, $seconds);
 
         return array(
             "cookie" => $cookie,
@@ -610,8 +606,7 @@ class FlutterUserController extends FlutterBaseController
             $user_id = wp_insert_user($userdata);
         }
 
-        $expiration = time() + apply_filters('auth_cookie_expiration', 1209600, $user_id, true);
-        $cookie = wp_generate_auth_cookie($user_id, $expiration, 'logged_in');
+        $cookie = generateCookieByUserId($user_id);
         $user = get_userdata($user_id);
 
         $response['wp_user_id'] = $user_id;
@@ -712,8 +707,7 @@ class FlutterUserController extends FlutterBaseController
                 if (!$user) {
                     return parent::sendError("invalid_login", "User does not exist", 400);
                 }
-                $expiration = time() + apply_filters('auth_cookie_expiration', 1209600, $user->ID, true);
-                $cookie = wp_generate_auth_cookie($user->ID, $expiration, 'logged_in');
+                $cookie = generateCookieByUserId($user->ID);
                 $response['wp_user_id'] = $user->ID;
                 $response['cookie'] = $cookie;
                 $response['user_login'] = $user->user_login;
@@ -724,8 +718,7 @@ class FlutterUserController extends FlutterBaseController
                 return parent::sendError("invalid_login", "Too many users with the same phone number", 400);
             }
             $user = $search_users[0];
-            $expiration = time() + apply_filters('auth_cookie_expiration', 1209600, $user->ID, true);
-            $cookie = wp_generate_auth_cookie($user->ID, $expiration, 'logged_in');
+            $cookie = generateCookieByUserId($user->ID);
             $response['wp_user_id'] = $user->ID;
             $response['cookie'] = $cookie;
             $response['user_login'] = $user->user_login;
