@@ -705,15 +705,50 @@ class FlutterVendor extends FlutterBaseController
 
     public function flutter_get_nearby_stores($request)
     {
+        if (is_plugin_active('dokan-lite/dokan.php') && is_plugin_active('dokan-pro/dokan-pro.php')){
+            $lat = sanitize_text_field($request['latitude']);
+            $lng = sanitize_text_field($request['longitude']);
+            $distance = 10;
+            if(isset($request['distance'])){
+                $distance = sanitize_text_field($request['distance']);   
+            }
+
+            if(isset($lat) && isset($lng)){
+                $distance_unit = dokan_get_option( 'distance_unit', 'dokan_geolocation', 'km' );
+                $distance_earth_center_to_surface = ( 'km' === $distance_unit ) ? 6371 : 3959;
+                global $wpdb;
+                $table_name2 = $wpdb->prefix.'usermeta';
+
+                $query =  "SELECT DISTINCT ";
+                $query.= "city_latitude.user_id, ";
+                $query.= "($distance_earth_center_to_surface * acos(cos( radians($lat) ) * cos( radians(city_latitude.meta_value ) ) * cos( radians(city_longitude.meta_value ) - radians($lng) ) + sin( radians($lat) ) * sin( radians( city_latitude.meta_value)))) AS distance ";
+                $query.= "FROM $table_name2 AS city_latitude ";
+                $query.= "LEFT JOIN $table_name2 as city_longitude ON city_latitude.user_id = city_longitude.user_id ";
+                $query.= "WHERE city_latitude.meta_key = 'dokan_geo_latitude' AND city_longitude.meta_key = 'dokan_geo_longitude' ";
+                $query .="HAVING distance < $distance ";
+                $query .="Limit 10";
+                $users = $wpdb->get_results($query);
+                $results = [];
+                if(count($users) > 0){
+                    foreach($users as $user){
+						$vendor = new Dokan_Vendor( $user->user_id );
+						$vendor_data = $vendor->to_array();
+                        $results[] =$vendor_data;
+                    }
+                }
+                return $results;
+            }
+        }
         return [];
     }
 
     public function flutter_get_reviews($request)
     {
-        $page = $request['page'];
-        $per_page = $request['per_page'];
-        $store_id = $request['store_id'];
+        $page = sanitize_text_field($request['page']);
+        $per_page = sanitize_text_field($request['per_page']);
+        $store_id = sanitize_text_field($request['store_id']);
         $status = 1;
+        $status_type = sanitize_text_field($request['status_type']);
 
         if (!isset($store_id)) {
             return [];
@@ -724,13 +759,12 @@ class FlutterVendor extends FlutterBaseController
         if (!isset($per_page)) {
             $per_page = 10;
         }
-        if (!isset($request['status_type'])) {
-            if ($request['status_type'] == 'approved') {
+        if (isset($status_type)) {
+            if ($status_type == 'approved') {
                 $status = 1;
             } else {
                 $status = 0;
             }
-
         }
 
         if (is_plugin_active('wcfm-marketplace-rest-api/wcfm-marketplace-rest-api.php')) {
