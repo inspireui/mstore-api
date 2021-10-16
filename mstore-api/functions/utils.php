@@ -50,7 +50,11 @@ class FlutterUtils {
 
     public static function get_all_json_files(){
         $files = scandir(FlutterUtils::get_json_folder());
-        $old_files = scandir(FlutterUtils::get_old_json_folder());
+        if(file_exists(FlutterUtils::get_old_json_folder())){
+            $old_files = scandir(FlutterUtils::get_old_json_folder());
+        }else{
+            $old_files = [];
+        }
         $configs = [];
         foreach (array_merge($old_files, $files) as $file) {
             if (strpos($file, "config") > -1 && strpos($file, ".json") > -1) {
