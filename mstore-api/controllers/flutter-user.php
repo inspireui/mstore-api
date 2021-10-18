@@ -530,6 +530,9 @@ class FlutterUserController extends FlutterBaseController
         } else {
             $avatar = $avatar[0];
         }
+        if(is_plugin_active('delivery-drivers-for-woocommerce/delivery-drivers-for-woocommerce.php')){
+			$is_driver_available = get_user_meta( $user->ID, 'ddwc_driver_availability', true );
+		}
         return array(
             "id" => $user->ID,
             "username" => $user->user_login,
@@ -547,6 +550,7 @@ class FlutterUserController extends FlutterBaseController
             "shipping" => $shipping,
             "billing" => $billing,
             "avatar" => $avatar,
+            "is_driver_available" => $is_driver_available,
             "dokan_enable_selling" => $user->dokan_enable_selling
         );
     }

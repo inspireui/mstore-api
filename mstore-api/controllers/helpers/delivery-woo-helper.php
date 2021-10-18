@@ -339,8 +339,29 @@ class DeliveryWooHelper
             'status' => 'success',
             'response' => 1,
         ), 200);
-
-
     }
+
+
+    function set_off_time($user_id, $is_available){
+		if(is_plugin_active('delivery-drivers-for-woocommerce/delivery-drivers-for-woocommerce.php')){
+			$new_value = 'on';
+			$old_value = '';
+			if($is_available !== 'true'){
+				$new_value = '';
+				$old_value = 'on';
+			}			
+			// Update driver availability.
+			update_user_meta( $user_id, 'ddwc_driver_availability', $new_value, $old_value );
+			$meta_value = get_user_meta( $user_id, 'ddwc_driver_availability', true );
+			    return new WP_REST_Response(array(
+                'status' => 'success',
+                'response' => $meta_value,
+            ), 200);
+		}
+        return new WP_REST_Response(array(
+            'status' => 'unknown-error',
+            'response' => '',        
+        ), 400);
+	}
 }
     

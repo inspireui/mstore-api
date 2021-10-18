@@ -138,6 +138,18 @@ class FlutterDelivery extends FlutterBaseController
                 }
             ),
         ));
+        register_rest_route($this->namespace, '/offtime', array(
+            array(
+                'methods' => 'PUT',
+                'callback' => array(
+                    $this,
+                    'set_off_time'
+                ),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
     }
 
 
@@ -243,6 +255,19 @@ class FlutterDelivery extends FlutterBaseController
             $helper = new DeliveryWooHelper();
         }
         return $helper->get_delivery_profile($user_id);
+    }
+    
+    public function set_off_time($request)
+    {
+        $user_id = $this->authorize_user($request['token']);
+        if (is_wp_error($user_id)) {
+            return $user_id;
+        }
+        $helper = new DeliveryWCFMHelper();
+        if ($request['platform'] == 'woo') {
+            $helper = new DeliveryWooHelper();
+        }
+        return $helper->set_off_time($user_id,sanitize_text_field($request['is_available']));
     }
 
 
