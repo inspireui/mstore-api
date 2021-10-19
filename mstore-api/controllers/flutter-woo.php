@@ -959,6 +959,13 @@ class FlutterWoo extends FlutterBaseController
     public function create_product_review($request)
     {
         $controller = new WC_REST_Product_Reviews_Controller();
+		$response = $controller->create_item($request);
+		if(is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')){
+			global $WCFMmp;
+			$comment_id = $response->get_data()['id'];
+			$WCFMmp->wcfmmp_reviews->wcfmmp_add_store_review( $comment_id );
+		}
+        
         return $controller->create_item($request);
     }
 
