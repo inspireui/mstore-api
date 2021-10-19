@@ -368,18 +368,19 @@ function customProductResponse($response, $object, $request)
 
     /* Product Add On */
     $addOns = getAddOns($response->data["categories"]);
-    if (count($addOns) > 0) {
-        $meta_data = $response->data['meta_data'];
-        $new_meta_data = [];
-        foreach ($meta_data as $meta_data_item) {
-            if ($meta_data_item->get_data()["key"] == "_product_addons") {
-                $meta_data_item->__set("value", array_merge($meta_data_item->get_data()["value"], $addOns));
+    $meta_data = $response->data['meta_data'];
+    $new_meta_data = [];
+    foreach ($meta_data as $meta_data_item) {
+        if ($meta_data_item->get_data()["key"] == "_product_addons") {
+            if(class_exists('WC_Product_Addons_Helper')){
+                $product_addons = WC_Product_Addons_Helper::get_product_addons( $response->data['id'], false );
+                $meta_data_item->__set("value", count($addOns) == 0 ? $product_addons : array_merge($product_addons, $addOns));
                 $meta_data_item->apply_changes();
             }
-            $new_meta_data[] = $meta_data_item;
         }
-        $response->data['meta_data'] = $new_meta_data;
+        $new_meta_data[] = $meta_data_item;
     }
+    $response->data['meta_data'] = $new_meta_data;
 
     /* Product Booking */
     if (is_plugin_active('woocommerce-appointments/woocommerce-appointments.php')) {
