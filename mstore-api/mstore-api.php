@@ -446,6 +446,9 @@ function prepare_checkout()
                 }
             } else {
                 parseMetaDataForBookingProduct($product);
+                if (isset($product['addons'])) {
+                    $_POST = $product['addons'];
+                }
                 $woocommerce->cart->add_to_cart($productId, $quantity, 0, $attributes);
             }
         }
