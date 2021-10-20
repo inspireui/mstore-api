@@ -165,7 +165,100 @@ class FlutterWoo extends FlutterBaseController
                 }
             ),
         ));
+
+        register_rest_route($this->namespace, '/scanner', array(
+            array(
+                'methods' => "GET",
+                'callback' => array($this, 'get_data_from_scanner'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
     }
+
+    function get_data_from_scanner($request){
+		$data = sanitize_text_field($request['data']);
+        $token = sanitize_text_field($request['token']);
+		if(isset($data) && is_numeric($data)){
+			$type = get_post_type($data);
+			
+			if($type){
+				if($type == 'product'){
+					$controller = new CUSTOM_WC_REST_Products_Controller();
+            		$req = new WP_REST_Request('GET');
+            		$params = array('status' =>'published', 'include' => [$data]);
+                    $req->set_query_params($params);
+            		$response = $controller->get_items($req);
+            		return array(
+						'type' => $type,
+						'data' => $response->get_data(),
+					);
+				}
+
+
+				if($type == 'shop_order'){
+                    if (isset($token)) {
+                        $cookie = urldecode(base64_decode($token));
+                    } else {
+                        return parent::sendError("unauthorized", "You are not allowed to do this", 401);
+                    }
+                    $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
+                    if (!$user_id) {
+                        return parent::sendError("invalid_login", "You do not exist in this world. Please re-check your existence with your Creator :)", 401);
+                    }
+
+
+					$api = new WC_REST_Orders_V1_Controller();
+					$order = wc_get_order($data);
+                    $customer_id = $order->get_user_id();
+                    if($user_id != $customer_id){
+                        return parent::sendError("unauthorized", "You are not allowed to do this", 401);
+                    }
+				    $response = $api->prepare_item_for_response($order, $request);
+                    $order = $response->get_data();
+                    $count = count($order["line_items"]);
+                    $order["product_count"] = $count;
+                    $line_items = array();
+                    for ($i = 0; $i < $count; $i++) {
+                        $image = wp_get_attachment_image_src(
+                            get_post_thumbnail_id($product_id)
+                        );
+                        if (!is_null($image[0])) {
+                            $order["line_items"][$i]["featured_image"] = $image[0];
+                        }
+                        $order_item = new WC_Order_Item_Product($order["line_items"][$i]["id"]);
+                        $order["line_items"][$i]["meta"] = $order_item->get_meta_data();
+                        if (is_plugin_active('wc-frontend-manager-delivery/wc-frontend-manager-delivery.php')) {
+                            $table_name = $wpdb->prefix . "wcfm_delivery_orders";
+                            $sql = "SELECT delivery_boy FROM `{$table_name}`";
+                            $sql .= " WHERE 1=1";
+                            $sql .= " AND product_id = '{$product_id}'";
+                            $sql .= " AND order_id = '{$item->order_id}'";
+                            $users = $wpdb->get_results($sql);
+
+                            if (count($users) > 0) {
+                                $user = get_userdata($users[0]->delivery_boy);
+                                $order["line_items"][$i]['delivery_user'] = [
+                                    "id" => $user->ID,
+                                    "name" => $user->display_name,
+                                    "profile_picture" => $profile_pic,
+                                ];
+                            }
+                        }
+                        $line_items[] = $order["line_items"][$i];
+                    }
+                    $order["line_items"] = $line_items;
+              
+                	return array(
+						'type' => $type,
+						'data' => [$order],
+					);
+				}
+			}
+		}
+		return parent::sendError("invalid_data", "Invalid data", 400);
+	}
 
     function check_upload_file_permission($request){
         $base_permission = parent::checkApiPermission();
