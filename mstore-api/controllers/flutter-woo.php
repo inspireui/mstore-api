@@ -166,6 +166,16 @@ class FlutterWoo extends FlutterBaseController
             ),
         ));
 
+        register_rest_route( $this->namespace,  '/blog/create', array(
+			array(
+				'methods' => "POST",
+				'callback' => array( $this, 'create_blog' ),
+				'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+			),
+		));
+
         register_rest_route($this->namespace, '/scanner', array(
             array(
                 'methods' => "GET",
@@ -176,6 +186,103 @@ class FlutterWoo extends FlutterBaseController
             ),
         ));
     }
+
+    protected function upload_image_from_mobile($image, $count, $user_id)
+    {
+        require_once ABSPATH . "wp-admin" . "/includes/file.php";
+        require_once ABSPATH . "wp-admin" . "/includes/image.php";
+        $imgdata = $image;
+        $imgdata = trim($imgdata);
+        $imgdata = str_replace("data:image/png;base64,", "", $imgdata);
+        $imgdata = str_replace("data:image/jpg;base64,", "", $imgdata);
+        $imgdata = str_replace("data:image/jpeg;base64,", "", $imgdata);
+        $imgdata = str_replace("data:image/gif;base64,", "", $imgdata);
+        $imgdata = str_replace(" ", "+", $imgdata);
+        $imgdata = base64_decode($imgdata);
+        $f = finfo_open();
+        $mime_type = finfo_buffer($f, $imgdata, FILEINFO_MIME_TYPE);
+        $type_file = explode("/", $mime_type);
+        $avatar = time() . "_" . $count . "." . $type_file[1];
+
+        $uploaddir = wp_upload_dir();
+        $myDirPath = $uploaddir["path"];
+        $myDirUrl = $uploaddir["url"];
+
+        file_put_contents($uploaddir["path"] . "/" . $avatar, $imgdata);
+
+        $filename = $myDirUrl . "/" . basename($avatar);
+        $wp_filetype = wp_check_filetype(basename($filename), null);
+        $uploadfile = $uploaddir["path"] . "/" . basename($filename);
+
+        $attachment = [
+            "post_mime_type" => $wp_filetype["type"],
+            "post_title" => preg_replace("/\.[^.]+$/", "", basename($filename)),
+            "post_content" => "",
+            "post_author" => $user_id,
+            "post_status" => "inherit",
+            "guid" => $myDirUrl . "/" . basename($filename),
+        ];
+
+        $attachment_id = wp_insert_attachment($attachment, $uploadfile);
+        $attach_data = apply_filters(
+            "wp_generate_attachment_metadata",
+            $attachment,
+            $attachment_id,
+            "create"
+        );
+        // $attach_data = wp_generate_attachment_metadata($attachment_id, $uploadfile);
+        wp_update_attachment_metadata($attachment_id, $attach_data);
+        return $attachment_id;
+    }
+	
+	function create_blog($request){
+		$title = sanitize_text_field($request['title']);
+		$content = sanitize_text_field($request['content']);
+		$author = sanitize_text_field($request['author']);
+		$date = sanitize_text_field($request['date']);
+		$status = sanitize_text_field($request['status']);
+		$categories = sanitize_text_field($request['categories']);
+		$token = sanitize_text_field($request['token']);
+		$image = sanitize_text_field($request['image']);
+
+        if (isset($token)) {
+            $cookie = urldecode(base64_decode($token));
+        } else {
+            return parent::sendError("unauthorized", "You are not allowed to do this", 401);
+        }
+        $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
+        if (!$user_id) {
+            return parent::sendError("invalid_login", "You do not exist in this world. Please re-check your existence with your Creator :)", 401);
+        }
+		if($user_id != $author){
+			return parent::sendError("unauthorized", "You are not allowed to do this", 401);
+		}
+		
+        $my_post = array(
+            'post_author' => $user_id,
+            'post_title'   => $title,
+            'post_content' => $content,
+            'post_status' => $status,
+			'post_category' => [$categories],
+        );
+		
+        $post_id = wp_insert_post( $my_post );
+		
+		if(isset($image)){
+            $img_id = $this->upload_image_from_mobile($image, 0 ,$user_id);
+            if($img_id != false){
+                set_post_thumbnail($post_id, $img_id);
+            }
+		}
+		
+        return new WP_REST_Response(
+            [
+                "status" => "success",
+                "response" => '',
+            ],
+            200
+        );
+	}
 
     function get_data_from_scanner($request){
 		$data = sanitize_text_field($request['data']);
