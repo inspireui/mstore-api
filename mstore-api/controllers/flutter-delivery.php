@@ -160,7 +160,7 @@ class FlutterDelivery extends FlutterBaseController
             return $user_id;
         }
         $helper = new DeliveryWCFMHelper();
-        if ($request['platform'] == 'woo') {
+        if ($request['platform'] == 'woo' ||$request['platform'] == 'dokan') {
             $helper = new DeliveryWooHelper();
         }
         return $helper->get_delivery_orders($user_id, $request);
@@ -173,7 +173,7 @@ class FlutterDelivery extends FlutterBaseController
             return $user_id;
         }
         $helper = new DeliveryWCFMHelper();
-        if ($request['platform'] == 'woo') {
+        if ($request['platform'] == 'woo' ||$request['platform'] == 'dokan') {
             $helper = new DeliveryWooHelper();
         }
         return $helper->get_delivery_stores($user_id, $request);
@@ -186,7 +186,7 @@ class FlutterDelivery extends FlutterBaseController
             return $user_id;
         }
         $helper = new DeliveryWCFMHelper();
-        if ($request['platform'] == 'woo') {
+        if ($request['platform'] == 'woo' ||$request['platform'] == 'dokan') {
             $helper = new DeliveryWooHelper();
         }
         return $helper->get_delivery_order($user_id, $request);
@@ -199,7 +199,7 @@ class FlutterDelivery extends FlutterBaseController
             return $user_id;
         }
         $helper = new DeliveryWCFMHelper();
-        if ($request['platform'] == 'woo') {
+        if ($request['platform'] == 'woo' ||$request['platform'] == 'dokan') {
             $helper = new DeliveryWooHelper();
         }
         return $helper->get_delivery_stat($user_id);
@@ -212,7 +212,7 @@ class FlutterDelivery extends FlutterBaseController
             return $user_id;
         }
         $helper = new DeliveryWCFMHelper();
-        if ($request['platform'] == 'woo') {
+        if ($request['platform'] == 'woo' ||$request['platform'] == 'dokan') {
             $helper = new DeliveryWooHelper();
         }
         return $helper->get_notification($request, $user_id);
@@ -225,7 +225,7 @@ class FlutterDelivery extends FlutterBaseController
             return $user_id;
         }
         $helper = new DeliveryWCFMHelper();
-        if ($request['platform'] == 'woo') {
+        if ($request['platform'] == 'woo' ||$request['platform'] == 'dokan') {
             $helper = new DeliveryWooHelper();
         }
         return $helper->update_delivery_profile($request, $user_id);
@@ -238,7 +238,7 @@ class FlutterDelivery extends FlutterBaseController
             return $user_id;
         }
         $helper = new DeliveryWCFMHelper();
-        if ($request['platform'] == 'woo') {
+        if ($request['platform'] == 'woo' ||$request['platform'] == 'dokan') {
             $helper = new DeliveryWooHelper();
         }
         return $helper->update_delivery_order($request['order_id']);
@@ -251,7 +251,7 @@ class FlutterDelivery extends FlutterBaseController
             return $user_id;
         }
         $helper = new DeliveryWCFMHelper();
-        if ($request['platform'] == 'woo') {
+        if ($request['platform'] == 'woo' ||$request['platform'] == 'dokan') {
             $helper = new DeliveryWooHelper();
         }
         return $helper->get_delivery_profile($user_id);
@@ -264,7 +264,7 @@ class FlutterDelivery extends FlutterBaseController
             return $user_id;
         }
         $helper = new DeliveryWCFMHelper();
-        if ($request['platform'] == 'woo') {
+        if ($request['platform'] == 'woo' ||$request['platform'] == 'dokan') {
             $helper = new DeliveryWooHelper();
         }
         return $helper->set_off_time($user_id,sanitize_text_field($request['is_available']));
