@@ -1091,6 +1091,11 @@ class FlutterUserController extends FlutterBaseController
         $user_id = $user->ID;
         $serverKey = get_option("mstore_firebase_server_key");
         $status = false;
+        $is_onesignal = $params->is_onesignal;
+        if($is_onesignal){
+            $status = one_signal_push_notification("Fluxstore", "Test push notification", array($user_id));
+            return ['status' => $status];
+        }
         if (isset($is_manager)) {
             if ($is_manager) {
                 $deviceToken = get_user_meta($user_id, 'mstore_manager_device_token', true);
@@ -1140,13 +1145,11 @@ class FlutterUserController extends FlutterBaseController
             return parent::sendError("invalid_user", "User does not exist in this world. Please re-check user's existence with the Creator :)", 401);
         }
 
-        $serverKey = get_option("mstore_firebase_server_key");
         $message = $request['message'];
 
         $deviceToken = get_user_meta($receiver->ID, 'mstore_device_token', true);
         $manager_device_token = get_user_meta($receiver->ID, 'mstore_manager_device_token', true);
         pushNotification($sender_name, $message, $deviceToken);
         pushNotification($sender_name, $message, $manager_device_token);
-
     }
 }
