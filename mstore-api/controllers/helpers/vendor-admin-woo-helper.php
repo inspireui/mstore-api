@@ -134,7 +134,8 @@ class VendorAdminWooHelper
         $terms = array(
             'post_type' => 'product',
             'posts_per_page' => $limit,
-            'paged' => $page
+            'paged' => $page,
+            'post_status' => 'any'
         );
 
         // Added search product feature
