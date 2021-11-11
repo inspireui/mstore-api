@@ -33,9 +33,6 @@ function one_signal_push_notification($title = '', $message = '', $user_ids = ar
     $app_id = $onesignal_wp_settings['app_id'];
     $api_key = $onesignal_wp_settings['app_rest_api_key'];
 
-    $app_id = "8b45b6db-7421-45e1-85aa-75e597f62714";
-    $api_key = 'YmY5NzljNmMtOTQxMi00ODMyLWFmMTItNDUyNDc1NDBhNmI5';
-
     if(empty($app_id) || empty($api_key)){
         return false;
     }
