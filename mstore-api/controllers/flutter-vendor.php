@@ -712,19 +712,38 @@ class FlutterVendor extends FlutterBaseController
             if(isset($request['distance'])){
                 $distance = sanitize_text_field($request['distance']);   
             }
+            if(isset($request['search'])){
+                $search = sanitize_text_field($request['search']);  
+            }
 
             if(isset($lat) && isset($lng)){
                 $distance_unit = dokan_get_option( 'distance_unit', 'dokan_geolocation', 'km' );
                 $distance_earth_center_to_surface = ( 'km' === $distance_unit ) ? 6371 : 3959;
                 global $wpdb;
                 $table_name2 = $wpdb->prefix.'usermeta';
+                if(isset($search)){
+                    $query = "SELECT $table_name2.user_id FROM $table_name2 WHERE $table_name2.meta_key = 'dokan_store_name' AND $table_name2.meta_value LIKE '%$search%'";
+                    $ids = $wpdb->get_results($query);
+                    if(count($ids) == 0){
+                        return [];
+                    }
+                    if(count($ids) > 0){
+                        foreach($ids as $id){
+                            $user_ids[] = $id->user_id;
+                        }
+                        $user_ids = implode(',', $user_ids);
+                    }
+                }
 
                 $query =  "SELECT DISTINCT ";
-                $query.= "city_latitude.user_id, ";
-                $query.= "($distance_earth_center_to_surface * acos(cos( radians($lat) ) * cos( radians(city_latitude.meta_value ) ) * cos( radians(city_longitude.meta_value ) - radians($lng) ) + sin( radians($lat) ) * sin( radians( city_latitude.meta_value)))) AS distance ";
-                $query.= "FROM $table_name2 AS city_latitude ";
-                $query.= "LEFT JOIN $table_name2 as city_longitude ON city_latitude.user_id = city_longitude.user_id ";
-                $query.= "WHERE city_latitude.meta_key = 'dokan_geo_latitude' AND city_longitude.meta_key = 'dokan_geo_longitude' ";
+                $query.= "store_latitude.user_id, ";
+                $query.= "($distance_earth_center_to_surface * acos(cos( radians($lat) ) * cos( radians(store_latitude.meta_value ) ) * cos( radians(store_longitude.meta_value ) - radians($lng) ) + sin( radians($lat) ) * sin( radians( store_latitude.meta_value)))) AS distance";
+                $query.= " FROM $table_name2 AS store_latitude ";
+                $query.= "LEFT JOIN $table_name2 as store_longitude ON store_latitude.user_id = store_longitude.user_id ";
+                $query.= "WHERE store_latitude.meta_key = 'dokan_geo_latitude' AND store_longitude.meta_key = 'dokan_geo_longitude' ";
+                if(isset($user_ids)){
+                    $query.= "AND store_latitude.user_id IN ({$user_ids}) ";
+                }
                 $query .="HAVING distance < $distance ";
                 $query .="Limit 10";
                 $users = $wpdb->get_results($query);

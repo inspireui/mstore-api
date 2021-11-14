@@ -963,42 +963,40 @@ class FlutterWCFMHelper
         $store_id = $request['id'];
         $page = isset($request["page"]) ? $request["page"] : 1;
         $limit = isset($request["limit"]) ? $request["limit"] : 10;
-
-        global $woocommerce, $wpdb;
-        $table_name = $wpdb->prefix . "posts";
-        $sql = "SELECT * FROM `$table_name` ";
-        $sql .= "WHERE `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` = 'publish' ";
-        if (isset($store_id)) {
-            $sql .= "AND `$table_name`.`post_author` = $store_id";
-        }
-
-        $products = $wpdb->get_results($sql);
-
-        $categoryIds = array();
-        foreach ($products as $object) {
-            $terms = get_the_terms($object->ID, 'product_cat');
-            foreach ((array)$terms as $term) {
-                $cat_id = $term->term_id;
-                if (!in_array($cat_id, $categoryIds)) {
-                    $categoryIds[] = $cat_id;
-                }
-            }
-        }
-        if (empty($categoryIds)) {
-            return [];
-        }
-
-        $controller = new WC_REST_Product_Categories_Controller();
-        $req = new WP_REST_Request('GET');
-        $params = array('include' => $categoryIds, 'page' => $page, 'per_page' => $limit, 'orderby' => 'name', 'order' => 'asc');
+        $params = array('page' => $page, 'per_page' => $limit, 'orderby' => 'name', 'order' => 'asc');
         if (isset($request['lang'])) {
             $params['lang'] = $request['lang'];
         }
         if (isset($request['hide_empty'])) {
             $params['hide_empty'] = $request['hide_empty'];
         }
-        $req->set_query_params($params);
 
+        if (isset($store_id)) {
+            global $woocommerce, $wpdb;
+            $table_name = $wpdb->prefix . "posts";
+            $sql = "SELECT * FROM `$table_name` ";
+            $sql .= "WHERE `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` = 'publish' ";
+            $sql .= "AND `$table_name`.`post_author` = $store_id";
+            $products = $wpdb->get_results($sql);
+
+            $categoryIds = array();
+            foreach ($products as $object) {
+                $terms = get_the_terms($object->ID, 'product_cat');
+                foreach ((array)$terms as $term) {
+                    $cat_id = $term->term_id;
+                    if (!in_array($cat_id, $categoryIds)) {
+                        $categoryIds[] = $cat_id;
+                    }
+                }
+            }
+            if (empty($categoryIds)) {
+                return [];
+            }
+            $params['include'] = $categoryIds;
+        }
+        $controller = new WC_REST_Product_Categories_Controller();
+        $req = new WP_REST_Request('GET');
+        $req->set_query_params($params);
         $response = $controller->get_items($req);
         return $response->get_data();
     }

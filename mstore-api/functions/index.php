@@ -23,11 +23,65 @@ function verifyPurchaseCode($code)
     return $success;
 }
 
+
+function one_signal_push_notification($title = '', $message = '', $user_ids = array()) {   
+    if(!is_plugin_active('onesignal-free-web-push-notifications/onesignal.php')){
+        return false;
+    }
+
+    $onesignal_wp_settings = OneSignal::get_onesignal_settings();
+    $app_id = $onesignal_wp_settings['app_id'];
+    $api_key = $onesignal_wp_settings['app_rest_api_key'];
+
+    if(empty($app_id) || empty($api_key)){
+        return false;
+    }
+
+    $content      = array(
+        "en" => $message
+    );
+    $headings = array(
+        "en" => $title
+    );
+	
+	$external_ids = array();
+	foreach($user_ids as $id){
+		$external_ids[] = strval($id);
+	}
+
+    $fields = array(
+        'app_id' => $app_id,
+        'data' => array(
+			'title' => $title,
+			'message' => $message,
+		),
+        'include_external_user_ids' => $external_ids,
+        'contents' => $content,
+        'headings' => $headings,
+    );
+    $bodyAsJson = json_encode($fields);
+    $response =  wp_remote_post("https://onesignal.com/api/v1/notifications", array(
+        'method' => 'POST',
+        'timeout' => 45,
+        'redirection' => 5,
+        'httpversion' => '1.0',
+        'blocking' => true,
+        'headers' => array("Content-type" => "application/json;charset=UTF-8",
+            "Authorization" => "Basic " . $api_key ),
+        'body' => $bodyAsJson,
+      )
+    );
+    return wp_remote_retrieve_response_code($response) == 200;
+}
+
 function pushNotification($title, $message, $deviceToken)
 {
     $serverKey = get_option("mstore_firebase_server_key");
     if (isset($serverKey) && $serverKey != false) {
-        $body = ["notification" => ["title" => $title, "body" => $message, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], "data" => ["title" => $title, "body" => $message, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], "to" => $deviceToken];
+        $body = ["notification" => ["title" => $title, "body" => $message, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], 
+        "data" => ["title" => $title, "body" => $message, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], 
+        "apns" => ["headers"=>["apns-priority" => "10"], "payload"=>["aps" => ["sound"=>"default"],],],
+        "to" => $deviceToken];
         $headers = ["Authorization" => "key=" . $serverKey, 'Content-Type' => 'application/json; charset=utf-8'];
         $response = wp_remote_post("https://fcm.googleapis.com/fcm/send", ["headers" => $headers, "body" => json_encode($body)]);
         $statusCode = wp_remote_retrieve_response_code($response);
@@ -41,21 +95,23 @@ function sendNotificationToUser($userId, $orderId, $previous_status, $next_statu
 {
     $user = get_userdata($userId);
     $deviceToken = get_user_meta($userId, 'mstore_device_token', true);
-    if (isset($deviceToken) && $deviceToken != false) {
-        $itle = get_option("mstore_status_order_title");
-        if (!isset($itle) || $itle == false) {
-            $itle = "Order Status Changed";
-        }
-        $message = get_option("mstore_status_order_message");
-        if (!isset($message) || $message == false) {
-            $message = "Hi {{name}}, Your order: #{{orderId}} changed from {{prevStatus}} to {{nextStatus}}";
-        }
-        $message = str_replace("{{name}}", $user->display_name, $message);
-        $message = str_replace("{{orderId}}", $orderId, $message);
-        $message = str_replace("{{prevStatus}}", $previous_status, $message);
-        $message = str_replace("{{nextStatus}}", $next_status, $message);
-        pushNotification($itle, $message, $deviceToken);
+    $title = get_option("mstore_status_order_title");
+    if (!isset($title) || $title == false) {
+        $title = "Order Status Changed";
     }
+    $message = get_option("mstore_status_order_message");
+    if (!isset($message) || $message == false) {
+        $message = "Hi {{name}}, Your order: #{{orderId}} changed from {{prevStatus}} to {{nextStatus}}";
+    }
+    $message = str_replace("{{name}}", $user->display_name, $message);
+    $message = str_replace("{{orderId}}", $orderId, $message);
+    $message = str_replace("{{prevStatus}}", $previous_status, $message);
+    $message = str_replace("{{nextStatus}}", $next_status, $message);
+
+    if (isset($deviceToken) && $deviceToken != false) {
+        pushNotification($title, $message, $deviceToken);
+    }
+    one_signal_push_notification($title,$message,array($userId));
 }
 
 function trackOrderStatusChanged($id, $previous_status, $next_status)
@@ -65,8 +121,6 @@ function trackOrderStatusChanged($id, $previous_status, $next_status)
     sendNotificationToUser($userId, $id, $previous_status, $next_status);
     $status = $order->get_status();
     sendNewOrderNotificationToDelivery($id, $status);
-
-
 }
 
 function sendNewOrderNotificationToDelivery($order_id, $status)
@@ -83,12 +137,15 @@ function sendNewOrderNotificationToDelivery($order_id, $status)
             $sql .= " AND delivery_status = 'pending'";
             $result = $wpdb->get_results($sql);
 
+            $user_ids = array();
             foreach ($result as $item) {
+                $user_ids[]=$item->delivery_boy;
                 $deviceToken = get_user_meta($item->delivery_boy, 'mstore_delivery_device_token', true);
                 if (isset($deviceToken) && $deviceToken != false) {
                     pushNotification($title, $message, $deviceToken);
                 }
             }
+            one_signal_push_notification($title,$message, $user_ids);
         }
 
     }
@@ -145,6 +202,7 @@ function sendNewOrderNotificationToVendor($order_seller_id, $order_id)
             wcfm_message_on_new_order($order_id);
         }
     }
+    one_signal_push_notification($title, $message, array($order_seller_id));
 }
 
 function wcfm_message_on_new_order($order_id)
