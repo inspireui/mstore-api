@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 3.4.6
+ * Version: 3.4.7
  * Author: InspireUI
  * Author URI: https://inspireui.com
  *
@@ -26,10 +26,11 @@ include_once plugin_dir_path(__FILE__) . "controllers/flutter-delivery.php";
 include_once plugin_dir_path(__FILE__) . "functions/index.php";
 include_once plugin_dir_path(__FILE__) . "functions/utils.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-tera-wallet.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-paytm.php";
 
 class MstoreCheckOut
 {
-    public $version = '3.4.6';
+    public $version = '3.4.7';
 
     public function __construct()
     {
@@ -449,7 +450,14 @@ function prepare_checkout()
                 if (isset($product['addons'])) {
                     $_POST = $product['addons'];
                 }
-                $woocommerce->cart->add_to_cart($productId, $quantity, 0, $attributes);
+                $cart_item_data = array();
+                if (is_plugin_active('woo-wallet/woo-wallet.php')) {
+                    $wallet_product = get_wallet_rechargeable_product();
+                    if ($wallet_product->id == $productId) {
+                        $cart_item_data['recharge_amount'] = $product['total'];
+                    }
+                }
+                $woocommerce->cart->add_to_cart($productId, $quantity, 0, $attributes, $cart_item_data);
             }
         }
 

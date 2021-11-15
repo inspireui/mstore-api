@@ -43,6 +43,9 @@ Faster- Smoother- Closer.
 1. Click Install.
 
 == Changelog ==
+= 3.4.7 =
+  * Support PayTM payment
+
 = 3.4.6 =
   * Fix the warning issues on PHP 8.x
   * Update some Text sanitize.
