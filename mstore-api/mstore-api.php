@@ -450,7 +450,14 @@ function prepare_checkout()
                 if (isset($product['addons'])) {
                     $_POST = $product['addons'];
                 }
-                $woocommerce->cart->add_to_cart($productId, $quantity, 0, $attributes);
+                $cart_item_data = array();
+                if (is_plugin_active('woo-wallet/woo-wallet.php')) {
+                    $wallet_product = get_wallet_rechargeable_product();
+                    if ($wallet_product->id == $productId) {
+                        $cart_item_data['recharge_amount'] = $product['total'];
+                    }
+                }
+                $woocommerce->cart->add_to_cart($productId, $quantity, 0, $attributes, $cart_item_data);
             }
         }
 
