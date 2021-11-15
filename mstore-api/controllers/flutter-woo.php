@@ -176,6 +176,16 @@ class FlutterWoo extends FlutterBaseController
 			),
 		));
 
+        register_rest_route( $this->namespace,  '/blog/comment', array(
+			array(
+				'methods' => "POST",
+				'callback' => array( $this, 'create_comment' ),
+				'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+			),
+		));
+
         register_rest_route($this->namespace, '/scanner', array(
             array(
                 'methods' => "GET",
@@ -234,6 +244,47 @@ class FlutterWoo extends FlutterBaseController
         wp_update_attachment_metadata($attachment_id, $attach_data);
         return $attachment_id;
     }
+
+
+    function create_comment($request){
+		$content = sanitize_text_field($request['content']);
+		$token = sanitize_text_field($request['token']);
+		$post_id = sanitize_text_field($request['post_id']);
+		
+        if (!empty($token)) {
+            $cookie = urldecode(base64_decode($token));
+        } else {
+            return parent::sendError("unauthorized", "You are not allowed to do this", 401);
+        }
+        $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
+        if (!$user_id) {
+            return parent::sendError("invalid_login", "You do not exist in this world. Please re-check your existence with your Creator :)", 401);
+        }
+		if($user_id != $author){
+			return parent::sendError("unauthorized", "You are not allowed to do this", 401);
+		}
+		
+		$is_approved = get_option( 'comment_moderation' ) ;
+	    if ( comments_open( $post_id ) ) {
+			$current_user = get_user_by('ID',$user_id);
+			
+        	$data = array(
+            'comment_post_ID'      => $post_id,
+            'comment_content'      => $content,
+            'user_id'              => $current_user->ID,
+            'comment_author'       => $current_user->user_login,
+            'comment_author_email' => $current_user->user_email,
+            'comment_author_url'   => $current_user->user_url,
+			'comment_approved'	   => empty($is_approved) ? 1 : 0,
+        );
+ 
+        $comment_id = wp_insert_comment( $data );
+        if ( ! is_wp_error( $comment_id ) ) {
+                return true;
+            }
+        }
+ 	    return false;
+	}
 	
 	function create_blog($request){
 		$title = sanitize_text_field($request['title']);
