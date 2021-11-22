@@ -260,9 +260,6 @@ class FlutterWoo extends FlutterBaseController
         if (!$user_id) {
             return parent::sendError("invalid_login", "You do not exist in this world. Please re-check your existence with your Creator :)", 401);
         }
-		if($user_id != $author){
-			return parent::sendError("unauthorized", "You are not allowed to do this", 401);
-		}
 		
 		$is_approved = get_option( 'comment_moderation' ) ;
 	    if ( comments_open( $post_id ) ) {
