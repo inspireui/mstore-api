@@ -1007,11 +1007,15 @@ class VendorAdminDokanHelper
                 $pro_attributes = array();
                 foreach ($attribute_json as $key => $value) {
                     if ($value['isActive']) {
-                        $attribute_name = strtolower($value['slug']);
-                        if ($value['default']) {
-                            $attribute_name = strtolower('pa_' . $value['slug']);
+                        $attribute_name = strtolower($value["slug"]);
+                        if ($value["default"]) {
+                            $attribute_name = strtolower(
+                                "pa_" . $value["slug"]
+                            );
                         }
-                        $attribute_id = wc_attribute_taxonomy_id_by_name($attribute_name);
+                        $attribute_id = wc_attribute_taxonomy_id_by_name(
+                            $attribute_name
+                        );
                         $attribute = new WC_Product_Attribute();
                         $attribute->set_id($attribute_id);
                         $attribute->set_name(wc_clean($attribute_name));
@@ -1038,7 +1042,7 @@ class VendorAdminDokanHelper
                     $variations_arr = json_decode($variations, true);
                     foreach ($variations_arr as $variation) {
                         if ($variation['variation_id'] != -1) {
-                            foreach ($variation['attributes'] as $key => $value) {
+                            foreach ($variation['slugs'] as $key => $value) {
                                 $variationAttrArr[$key] = strtolower(strval($value));
                             }
                             $variationProduct = new WC_Product_Variation($variation['variation_id']);
@@ -1062,7 +1066,7 @@ class VendorAdminDokanHelper
                             );
                             $variation_id = wp_insert_post($variation_post);
 
-                            foreach ($variation['attributes'] as $key => $value) {
+                            foreach ($variation['slugs'] as $key => $value) {
                                 $variationAttrArr[$key] = strtolower(strval($value));
                             }
                             $variationProduct = new WC_Product_Variation($variation_id);
@@ -1179,6 +1183,7 @@ class VendorAdminDokanHelper
         $variations = sanitize_text_field($request['variations']);      
         $inventory_delta = sanitize_text_field($request['inventory_delta']);     
         $status = sanitize_text_field($request['status']);     
+        $stock_status = sanitize_text_field($request['stock_status']);
          
         $count = 1;
         if ($product->get_type() != $type) {
@@ -1291,12 +1296,12 @@ class VendorAdminDokanHelper
                 $product->set_short_description(strip_tags($short_description));
             }
 
-            // Stock status.
-            if (isset($in_stock)) {
-                $stock_status = true === $in_stock ? 'instock' : 'outofstock';
-            } else {
-                $stock_status = $product->get_stock_status();
-            }
+            // // Stock status.
+            // if (isset($in_stock)) {
+            //     $stock_status = true === $in_stock ? 'instock' : 'outofstock';
+            // } else {
+            //     $stock_status = $product->get_stock_status();
+            // }
 
             // Stock data.
             if ('yes' === get_option('woocommerce_manage_stock')) {
@@ -1369,10 +1374,13 @@ class VendorAdminDokanHelper
             $pro_attributes = array();
             foreach ($attribute_json as $key => $value) {
                 if ($value['isActive']) {
-                    $attribute_name = strtolower($key);
-                    if ($value['default']) {
-                        $attribute_name = 'pa_' . $attribute_name;
+                    $attribute_name = strtolower($value["slug"]);
+                    if ($value["default"]) {
+                        $attribute_name = strtolower("pa_" . $value["slug"]);
                     }
+                    $attribute_id = wc_attribute_taxonomy_id_by_name(
+                        $attribute_name
+                    );
                     $attribute_id = wc_attribute_taxonomy_id_by_name($attribute_name);
                     $attribute = new WC_Product_Attribute();
                     $attribute->set_id($attribute_id);
@@ -1395,7 +1403,7 @@ class VendorAdminDokanHelper
                 $variations_arr = json_decode($variations, true);
                 foreach ($variations_arr as $variation) {
                     if ($variation['variation_id'] != -1) {
-                        foreach ($variation['attributes'] as $key => $value) {
+                        foreach ($variation['slugs'] as $key => $value) {
                             $variationAttrArr[$key] = strtolower(strval($value));
                         }
                         $variationProduct = new WC_Product_Variation($variation['variation_id']);
@@ -1419,7 +1427,7 @@ class VendorAdminDokanHelper
                         );
                         $variation_id = wp_insert_post($variation_post);
 
-                        foreach ($variation['attributes'] as $key => $value) {
+                        foreach ($variation['slugs'] as $key => $value) {
                             $variationAttrArr[$key] = strtolower(strval($value));
                         }
                         $variationProduct = new WC_Product_Variation($variation_id);

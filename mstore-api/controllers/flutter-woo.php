@@ -1206,15 +1206,34 @@ class FlutterWoo extends FlutterBaseController
 
     public function create_product_review($request)
     {
+		$images = $request['images'];
         $controller = new WC_REST_Product_Reviews_Controller();
 		$response = $controller->create_item($request);
+		if(is_wp_error($response)){
+			return array(
+			'message'=>$response->get_error_message ());
+		}
+		$comment_id = $response->get_data()['id'];
 		if(is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')){
 			global $WCFMmp;
-			$comment_id = $response->get_data()['id'];
 			$WCFMmp->wcfmmp_reviews->wcfmmp_add_store_review( $comment_id );
-		}
-        
-        return $controller->create_item($request);
+		}    
+		if(is_plugin_active('woo-photo-reviews/woo-photo-reviews.php')){
+            if(isset($images)){
+                $images = $images;
+				$images = array_filter(explode(',', $images));
+                $count = 0;
+                $img_arr = array();
+				$user_id = get_comment($comment_id)->user_id;
+                foreach($images as $image){
+                    $img_id = $this->upload_image_from_mobile($image, $count ,$user_id);
+					$img_arr[] = $img_id;
+					$count++;
+                }
+				update_comment_meta( $comment_id, 'reviews-images', $img_arr );
+            }
+        }
+        return $response;
     }
 
     public function get_ddates($request)
