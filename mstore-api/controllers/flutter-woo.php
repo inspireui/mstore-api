@@ -741,6 +741,19 @@ class FlutterWoo extends FlutterBaseController
             }
         }
 
+        if( apply_filters( 'wcfmmp_is_allow_checkout_user_location', true ) ) {
+			if ( !empty($shipping["wcfmmp_user_location"]) ) {
+				WC()->customer->set_props( array( 'wcfmmp_user_location' => sanitize_text_field( $shipping["wcfmmp_user_location"] ) ) );
+				WC()->session->set( '_wcfmmp_user_location', sanitize_text_field( $shipping["wcfmmp_user_location"] ) );
+			}
+			if ( !empty($shipping["wcfmmp_user_location_lat"]) ) {
+				WC()->session->set( '_wcfmmp_user_location_lat', sanitize_text_field( $shipping['wcfmmp_user_location_lat'] ) );
+			}
+			if ( !empty( $shipping['wcfmmp_user_location_lng'] ) ) {
+				WC()->session->set( '_wcfmmp_user_location_lng', sanitize_text_field( $shipping['wcfmmp_user_location_lng'] ) );
+			}
+		}
+
         $shipping_methods = WC()->shipping->calculate_shipping(WC()->cart->get_shipping_packages());
         $results = [];
         foreach ($shipping_methods as $shipping_method) {
