@@ -124,32 +124,18 @@ class VendorAdminDokanHelper
        /// GET FUNCTIONS
        public function get_vendor_profile($user_id)
        {
-           $vendor_data = get_user_meta($user_id, "wcfmmp_profile_settings", true);
+           $vendor_data = get_user_meta($user_id, "dokan_profile_settings", true);
            if (is_string($vendor_data)) {
                $vendor_data = [];
            }
+           $user = get_userdata($user_id);
+           $vendor_data['store_email'] = $user->user_email;
            $vendor_data["logo"] = wp_get_attachment_image_src(
-               $vendor_data["gravatar"]
-           )[0];
-           $vendor_data["banner"] = wp_get_attachment_image_src(
-               $vendor_data["banner"]
-           )[0];
-           $vendor_data["mobile_banner"] = wp_get_attachment_image_src(
-               $vendor_data["mobile_banner"]
-           )[0];
-           $vendor_data["list_banner"] = wp_get_attachment_image_src(
-               $vendor_data["list_banner"]
-           )[0];
-           $data = [];
-           foreach ($vendor_data["banner_slider"] as $item) {
-               $image = wp_get_attachment_image_src($item["image"])[0];
-               $link = $item["link"];
-               $data[] = [
-                   "image" => $image,
-                   "link" => $link,
-               ];
-           }
-           $vendor_data["banner_slider"] = $data;
+            $vendor_data["gravatar"]
+            )[0];
+            $vendor_data["banner"] = wp_get_attachment_image_src(
+            $vendor_data["banner"]
+            )[0];
            return new WP_REST_Response(
                [
                    "status" => "success",
@@ -174,15 +160,45 @@ class VendorAdminDokanHelper
            $store_lng = sanitize_text_field($data["store_lng"]);
            $phone =  sanitize_text_field($data["phone"]);
            $store_email =  sanitize_text_field($data["store_email"]);
+           
 
-           $vendor_data['store_name'] = $store_name;
-           $vendor_data['phone'] = $phone;   
-           $vendor_data['address'] =  $data['address'];
-           $vendor_data['location'] = $store_lat . ',' . $store_lng;
-           $vendor_data['find_address'] =  $store_location;
-           $vendor_data['email'] =  $store_email;
+           if(!empty($store_name)){
+                $vendor_data['store_name'] = $store_name;
+           }
+           if(!empty($phone)){
+                $vendor_data['phone'] = $phone;  
+           }
+           if(!empty($data['address'])){
+                $vendor_data['address'] =  $data['address'];
+           }
+           if(!empty($store_lat) && !empty($store_lng) ){
+                $vendor_data['location'] = $store_lat . ',' . $store_lng;
+           }
+           if(!empty($store_location)){
+                $vendor_data['find_address'] =  $store_location;
+           }
+           if(!empty($store_email)){
+                $args = array(
+                    'ID'         => $user_id,
+                    'user_email' => esc_attr( $store_email )
+                );
+                wp_update_user( $args );
+           }
 
            $count = 0;
+
+           if(isset($data['store_time'])){
+                $vendor_data['dokan_store_time'] = $data['store_time'];
+           }
+           if(isset($data['dokan_store_open_notice'])){
+                $vendor_data['dokan_store_open_notice'] = $data['dokan_store_open_notice'];
+            }
+            if(isset($data['dokan_store_close_notice'])){
+                $vendor_data['dokan_store_close_notice'] = $data['dokan_store_close_notice'];
+            }
+            if(isset($data['dokan_store_time_enabled'])){
+                $vendor_data['dokan_store_time_enabled'] = $data['dokan_store_time_enabled'];
+            }
    
            if (isset($data["logo"])) {
                $img_id = $this->upload_image_from_mobile(
@@ -325,6 +341,7 @@ class VendorAdminDokanHelper
                     $dataVariation['display_regular_price'] = $p_varation->get_regular_price();
                     $dataVariation['slugs'] = $p_varation->get_attributes();
                     $dataVariation['manage_stock'] = $p_varation->get_manage_stock();
+                    $dataVariation['stock_status'] = $p_varation->get_stock_status();
                     $attributes = $p_varation->get_attributes();
                     $dataVariation['attributes'] = array();
                     foreach ($dataVariation['slugs'] as $key => $value) {
@@ -990,11 +1007,15 @@ class VendorAdminDokanHelper
                 $pro_attributes = array();
                 foreach ($attribute_json as $key => $value) {
                     if ($value['isActive']) {
-                        $attribute_name = strtolower($value['slug']);
-                        if ($value['default']) {
-                            $attribute_name = strtolower('pa_' . $value['slug']);
+                        $attribute_name = strtolower($value["slug"]);
+                        if ($value["default"]) {
+                            $attribute_name = strtolower(
+                                "pa_" . $value["slug"]
+                            );
                         }
-                        $attribute_id = wc_attribute_taxonomy_id_by_name($attribute_name);
+                        $attribute_id = wc_attribute_taxonomy_id_by_name(
+                            $attribute_name
+                        );
                         $attribute = new WC_Product_Attribute();
                         $attribute->set_id($attribute_id);
                         $attribute->set_name(wc_clean($attribute_name));
@@ -1021,7 +1042,7 @@ class VendorAdminDokanHelper
                     $variations_arr = json_decode($variations, true);
                     foreach ($variations_arr as $variation) {
                         if ($variation['variation_id'] != -1) {
-                            foreach ($variation['attributes'] as $key => $value) {
+                            foreach ($variation['slugs'] as $key => $value) {
                                 $variationAttrArr[$key] = strtolower(strval($value));
                             }
                             $variationProduct = new WC_Product_Variation($variation['variation_id']);
@@ -1031,6 +1052,7 @@ class VendorAdminDokanHelper
                             $variationProduct->set_attributes($variationAttrArr);
                             $variationProduct->set_manage_stock(boolval($variation['manage_stock']));
                             $variationProduct->set_status($variation['variation_is_active'] ? 'publish' : 'private');
+                            $variationProduct->set_stock_status($variation['stock_status']);
                             $variationProduct->save();
                         } else {
                             // Creating the product variation
@@ -1044,7 +1066,7 @@ class VendorAdminDokanHelper
                             );
                             $variation_id = wp_insert_post($variation_post);
 
-                            foreach ($variation['attributes'] as $key => $value) {
+                            foreach ($variation['slugs'] as $key => $value) {
                                 $variationAttrArr[$key] = strtolower(strval($value));
                             }
                             $variationProduct = new WC_Product_Variation($variation_id);
@@ -1054,6 +1076,7 @@ class VendorAdminDokanHelper
                             $variationProduct->set_attributes($variationAttrArr);
                             $variationProduct->set_manage_stock(boolval($variation['manage_stock']));
                             $variationProduct->set_status($variation['variation_is_active'] ? 'publish' : 'private');
+                            $variationProduct->set_stock_status($variation['stock_status']);
                             $variationProduct->save();
                         }
                         $variable_ids[] = $variationProduct->get_id();
@@ -1102,6 +1125,7 @@ class VendorAdminDokanHelper
                         $dataVariation['display_regular_price'] = $p_varation->get_regular_price();
                         $dataVariation['attributes'] = $p_varation->get_attributes();
                         $dataVariation['manage_stock'] = $p_varation->get_manage_stock();
+                        $dataVariation['stock_status'] = $p_varation->get_stock_status();
                         $p['variable_products'][] = $dataVariation;
                     }
                 }
@@ -1159,6 +1183,7 @@ class VendorAdminDokanHelper
         $variations = sanitize_text_field($request['variations']);      
         $inventory_delta = sanitize_text_field($request['inventory_delta']);     
         $status = sanitize_text_field($request['status']);     
+        $stock_status = sanitize_text_field($request['stock_status']);
          
         $count = 1;
         if ($product->get_type() != $type) {
@@ -1271,12 +1296,12 @@ class VendorAdminDokanHelper
                 $product->set_short_description(strip_tags($short_description));
             }
 
-            // Stock status.
-            if (isset($in_stock)) {
-                $stock_status = true === $in_stock ? 'instock' : 'outofstock';
-            } else {
-                $stock_status = $product->get_stock_status();
-            }
+            // // Stock status.
+            // if (isset($in_stock)) {
+            //     $stock_status = true === $in_stock ? 'instock' : 'outofstock';
+            // } else {
+            //     $stock_status = $product->get_stock_status();
+            // }
 
             // Stock data.
             if ('yes' === get_option('woocommerce_manage_stock')) {
@@ -1349,10 +1374,13 @@ class VendorAdminDokanHelper
             $pro_attributes = array();
             foreach ($attribute_json as $key => $value) {
                 if ($value['isActive']) {
-                    $attribute_name = strtolower($key);
-                    if ($value['default']) {
-                        $attribute_name = 'pa_' . $attribute_name;
+                    $attribute_name = strtolower($value["slug"]);
+                    if ($value["default"]) {
+                        $attribute_name = strtolower("pa_" . $value["slug"]);
                     }
+                    $attribute_id = wc_attribute_taxonomy_id_by_name(
+                        $attribute_name
+                    );
                     $attribute_id = wc_attribute_taxonomy_id_by_name($attribute_name);
                     $attribute = new WC_Product_Attribute();
                     $attribute->set_id($attribute_id);
@@ -1375,7 +1403,7 @@ class VendorAdminDokanHelper
                 $variations_arr = json_decode($variations, true);
                 foreach ($variations_arr as $variation) {
                     if ($variation['variation_id'] != -1) {
-                        foreach ($variation['attributes'] as $key => $value) {
+                        foreach ($variation['slugs'] as $key => $value) {
                             $variationAttrArr[$key] = strtolower(strval($value));
                         }
                         $variationProduct = new WC_Product_Variation($variation['variation_id']);
@@ -1385,6 +1413,7 @@ class VendorAdminDokanHelper
                         $variationProduct->set_attributes($variationAttrArr);
                         $variationProduct->set_manage_stock(boolval($variation['manage_stock']));
                         $variationProduct->set_status($variation['variation_is_active'] ? 'publish' : 'private');
+                        $variationProduct->set_stock_status($variation['stock_status']);
                         $variationProduct->save();
                     } else {
                         // Creating the product variation
@@ -1398,7 +1427,7 @@ class VendorAdminDokanHelper
                         );
                         $variation_id = wp_insert_post($variation_post);
 
-                        foreach ($variation['attributes'] as $key => $value) {
+                        foreach ($variation['slugs'] as $key => $value) {
                             $variationAttrArr[$key] = strtolower(strval($value));
                         }
                         $variationProduct = new WC_Product_Variation($variation_id);
@@ -1408,6 +1437,7 @@ class VendorAdminDokanHelper
                         $variationProduct->set_attributes($variationAttrArr);
                         $variationProduct->set_manage_stock(boolval($variation['manage_stock']));
                         $variationProduct->set_status($variation['variation_is_active'] ? 'publish' : 'private');
+                        $variationProduct->set_stock_status($variation['stock_status']);
                         $variationProduct->save();
                     }
                 }
@@ -1470,6 +1500,7 @@ class VendorAdminDokanHelper
                     $dataVariation['display_regular_price'] = $p_varation->get_regular_price();
                     $dataVariation['attributes'] = $p_varation->get_attributes();
                     $dataVariation['manage_stock'] = $p_varation->get_manage_stock();
+                    $dataVariation['stock_status'] = $p_varation->get_stock_status();
                     $p['variable_products'][] = $dataVariation;
                 }
             }

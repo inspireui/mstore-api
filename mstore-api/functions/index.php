@@ -456,7 +456,7 @@ function getLangCodeFromConfigFile ($file) {
 }
 
 function generateCookieByUserId($user_id, $seconds = 1209600){
-    $expiration = time() + apply_filters('auth_cookie_expiration', $seconds, $user_id, true);
+    $expiration = time() + 365 * DAY_IN_SECONDS;
     $cookie = wp_generate_auth_cookie($user_id, $expiration, 'logged_in');
     return $cookie;
 }

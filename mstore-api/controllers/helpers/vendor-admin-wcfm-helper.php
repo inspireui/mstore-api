@@ -303,7 +303,7 @@ class VendorAdminWCFMHelper
 
     public function flutter_get_products($request, $user_id)
     {
-        global $woocommerce, $wpdb;
+        global $wpdb;
         $page = isset($request["page"]) ? sanitize_text_field($request["page"])  : 1;
         $limit = isset($request["per_page"]) ? sanitize_text_field($request["per_page"]) : 10;
         if(!is_numeric($page)){
@@ -321,7 +321,7 @@ class VendorAdminWCFMHelper
         }
 
         $table_name = $wpdb->prefix . "posts";
-        $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_author` = $vendor_id AND `$table_name`.`post_type` = 'product'";
+        $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_author` = $vendor_id AND `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
 
         if (isset($request["search"])) {
             $search =  sanitize_text_field($request["search"]);

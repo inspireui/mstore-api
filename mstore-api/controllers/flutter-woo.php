@@ -176,6 +176,16 @@ class FlutterWoo extends FlutterBaseController
 			),
 		));
 
+        register_rest_route( $this->namespace,  '/blog/comment', array(
+			array(
+				'methods' => "POST",
+				'callback' => array( $this, 'create_comment' ),
+				'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+			),
+		));
+
         register_rest_route($this->namespace, '/scanner', array(
             array(
                 'methods' => "GET",
@@ -234,6 +244,44 @@ class FlutterWoo extends FlutterBaseController
         wp_update_attachment_metadata($attachment_id, $attach_data);
         return $attachment_id;
     }
+
+
+    function create_comment($request){
+		$content = sanitize_text_field($request['content']);
+		$token = sanitize_text_field($request['token']);
+		$post_id = sanitize_text_field($request['post_id']);
+		
+        if (!empty($token)) {
+            $cookie = urldecode(base64_decode($token));
+        } else {
+            return parent::sendError("unauthorized", "You are not allowed to do this", 401);
+        }
+        $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
+        if (!$user_id) {
+            return parent::sendError("invalid_login", "You do not exist in this world. Please re-check your existence with your Creator :)", 401);
+        }
+		
+		$is_approved = get_option( 'comment_moderation' ) ;
+	    if ( comments_open( $post_id ) ) {
+			$current_user = get_user_by('ID',$user_id);
+			
+        	$data = array(
+            'comment_post_ID'      => $post_id,
+            'comment_content'      => $content,
+            'user_id'              => $current_user->ID,
+            'comment_author'       => $current_user->user_login,
+            'comment_author_email' => $current_user->user_email,
+            'comment_author_url'   => $current_user->user_url,
+			'comment_approved'	   => empty($is_approved) ? 1 : 0,
+        );
+ 
+        $comment_id = wp_insert_comment( $data );
+        if ( ! is_wp_error( $comment_id ) ) {
+                return true;
+            }
+        }
+ 	    return false;
+	}
 	
 	function create_blog($request){
 		$title = sanitize_text_field($request['title']);
@@ -692,6 +740,19 @@ class FlutterWoo extends FlutterBaseController
                 }
             }
         }
+
+        if( apply_filters( 'wcfmmp_is_allow_checkout_user_location', true ) ) {
+			if ( !empty($shipping["wcfmmp_user_location"]) ) {
+				WC()->customer->set_props( array( 'wcfmmp_user_location' => sanitize_text_field( $shipping["wcfmmp_user_location"] ) ) );
+				WC()->session->set( '_wcfmmp_user_location', sanitize_text_field( $shipping["wcfmmp_user_location"] ) );
+			}
+			if ( !empty($shipping["wcfmmp_user_location_lat"]) ) {
+				WC()->session->set( '_wcfmmp_user_location_lat', sanitize_text_field( $shipping['wcfmmp_user_location_lat'] ) );
+			}
+			if ( !empty( $shipping['wcfmmp_user_location_lng'] ) ) {
+				WC()->session->set( '_wcfmmp_user_location_lng', sanitize_text_field( $shipping['wcfmmp_user_location_lng'] ) );
+			}
+		}
 
         $shipping_methods = WC()->shipping->calculate_shipping(WC()->cart->get_shipping_packages());
         $results = [];
@@ -1158,15 +1219,34 @@ class FlutterWoo extends FlutterBaseController
 
     public function create_product_review($request)
     {
+		$images = $request['images'];
         $controller = new WC_REST_Product_Reviews_Controller();
 		$response = $controller->create_item($request);
+		if(is_wp_error($response)){
+			return array(
+			'message'=>$response->get_error_message ());
+		}
+		$comment_id = $response->get_data()['id'];
 		if(is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')){
 			global $WCFMmp;
-			$comment_id = $response->get_data()['id'];
 			$WCFMmp->wcfmmp_reviews->wcfmmp_add_store_review( $comment_id );
-		}
-        
-        return $controller->create_item($request);
+		}    
+		if(is_plugin_active('woo-photo-reviews/woo-photo-reviews.php')){
+            if(isset($images)){
+                $images = $images;
+				$images = array_filter(explode(',', $images));
+                $count = 0;
+                $img_arr = array();
+				$user_id = get_comment($comment_id)->user_id;
+                foreach($images as $image){
+                    $img_id = $this->upload_image_from_mobile($image, $count ,$user_id);
+					$img_arr[] = $img_id;
+					$count++;
+                }
+				update_comment_meta( $comment_id, 'reviews-images', $img_arr );
+            }
+        }
+        return $response;
     }
 
     public function get_ddates($request)

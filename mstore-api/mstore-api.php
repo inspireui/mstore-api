@@ -288,6 +288,23 @@ function mstore_init()
 
 add_filter('woocommerce_rest_prepare_product_variation_object', 'custom_woocommerce_rest_prepare_product_variation_object', 20, 3);
 add_filter('woocommerce_rest_prepare_product_object', 'custom_change_product_response', 20, 3);
+add_filter('woocommerce_rest_prepare_product_review', 'custom_product_review', 20, 3);
+
+function custom_product_review($response, $object, $request)
+{
+    if(is_plugin_active('woo-photo-reviews/woo-photo-reviews.php')){
+        $id = $response->data['id'];
+        $image_post_ids = get_comment_meta( $id, 'reviews-images', true );
+        $image_arr = array();
+        foreach ( $image_post_ids as $image_post_id ) {
+            $image_arr[] = wp_get_attachment_thumb_url( $image_post_id );
+        }
+        $response->data['images'] = $image_arr;
+    }
+
+    return $response;
+}
+ 
 
 function custom_change_product_response($response, $object, $request)
 {
@@ -451,7 +468,14 @@ function prepare_checkout()
                 if (isset($product['addons'])) {
                     $_POST = $product['addons'];
                 }
-                $woocommerce->cart->add_to_cart($productId, $quantity, 0, $attributes);
+                $cart_item_data = array();
+                if (is_plugin_active('woo-wallet/woo-wallet.php')) {
+                    $wallet_product = get_wallet_rechargeable_product();
+                    if ($wallet_product->id == $productId) {
+                        $cart_item_data['recharge_amount'] = $product['total'];
+                    }
+                }
+                $woocommerce->cart->add_to_cart($productId, $quantity, 0, $attributes, $cart_item_data);
             }
         }
 
