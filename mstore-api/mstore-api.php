@@ -295,9 +295,12 @@ function custom_product_review($response, $object, $request)
         $id = $response->data['id'];
         $image_post_ids = get_comment_meta( $id, 'reviews-images', true );
         $image_arr = array();
-        foreach ( $image_post_ids as $image_post_id ) {
-            $image_arr[] = wp_get_attachment_thumb_url( $image_post_id );
+        if(!is_string($image_post_ids)){
+            foreach( $image_post_ids as $image_post_id ) {
+                $image_arr[] = wp_get_attachment_thumb_url( $image_post_id );
+            }
         }
+
         $response->data['images'] = $image_arr;
     }
 

@@ -996,17 +996,7 @@ class FlutterUserController extends FlutterBaseController
 
         }
 
-        if (isset($params->deviceToken)) {
-            if (isset($params->is_manager) && $params->is_manager) {
-                update_user_meta($user_id, "mstore_manager_device_token", $params->deviceToken);
-            } else if (isset($params->is_delivery) && $params->is_delivery) {
-                update_user_meta($user_id, "mstore_delivery_device_token", $params->deviceToken);
-            }
 
-            if (!isset($params->is_delivery) && !isset($params->is_manager)) {
-                update_user_meta($user_id, "mstore_device_token", $params->deviceToken);
-            }
-        }
         $user_data = wp_update_user($user_update);
 
         if (is_wp_error($user_data)) {
@@ -1014,6 +1004,21 @@ class FlutterUserController extends FlutterBaseController
             echo 'Error.';
         }
         $user = get_userdata($user_id);
+
+        if (isset($params->deviceToken)) {
+            if (isset($params->is_manager) && $params->is_manager) {
+                update_user_meta($user_id, "mstore_manager_device_token", $params->deviceToken);
+            } else if (isset($params->is_delivery) && $params->is_delivery) {
+                update_user_meta($user_id, "mstore_delivery_device_token", $params->deviceToken);
+            }
+            if (!isset($params->is_delivery) && !isset($params->is_manager)) {
+                update_user_meta($user_id, "mstore_device_token", $params->deviceToken);
+            }
+            if(in_array('wcfm_delivery_boy', (array)$user->roles) || in_array('driver',(array)$user->roles)){
+                update_user_meta($user_id, "mstore_delivery_device_token", $params->deviceToken);
+            }
+        }
+
         return $this->getResponseUserInfo($user);
     }
 

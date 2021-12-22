@@ -126,7 +126,12 @@ class VendorAdminWCFMHelper
                 "fields" => "slugs",
             ]);
         } elseif (isset($attribute["value"])) {
-            return array_map("trim", explode("|", $attribute["value"]));
+			$arr = explode("|", $attribute["value"]);
+			$data = array();
+			foreach($arr as $item){
+				$data[] = str_replace('-',' ',trim($item)) ;
+			}
+            return $data;
         }
 
         return [];
@@ -384,12 +389,20 @@ class VendorAdminWCFMHelper
                         $attribute
                     ),
                     "default" => 0 === strpos($attribute["name"], "pa_"),
-                    "slug" => $attribute["name"],
+                    "slug" => str_replace(' ','-',$attribute["name"]),
                 ];
             }
             $p["attributesData"] = $attributes;
             if ($product->get_type() == "variable") {
                 $result = [];
+                $p['min_price'] = $product->get_variation_price();
+                $p['max_price'] = $product->get_variation_price('max');
+                if(!$p['min_price']){
+                    $p['min_price'] = '0';
+                }
+                if(!$p['max_price']){
+                    $p['max_price'] = '0';
+                }
                 $query = [
                     "post_parent" => $product->get_id(),
                     "post_status" => ["publish", "private"],
