@@ -43,6 +43,9 @@ Faster- Smoother- Closer.
 1. Click Install.
 
 == Changelog ==
+= 3.4.8 =
+  * Support Paid Membership Pro
+
 = 3.4.7 =
   * Support PayTM payment
 
