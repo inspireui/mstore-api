@@ -289,6 +289,20 @@ function mstore_init()
 add_filter('woocommerce_rest_prepare_product_variation_object', 'custom_woocommerce_rest_prepare_product_variation_object', 20, 3);
 add_filter('woocommerce_rest_prepare_product_object', 'custom_change_product_response', 20, 3);
 add_filter('woocommerce_rest_prepare_product_review', 'custom_product_review', 20, 3);
+add_filter('woocommerce_rest_prepare_product_cat', 'custom_product_category', 20, 3);
+
+function custom_product_category($response, $object, $request)
+{
+	 $id = $response->data['id'];
+	 $children = get_term_children($id, 'product_cat');
+
+    if(empty( $children ) ) {
+    	$response->data['has_children'] = false;
+    }else{
+		$response->data['has_children'] = true;
+	}
+    return $response;
+}
 
 function custom_product_review($response, $object, $request)
 {
@@ -301,10 +315,8 @@ function custom_product_review($response, $object, $request)
                 $image_arr[] = wp_get_attachment_thumb_url( $image_post_id );
             }
         }
-
         $response->data['images'] = $image_arr;
     }
-
     return $response;
 }
  
