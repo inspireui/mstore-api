@@ -243,6 +243,9 @@ class FlutterPaidMembershipsPro extends FlutterBaseController
             $s->fields['type'] = 'card';
             $payment_method = $s->call();
     
+            if(isset($payment_method['error'])){
+                return $payment_method['error']['message'];
+            }
             $_REQUEST['CardType'] = $payment_method['card']['brand'];
             $_REQUEST['payment_method_id'] = $payment_method['id'];
             $_REQUEST['AccountNumber'] = 'XXXXXXXXXXXX'.$payment_method['card']['last4'];
@@ -285,9 +288,11 @@ class FlutterPaidMembershipsPro extends FlutterBaseController
         }
 
         global $wpdb, $gateway, $username, $password, $password2, $bfirstname, $blastname, $baddress1, $baddress2, $bcity, $bstate, $bzipcode, $bcountry, $bphone, $bemail, $bconfirmemail, $CardType, $AccountNumber, $ExpirationMonth, $ExpirationYear;
-        $this->init_params();
+        $errMsg = $this->init_params();
+        if(isset($errMsg)){
+            return parent::sendError('invalid_card', $errMsg, 400);	
+        }
         $pmpro_level = pmpro_getLevelAtCheckout();
-
         $morder = pmpro_build_order_for_checkout();
         $pmpro_processed = $morder->process();
         if ( ! empty( $pmpro_processed ) ) {
