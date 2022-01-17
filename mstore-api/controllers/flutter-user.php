@@ -530,6 +530,7 @@ class FlutterUserController extends FlutterBaseController
         } else {
             $avatar = $avatar[0];
         }
+        $is_driver_available = false;
         if(is_plugin_active('delivery-drivers-for-woocommerce/delivery-drivers-for-woocommerce.php')){
 			$is_driver_available = get_user_meta( $user->ID, 'ddwc_driver_availability', true );
 		}
