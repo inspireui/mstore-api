@@ -348,6 +348,8 @@ class VendorAdminWCFMHelper
                     $image_arr[] = $image[0];
                 }
             }
+			
+			
 
             $image = wp_get_attachment_image_src($p["image_id"], "full");
             if (!is_null($image[0])) {
@@ -356,10 +358,14 @@ class VendorAdminWCFMHelper
 
             $p["images"] = $image_arr;
             $p["category_ids"] = [];
+			$p['categories'] = [];
             $category_ids = wp_get_post_terms($p["id"], "product_cat");
             foreach ($category_ids as $cat) {
                 if ($cat->slug != "uncategorized") {
                     $p["category_ids"][] = $cat->term_id;
+					$cat_data = $cat;
+					$cat_data->has_children = !empty(get_term_children($cat->term_id, 'product_cat'));
+					$p['categories'][] = $cat_data;
                 }
             }
             $p["type"] = $product->get_type();
@@ -3097,7 +3103,7 @@ class VendorAdminWCFMHelper
         $user_ids = [];
         foreach ($users as $user) {
             $profile_pic = wp_get_attachment_image_src(get_user_meta($user->ID, 'wclovers_user_avatar', true))[0];
-            if (!profile_pic) {
+            if (!$profile_pic) {
                 $profile_pic = null;
             }
             $user_ids[] = [

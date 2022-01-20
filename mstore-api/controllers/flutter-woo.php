@@ -1231,7 +1231,7 @@ class FlutterWoo extends FlutterBaseController
 			global $WCFMmp;
 			$WCFMmp->wcfmmp_reviews->wcfmmp_add_store_review( $comment_id );
 		}    
-		if(is_plugin_active('woo-photo-reviews/woo-photo-reviews.php')){
+		if(is_plugin_active('woo-photo-reviews/woo-photo-reviews.php') || is_plugin_active('woocommerce-photo-reviews/woocommerce-photo-reviews.php')){
             if(isset($images)){
                 $images = $images;
 				$images = array_filter(explode(',', $images));

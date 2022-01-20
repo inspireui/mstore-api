@@ -306,7 +306,7 @@ function custom_product_category($response, $object, $request)
 
 function custom_product_review($response, $object, $request)
 {
-    if(is_plugin_active('woo-photo-reviews/woo-photo-reviews.php')){
+    if(is_plugin_active('woo-photo-reviews/woo-photo-reviews.php') || is_plugin_active('woocommerce-photo-reviews/woocommerce-photo-reviews.php')){
         $id = $response->data['id'];
         $image_post_ids = get_comment_meta( $id, 'reviews-images', true );
         $image_arr = array();

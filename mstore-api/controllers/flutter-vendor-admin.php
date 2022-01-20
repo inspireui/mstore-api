@@ -66,7 +66,7 @@ class FlutterVendorAdmin extends FlutterBaseController
                 'methods' => 'PUT',
                 'callback' => array(
                     $this,
-                    'vendor_admin_update_product'
+                    'vendor_admin_create_product'
                 ),
                 'permission_callback' => function () {
                     return parent::checkApiPermission();
@@ -411,17 +411,8 @@ class FlutterVendorAdmin extends FlutterBaseController
         if (is_wp_error($user_id)) {
             return $user_id;
         }
-
-        $helper = new VendorAdminWCFMHelper();
-        if (isset($request['platform'])) {
-            if ($request['platform'] == 'woo') {
-                $helper = new VendorAdminWooHelper();
-            }
-            if ($request['platform'] == 'dokan') {
-                $helper = new VendorAdminDokanHelper();
-            }
-        }
-        return $helper->vendor_admin_create_product($request, $user_id);
+        $helper = new ProductManagementHelper();
+        return $helper->create_product($request, $user_id);
     }
 
 
@@ -453,19 +444,10 @@ class FlutterVendorAdmin extends FlutterBaseController
             return $user_id;
         }
 
-        $helper = new VendorAdminWCFMHelper();
-        if (isset($request['platform'])) {
-            if ($request['platform'] == 'woo') {
-                $helper = new VendorAdminWooHelper();
-            }
-            if ($request['platform'] == 'dokan') {
-                $helper = new VendorAdminDokanHelper();
-            }
-        }
-
+        $helper = new ProductManagementHelper();
         return new WP_REST_Response(array(
             'status' => 'success',
-            'response' => $helper->flutter_get_products($request, $user_id),
+            'response' => $helper->get_products($request, $user_id),
         ), 200);
     }
 
@@ -541,12 +523,15 @@ class FlutterVendorAdmin extends FlutterBaseController
                 $taxonomy_terms = get_terms(wc_attribute_taxonomy_name($tax->attribute_name), array('hide_empty' => false, 'orderby' => 'name'));
                 $data['id'] = $tax->attribute_id;
                 $data['label'] = $tax->attribute_label;
-                $data['name'] = $tax->attribute_name;
+                $data['name'] =  $tax->labels->singular_name;
                 foreach ($taxonomy_terms as $term) {
                     $data['options'][] = $term->name;
                     $data['slugs'][] = $term->slug;
                 }
+                $data['slug'] ='pa_'.$tax->attribute_name;
+				$data['default'] = true;
                 $attributes[] = $data;
+               
             }
         }
         return $attributes;
