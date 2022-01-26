@@ -250,8 +250,8 @@ class VendorAdminWCFMHelper
             $vendor_data["banner_type"] =  sanitize_text_field($data["banner_type"]);
         }
 
-        if (isset($data["video"]) && isset($data["banner_type"])) {
-            $vendor_data["banner_video"] =  sanitize_text_field($data["video"]);
+        if (isset($data["banner_video"]) && isset($data["banner_type"])) {
+            $vendor_data["banner_video"] =  sanitize_text_field($data["banner_video"]);
             $vendor_data["banner_type"] =  sanitize_text_field($data["banner_type"]);
         }
 
@@ -551,7 +551,10 @@ class VendorAdminWCFMHelper
                     if (absint($product_author) != absint($user_id)) {
                         continue;
                     }
-
+					$commission_data = get_post_meta($product_id, '_wcfmmp_commission', true);
+					if(!empty($commission_data)){
+						$order["line_items"][$i]['commission'] = $commission_data;	
+					}
                     $image = wp_get_attachment_image_src(
                         get_post_thumbnail_id($product_id)
                     );
@@ -2895,6 +2898,18 @@ class VendorAdminWCFMHelper
                 $delivery_meta_id = $wpdb->insert_id;
             }
 
+
+            $noti_message = 'You have assigned to order '.$order_id.' item '. get_the_title($product_id);
+            $deviceToken = get_user_meta($wcfm_delivery_boy, 'mstore_delivery_device_token', true);
+            $title= '';
+            $serverKey = get_option("mstore_firebase_server_key");
+            if (isset($serverKey) && $serverKey != false && isset($deviceToken) && $deviceToken != false) {
+                $body = ["notification" => ["title" => "You have new notification", "body" => $noti_message, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], "data" => ["title" => $title, "body" => $noti_message , "click_action" => "FLUTTER_NOTIFICATION_CLICK"], "to" => $deviceToken];
+                $headers = ["Authorization" => "key=" . $serverKey, 'Content-Type' => 'application/json; charset=utf-8'];
+                $response = wp_remote_post("https://fcm.googleapis.com/fcm/send", ["headers" => $headers, "body" => json_encode($body)]);
+                $statusCode = wp_remote_retrieve_response_code($response);
+                $body = wp_remote_retrieve_body($response);
+            }
             // Notification Update
 
             if (apply_filters("wcfm_is_allow_itemwise_notification", true)) {
@@ -2952,7 +2967,7 @@ class VendorAdminWCFMHelper
             }
 
             // Deivery Boy Notification
-            $serverKey = get_option("mstore_firebase_server_key");
+          
             if (apply_filters("wcfm_is_allow_itemwise_notification", true)) {
                 $wcfm_messages = sprintf(
                     __(
@@ -2982,16 +2997,7 @@ class VendorAdminWCFMHelper
                     $wcfm_delivery_boy,
                     $wcfm_messages
                 );
-                $deviceToken = get_user_meta($wcfm_delivery_boy, 'mstore_delivery_device_token', true);
-                $title= '';
-                $notification_message = '';
-                if (isset($serverKey) && $serverKey != false && isset($deviceToken) && $deviceToken != false) {
-                    $body = ["notification" => ["title" => "You have new notification", "body" => $wcfm_messages, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], "data" => ["title" => $title, "body" => $notification_message, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], "to" => $deviceToken];
-                    $headers = ["Authorization" => "key=" . $serverKey, 'Content-Type' => 'application/json; charset=utf-8'];
-                    $response = wp_remote_post("https://fcm.googleapis.com/fcm/send", ["headers" => $headers, "body" => json_encode($body)]);
-                    $statusCode = wp_remote_retrieve_response_code($response);
-                    $body = wp_remote_retrieve_body($response);
-                }
+
             } else {
                 if (
                     ($vendor_id &&
@@ -3034,16 +3040,6 @@ class VendorAdminWCFMHelper
                         $wcfm_delivery_boy,
                         $wcfm_messages
                     );
-                    $deviceToken = get_user_meta($wcfm_delivery_boy, 'mstore_delivery_device_token', true);
-                    $title = '';
-                    $notification_message = '';
-                    if (isset($serverKey) && $serverKey != false && isset($deviceToken) && $deviceToken != false) {
-                        $body = ["notification" => ["title" => "You have new notification", "body" => $wcfm_messages, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], "data" => ["title" => $title, "body" => $notification_message, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], "to" => $deviceToken];
-                        $headers = ["Authorization" => "key=" . $serverKey, 'Content-Type' => 'application/json; charset=utf-8'];
-                        $response = wp_remote_post("https://fcm.googleapis.com/fcm/send", ["headers" => $headers, "body" => json_encode($body)]);
-                        $statusCode = wp_remote_retrieve_response_code($response);
-                        $body = wp_remote_retrieve_body($response);
-                    }
                 }
             }
 

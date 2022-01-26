@@ -407,12 +407,13 @@ class FlutterVendorAdmin extends FlutterBaseController
     ///------ CREATE FUNCTIONS ------///
     public function vendor_admin_create_product($request)
     {
+
         $user_id = $this->authorize_user($request['token']);
         if (is_wp_error($user_id)) {
             return $user_id;
         }
         $helper = new ProductManagementHelper();
-        return $helper->create_product($request, $user_id);
+        return $helper->create_or_update_product($request, $user_id);
     }
 
 
