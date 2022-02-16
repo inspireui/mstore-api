@@ -245,6 +245,10 @@ class DeliveryWooHelper
     function get_notification($request, $user_id)
     {
         global $WCFM, $wpdb;
+        // include upgrade-functions for maybe_create_table;
+        if (!function_exists('maybe_create_table')) {
+            require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        }
         $table_name = $wpdb->prefix . 'delivery_woo_notification';
         $sql = "CREATE TABLE " . $table_name . "(
                 id mediumint(9) NOT NULL AUTO_INCREMENT,
