@@ -264,23 +264,25 @@ class FlutterWoo extends FlutterBaseController
 		$is_approved = get_option( 'comment_moderation' ) ;
 	    if ( comments_open( $post_id ) ) {
 			$current_user = get_user_by('ID',$user_id);
-			
-        	$data = array(
-            'comment_post_ID'      => $post_id,
-            'comment_content'      => $content,
-            'user_id'              => $current_user->ID,
-            'comment_author'       => $current_user->user_login,
-            'comment_author_email' => $current_user->user_email,
-            'comment_author_url'   => $current_user->user_url,
-			'comment_approved'	   => empty($is_approved) ? 1 : 0,
-        );
- 
-        $comment_id = wp_insert_comment( $data );
-        if ( ! is_wp_error( $comment_id ) ) {
+                $data = array(
+                'comment_post_ID'      => $post_id,
+                'comment_content'      => $content,
+                'user_id'              => $current_user->ID,
+                'comment_author'       => $current_user->user_login,
+                'comment_author_email' => $current_user->user_email,
+                'comment_author_url'   => $current_user->user_url,
+                'comment_approved'	   => empty($is_approved) ? 1 : 0,
+            );
+    
+            $comment_id = wp_insert_comment( $data );
+            if ( ! is_wp_error( $comment_id ) ) {
                 return true;
+            }else{
+                return parent::sendError("error",$comment_id, 400);
             }
+        }else{
+            return parent::sendError("comments_open","This post doesn't allow to  comment", 400);
         }
- 	    return false;
 	}
 	
 	function create_blog($request){
