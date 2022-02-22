@@ -175,13 +175,13 @@ class ProductManagementHelper
             $image_arr = [];
             foreach (array_filter($p["gallery_image_ids"]) as $img) {
                 $image = wp_get_attachment_image_src($img, "full");
-                if (!is_null($image[0])) {
+                if (is_array($image) && !is_null($image[0])) {
                     $image_arr[] = $image[0];
                 }
             }
 
             $image = wp_get_attachment_image_src($p["image_id"], "full");
-            if (!is_null($image[0])) {
+            if (is_array($image) && !is_null($image[0])) {
                 $p["featured_image"] = $image[0];
             }
 

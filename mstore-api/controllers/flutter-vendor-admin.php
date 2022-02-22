@@ -2,6 +2,7 @@
 require_once(__DIR__ . '/helpers/vendor-admin-woo-helper.php');
 require_once(__DIR__ . '/helpers/vendor-admin-wcfm-helper.php');
 require_once(__DIR__ . '/helpers/vendor-admin-dokan-helper.php');
+require_once(__DIR__ . '/helpers/product-management.php');
 
 /*
  * Base REST Controller for flutter
