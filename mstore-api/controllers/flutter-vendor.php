@@ -685,7 +685,7 @@ class FlutterVendor extends FlutterBaseController
                     if (is_wp_error($res)) {
                         $item["product_data"] = null;
                     } else {
-                        $item["product_data"]['images'] = $res->get_data()['images'];
+                        $item["product_data"] = $res->get_data();
                     }
                     if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
                         $vendor_id = wcfm_get_vendor_id_by_post($product_id);
