@@ -101,5 +101,9 @@ class FlutterUtils {
             }
         }
     }
+
+    public static function get_home_cache_path($lang){
+        return trailingslashit(FlutterUtils::get_json_folder()). "home_cache_".$lang.".json";
+    }
 }
 ?>
