@@ -318,7 +318,7 @@ class FlutterVendor extends FlutterBaseController
         $response = array();
         try {
             if (!empty($request['media_path'])) {
-                $this->upload_dir = $request['media_path'];
+                $this->upload_dir = sanitize_file_name($request['media_path']);
                 $this->upload_dir = '/' . trim($this->upload_dir, '/');
                 add_filter('upload_dir', array($this, 'change_wp_upload_dir'));
             }
@@ -353,6 +353,14 @@ class FlutterVendor extends FlutterBaseController
         }
 
         return $response;
+    }
+
+    function change_wp_upload_dir($dirs) {
+        $dirs['baseurl'] = network_site_url('/wp-content/uploads');
+        $dirs['basedir'] = ABSPATH . 'wp-content/uploads';
+        $dirs['path'] = $dirs['basedir'] . $this->upload_dir . $dirs['subdir'];
+        $dirs['url'] = $dirs['baseurl'] . $this->upload_dir . $dirs['subdir'];
+        return $dirs;
     }
 
     public function flutter_create_product($request)
