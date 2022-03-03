@@ -59,8 +59,8 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
         $json = file_get_contents('php://input');
         $params = json_decode($json, TRUE);
         if (isset($cookie) && $cookie != null) {
-            $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-            if (!$user_id) {
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
                 return false;
             }
             $params["customer_id"] = $user_id;

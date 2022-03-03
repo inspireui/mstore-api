@@ -204,9 +204,9 @@ class FlutterVendor extends FlutterBaseController
             return parent::sendError("invalid_login", "You must include a 'cookie' var in your request. Use the `generate_auth_cookie` method.", 401);
         }
 
-        $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-        if (!$user_id) {
-            return parent::sendError("invalid_login", "You must include a 'cookie' var in your request. Use the `generate_auth_cookie` method.", 401);
+        $user_id = validateCookieLogin($cookie);
+        if (is_wp_error($user_id)) {
+            return $user_id;
         }
         $user = get_userdata($user_id);
         $isSeller = in_array("seller", $user->roles) || in_array("wcfm_vendor", $user->roles) || in_array("administrator", $user->roles);
@@ -370,9 +370,9 @@ class FlutterVendor extends FlutterBaseController
             return parent::sendError("invalid_login", "You must include a 'cookie' var in your request. Use the `generate_auth_cookie` method.", 401);
         }
 
-        $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-        if (!$user_id) {
-            return parent::sendError("invalid_login", "You must include a 'cookie' var in your request. Use the `generate_auth_cookie` method.", 401);
+        $user_id = validateCookieLogin($cookie);
+        if (is_wp_error($user_id)) {
+            return $user_id;
         }
         $user = get_userdata($user_id);
         $isSeller = in_array("seller", $user->roles) || in_array("wcfm_vendor", $user->roles) || in_array("administrator", $user->roles);
@@ -447,9 +447,9 @@ class FlutterVendor extends FlutterBaseController
             return parent::sendError("invalid_login", "You must include a 'cookie' var in your request. Use the `generate_auth_cookie` method.", 401);
         }
 
-        $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-        if (!$user_id) {
-            return parent::sendError("invalid_login", "You must include a 'cookie' var in your request. Use the `generate_auth_cookie` method.", 401);
+        $user_id = validateCookieLogin($cookie);
+        if (is_wp_error($user_id)) {
+            return $user_id;
         }
 
         $product_id = $request['id'];
@@ -477,9 +477,9 @@ class FlutterVendor extends FlutterBaseController
             return parent::sendError("invalid_login", "You must include a 'cookie' or 'user id' var in your request. Use the `generate_auth_cookie` method.", 401);
         }
 
-        $user_id = isset($id) ? $id : wp_validate_auth_cookie($cookie, 'logged_in');
-        if (!$user_id) {
-            return parent::sendError("invalid_login", "You must include a 'cookie' or 'user id' var in your request. Use the `generate_auth_cookie` method.", 401);
+        $user_id = isset($id) ? $id : validateCookieLogin($cookie);
+        if (is_wp_error($user_id)) {
+            return $user_id;
         }
 
         $page = isset($request["page"]) ? $request["page"] : 1;
@@ -650,9 +650,9 @@ class FlutterVendor extends FlutterBaseController
             return parent::sendError("invalid_login", "You must include a 'cookie' or 'user id' var in your request. Use the `generate_auth_cookie` method.", 401);
         }
 
-        $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-        if (!$user_id) {
-            return parent::sendError("invalid_login", "You must include a 'cookie' or 'user id' var in your request. Use the `generate_auth_cookie` method.", 401);
+        $user_id = validateCookieLogin($cookie);
+        if (is_wp_error($user_id)) {
+            return $user_id;
         }
 
         $api = new WC_REST_Orders_V1_Controller();
