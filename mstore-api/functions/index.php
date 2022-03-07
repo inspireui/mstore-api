@@ -511,7 +511,7 @@ function generateCookieByUserId($user_id, $seconds = 1209600){
 function validateCookieLogin($cookie){
     if(isset($cookie) && strlen($cookie) > 0){
         $userId = wp_validate_auth_cookie($cookie, 'logged_in');
-        if(!$user_id){
+        if($userId == false){
             return new WP_Error("invalid_login", "Your session has expired. Please logout and login again.", array('status' => 401));
         }else{
             return $userId;
