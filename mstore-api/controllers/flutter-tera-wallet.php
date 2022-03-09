@@ -130,9 +130,9 @@ class FlutterTeraWallet extends FlutterBaseController
 
         $cookie = $request->get_header("User-Cookie");
         if (isset($cookie) && $cookie != null) {
-            $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-            if (!$user_id) {
-                return parent::sendError("no_permission", "You need to login again to refresh cookie", 400);
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
+                return $user_id;
             }
             $page = isset($request['page']) ? $request['page'] : 0;
             $length = isset($request['length']) ? $request['length'] : 10;
@@ -165,9 +165,9 @@ class FlutterTeraWallet extends FlutterBaseController
 
         $cookie = $request->get_header("User-Cookie");
         if (isset($cookie) && $cookie != null) {
-            $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-            if (!$user_id) {
-                return parent::sendError("no_permission", "You need to login again to refresh cookie", 400);
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
+                return $user_id;
             }
             $data = woo_wallet()->wallet->get_wallet_balance($user_id, 'Edit');
             return $data;
@@ -184,9 +184,9 @@ class FlutterTeraWallet extends FlutterBaseController
 
         $cookie = $request->get_header("User-Cookie");
         if (isset($cookie) && $cookie != null) {
-            $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-            if (!$user_id) {
-                return parent::sendError("no_permission", "You need to login again to refresh cookie", 400);
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
+                return $user_id;
             }
 
             $json = file_get_contents('php://input');
@@ -247,9 +247,9 @@ class FlutterTeraWallet extends FlutterBaseController
         $params = json_decode($json, TRUE);
         $cookie = $request->get_header("User-Cookie");
         if (isset($cookie) && $cookie != null) {
-            $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-            if (!$user_id) {
-                return parent::sendError("no_permission", "You need to login again to refresh cookie", 400);
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
+                return $user_id;
             }
             wp_set_current_user($user_id);
             $order = wc_get_order($params['order_id']);
@@ -287,9 +287,9 @@ class FlutterTeraWallet extends FlutterBaseController
         $params = json_decode($json, TRUE);
         $cookie = $request->get_header("User-Cookie");
         if (isset($cookie) && $cookie != null) {
-            $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-            if (!$user_id) {
-                return parent::sendError("no_permission", "You need to login again to refresh cookie", 400);
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
+                return $user_id;
             }
             $order = wc_get_order($params['order_id']);
             if ($order) {
@@ -320,9 +320,9 @@ class FlutterTeraWallet extends FlutterBaseController
         $params = json_decode($json, TRUE);
         $cookie = $request->get_header("User-Cookie");
         if (isset($cookie) && $cookie != null) {
-            $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-            if (!$user_id) {
-                return parent::sendError("no_permission", "You need to login again to refresh cookie", 400);
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
+                return $user_id;
             }
 
             $user = get_user_by('email', $params['email']);

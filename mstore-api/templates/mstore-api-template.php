@@ -28,10 +28,9 @@ if (isset($_POST['order'])) {
 if ($data != null):
     global $woocommerce;
     // Validate the cookie token
-    $userId = wp_validate_auth_cookie($data['token'], 'logged_in');
-
-    if (!$userId) {
-        return var_dump("Invalid authentication cookie. Please try to login again!");
+    $userId = validateCookieLogin($data['token']);
+    if (is_wp_error($userId)) {
+        return var_dump($userId);
     }
 
     // Check user and authentication

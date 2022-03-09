@@ -140,11 +140,8 @@ class FlutterMultiVendor
     {
         $cookie = $request->get_header("User-Cookie");
         if (isset($cookie) && $cookie != null) {
-            $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-            if (!$user_id) {
-                return false;
-            }
-            return true;
+            $user_id = validateCookieLogin($cookie);
+            return !is_wp_error($user_id);
         } else {
             return false;
         }

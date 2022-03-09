@@ -507,4 +507,17 @@ function generateCookieByUserId($user_id, $seconds = 1209600){
     $cookie = wp_generate_auth_cookie($user_id, $expiration, 'logged_in');
     return $cookie;
 }
+
+function validateCookieLogin($cookie){
+    if(isset($cookie) && strlen($cookie) > 0){
+        $userId = wp_validate_auth_cookie($cookie, 'logged_in');
+        if($userId == false){
+            return new WP_Error("invalid_login", "Your session has expired. Please logout and login again.", array('status' => 401));
+        }else{
+            return $userId;
+        }
+    }else{
+        return new WP_Error("invalid_login", "Cookie is required", array('status' => 401));
+    }
+}
 ?>

@@ -801,9 +801,9 @@ class FlutterUserController extends FlutterBaseController
         if (!isset($cookie)) {
             return parent::sendError("invalid_login", "You must include a 'cookie' var in your request. Use the `generate_auth_cookie` method.", 401);
         }
-        $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-        if (!$user_id) {
-            return parent::sendError("invalid_login", "Invalid cookie. Use the `generate_auth_cookie` method.", 401);
+        $user_id = validateCookieLogin($cookie);
+        if (is_wp_error($user_id)) {
+            return $user_id;
         }
         if (!$request["post_id"]) {
             return parent::sendError("invalid_data", "No post specified. Include 'post_id' var in your request.", 400);
@@ -853,9 +853,9 @@ class FlutterUserController extends FlutterBaseController
             return parent::sendError("invalid_login", "You must include a 'cookie' var in your request. Use the `generate_auth_cookie` method.", 401);
         }
 
-        $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-        if (!$user_id) {
-            return parent::sendError("invalid_token", "Invalid cookie", 401);
+        $user_id = validateCookieLogin($cookie);
+        if (is_wp_error($user_id)) {
+            return $user_id;
         }
         $user = get_userdata($user_id);
         return array(
@@ -911,9 +911,9 @@ class FlutterUserController extends FlutterBaseController
         if (!isset($cookie)) {
             return parent::sendError("invalid_login", "You must include a 'cookie' var in your request. Use the `generate_auth_cookie` method.", 401);
         }
-        $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-        if (!$user_id) {
-            return parent::sendError("invalid_token", "Invalid cookie` method.", 401);
+        $user_id = validateCookieLogin($cookie);
+        if (is_wp_error($user_id)) {
+            return $user_id;
         }
 
         $user_update = array('ID' => $user_id);
@@ -1147,9 +1147,9 @@ class FlutterUserController extends FlutterBaseController
         } else {
             return parent::sendError("unauthorized", "You are not allowed to do this", 401);
         }
-        $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-        if (!$user_id) {
-            return parent::sendError("invalid_login", "You do not exist in this world. Please re-check your existence with your Creator :)", 401);
+        $user_id = validateCookieLogin($cookie);
+        if (is_wp_error($user_id)) {
+            return $user_id;
         }
         $receiver_email = $params['receiver'];
         $sender_name = $params['sender'];
