@@ -318,7 +318,7 @@ class FlutterVendor extends FlutterBaseController
         $response = array();
         try {
             if (!empty($request['media_path'])) {
-                $this->upload_dir = $request['media_path'];
+                $this->upload_dir = sanitize_file_name($request['media_path']);
                 $this->upload_dir = '/' . trim($this->upload_dir, '/');
                 add_filter('upload_dir', array($this, 'change_wp_upload_dir'));
             }
@@ -353,6 +353,14 @@ class FlutterVendor extends FlutterBaseController
         }
 
         return $response;
+    }
+
+    function change_wp_upload_dir($dirs) {
+        $dirs['baseurl'] = network_site_url('/wp-content/uploads');
+        $dirs['basedir'] = ABSPATH . 'wp-content/uploads';
+        $dirs['path'] = $dirs['basedir'] . $this->upload_dir . $dirs['subdir'];
+        $dirs['url'] = $dirs['baseurl'] . $this->upload_dir . $dirs['subdir'];
+        return $dirs;
     }
 
     public function flutter_create_product($request)
@@ -685,7 +693,7 @@ class FlutterVendor extends FlutterBaseController
                     if (is_wp_error($res)) {
                         $item["product_data"] = null;
                     } else {
-                        $item["product_data"]['images'] = $res->get_data()['images'];
+                        $item["product_data"] = $res->get_data();
                     }
                     if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
                         $vendor_id = wcfm_get_vendor_id_by_post($product_id);

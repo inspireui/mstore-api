@@ -155,6 +155,10 @@ function sendNewOrderNotificationToDelivery($order_id, $status)
         $driver_id = $order->get_meta('ddwc_driver_id');
         if ($driver_id) {
             global $WCFM, $wpdb;
+            // include upgrade-functions for maybe_create_table;
+            if (!function_exists('maybe_create_table')) {
+                require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+            }
             $table_name = $wpdb->prefix . 'delivery_woo_notification';
             $sql = "CREATE TABLE " . $table_name . "(
             id mediumint(9) NOT NULL AUTO_INCREMENT,
@@ -406,6 +410,49 @@ function customProductResponse($response, $object, $request)
             $response->data['price'] = current($prices['price']);
             $response->data['regular_price'] = current($prices['regular_price']);
             $response->data['sale_price'] = current($prices['sale_price']);
+            $response->data['min_price'] = $product->get_variation_price();
+            $response->data['max_price'] = $product->get_variation_price('max');
+            
+            if(!$response->data['min_price']){
+                $response->data['min_price'] = '0';
+            }
+            if(!$response->data['max_price']){
+                $response->data['max_price'] = '0';
+            }
+            $variations = $response->data['variations'];
+            $variation_arr = array();
+            foreach($variations as $variation_id){
+                $variation_data = array();
+                $variation_p = new WC_Product_Variation($variation_id);
+                $variation_data['id'] = $variation_id;
+                $variation_data['product_id'] = $product->get_id();
+                $variation_data['price'] = $variation_p->get_price();
+                $variation_data['regular_price'] = $variation_p->get_regular_price() ;
+                $variation_data['sale_price'] =$variation_p->get_sale_price() ;
+                $variation_data['date_on_sale_from'] = $variation_p->get_date_on_sale_from();
+                $variation_data['date_on_sale_to'] = $variation_p->get_date_on_sale_to();
+                $variation_data['on_sale'] = $variation_p->is_on_sale();
+                $variation_data['in_stock'] =$variation_p->is_in_stock() ;
+                $variation_data['stock_quantity'] = $variation_p->get_stock_quantity();
+                $variation_data['stock_status'] = $variation_p->get_stock_status();
+                $feature_image = wp_get_attachment_image_src( $variation_p->get_image_id(), 'single-post-thumbnail' );
+                $variation_data['feature_image'] = $feature_image ? $feature_image[0] : null;
+        
+                $attr_arr = array();
+                $variation_attributes = $variation_p->get_attributes();
+                foreach($variation_attributes as $k=>$v){
+                    $attr_data = array();
+                    $attr_data['name'] = $k;
+                    $attr_data['slug'] = $v;
+                    $meta = get_post_meta($variation_id, 'attribute_'.$k, true);
+                    $term = get_term_by('slug', $meta, $k);
+                    $attr_data['attribute_name'] = $term->name;
+                    $attr_arr[]=$attr_data;
+                }
+                $variation_data['attributes_arr'] = $attr_arr;
+                $variation_arr[]=$variation_data;
+            }
+            $response->data['variation_products'] = $variation_arr;
         }
     }
 

@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 3.4.7
+ * Version: 3.4.8
  * Author: InspireUI
  * Author URI: https://inspireui.com
  *
@@ -28,15 +28,22 @@ include_once plugin_dir_path(__FILE__) . "functions/utils.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-tera-wallet.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-membership/index.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-paytm.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-paid-memberships-pro.php";
 
 class MstoreCheckOut
 {
-    public $version = '3.4.7';
+    public $version = '3.4.8';
 
     public function __construct()
     {
         define('MSTORE_CHECKOUT_VERSION', $this->version);
         define('MSTORE_PLUGIN_FILE', __FILE__);
+
+        /**
+         * Prepare data before checkout by webview
+         */
+        add_action('template_redirect', 'prepare_checkout');
+
         include_once(ABSPATH . 'wp-admin/includes/plugin.php');
         if (is_plugin_active('woocommerce/woocommerce.php') == false) {
             return 0;
@@ -85,10 +92,6 @@ class MstoreCheckOut
 
         register_activation_hook(__FILE__, array($this, 'create_custom_mstore_table'));
 
-        /**
-         * Prepare data before checkout by webview
-         */
-        add_action('template_redirect', 'prepare_checkout');
 
         /**
          * Register js file to theme
@@ -289,19 +292,34 @@ function mstore_init()
 add_filter('woocommerce_rest_prepare_product_variation_object', 'custom_woocommerce_rest_prepare_product_variation_object', 20, 3);
 add_filter('woocommerce_rest_prepare_product_object', 'custom_change_product_response', 20, 3);
 add_filter('woocommerce_rest_prepare_product_review', 'custom_product_review', 20, 3);
+add_filter('woocommerce_rest_prepare_product_cat', 'custom_product_category', 20, 3);
+
+function custom_product_category($response, $object, $request)
+{
+	 $id = $response->data['id'];
+	 $children = get_term_children($id, 'product_cat');
+
+    if(empty( $children ) ) {
+    	$response->data['has_children'] = false;
+    }else{
+		$response->data['has_children'] = true;
+	}
+    return $response;
+}
 
 function custom_product_review($response, $object, $request)
 {
-    if(is_plugin_active('woo-photo-reviews/woo-photo-reviews.php')){
+    if(is_plugin_active('woo-photo-reviews/woo-photo-reviews.php') || is_plugin_active('woocommerce-photo-reviews/woocommerce-photo-reviews.php')){
         $id = $response->data['id'];
         $image_post_ids = get_comment_meta( $id, 'reviews-images', true );
         $image_arr = array();
-        foreach ( $image_post_ids as $image_post_id ) {
-            $image_arr[] = wp_get_attachment_thumb_url( $image_post_id );
+        if(!is_string($image_post_ids)){
+            foreach( $image_post_ids as $image_post_id ) {
+                $image_arr[] = wp_get_attachment_thumb_url( $image_post_id );
+            }
         }
         $response->data['images'] = $image_arr;
     }
-
     return $response;
 }
  
@@ -435,96 +453,98 @@ function prepare_checkout()
             }
         }
 
-        global $woocommerce;
-        WC()->session->set('refresh_totals', true);
-        WC()->cart->empty_cart();
+        if (is_plugin_active('woocommerce/woocommerce.php') == true) {
+            global $woocommerce;
+            WC()->session->set('refresh_totals', true);
+            WC()->cart->empty_cart();
 
-        $products = $data['line_items'];
-        foreach ($products as $product) {
-            $productId = absint($product['product_id']);
+            $products = $data['line_items'];
+            foreach ($products as $product) {
+                $productId = absint($product['product_id']);
 
-            $quantity = $product['quantity'];
-            $variationId = isset($product['variation_id']) ? $product['variation_id'] : "";
+                $quantity = $product['quantity'];
+                $variationId = isset($product['variation_id']) ? $product['variation_id'] : "";
 
-            $attributes = [];
-            if (isset($product["meta_data"])) {
-                foreach ($product["meta_data"] as $item) {
-                    $attributes[strtolower($item["key"])] = $item["value"];
-                }
-            }
-
-            // Check the product variation
-            if (!empty($variationId)) {
-                $productVariable = new WC_Product_Variable($productId);
-                $listVariations = $productVariable->get_available_variations();
-                foreach ($listVariations as $vartiation => $value) {
-                    if ($variationId == $value['variation_id']) {
-                        $attributes = array_merge($value['attributes'], $attributes);
-                        $woocommerce->cart->add_to_cart($productId, $quantity, $variationId, $attributes);
+                $attributes = [];
+                if (isset($product["meta_data"])) {
+                    foreach ($product["meta_data"] as $item) {
+                        $attributes[strtolower($item["key"])] = $item["value"];
                     }
                 }
-            } else {
-                parseMetaDataForBookingProduct($product);
-                if (isset($product['addons'])) {
-                    $_POST = $product['addons'];
-                }
-                $cart_item_data = array();
-                if (is_plugin_active('woo-wallet/woo-wallet.php')) {
-                    $wallet_product = get_wallet_rechargeable_product();
-                    if ($wallet_product->id == $productId) {
-                        $cart_item_data['recharge_amount'] = $product['total'];
+
+                // Check the product variation
+                if (!empty($variationId)) {
+                    $productVariable = new WC_Product_Variable($productId);
+                    $listVariations = $productVariable->get_available_variations();
+                    foreach ($listVariations as $vartiation => $value) {
+                        if ($variationId == $value['variation_id']) {
+                            $attributes = array_merge($value['attributes'], $attributes);
+                            $woocommerce->cart->add_to_cart($productId, $quantity, $variationId, $attributes);
+                        }
                     }
+                } else {
+                    parseMetaDataForBookingProduct($product);
+                    if (isset($product['addons'])) {
+                        $_POST = $product['addons'];
+                    }
+                    $cart_item_data = array();
+                    if (is_plugin_active('woo-wallet/woo-wallet.php')) {
+                        $wallet_product = get_wallet_rechargeable_product();
+                        if ($wallet_product->id == $productId) {
+                            $cart_item_data['recharge_amount'] = $product['total'];
+                        }
+                    }
+                    $woocommerce->cart->add_to_cart($productId, $quantity, 0, $attributes, $cart_item_data);
                 }
-                $woocommerce->cart->add_to_cart($productId, $quantity, 0, $attributes, $cart_item_data);
             }
-        }
 
-        if (isset($shipping)) {
-            $woocommerce->customer->set_shipping_first_name($shipping["first_name"]);
-            $woocommerce->customer->set_shipping_last_name($shipping["last_name"]);
-            $woocommerce->customer->set_shipping_company($shipping["company"]);
-            $woocommerce->customer->set_shipping_address_1($shipping["address_1"]);
-            $woocommerce->customer->set_shipping_address_2($shipping["address_2"]);
-            $woocommerce->customer->set_shipping_city($shipping["city"]);
-            $woocommerce->customer->set_shipping_state($shipping["state"]);
-            $woocommerce->customer->set_shipping_postcode($shipping["postcode"]);
-            $woocommerce->customer->set_shipping_country($shipping["country"]);
-        }
-
-        if (isset($billing)) {
-            $woocommerce->customer->set_billing_first_name($billing["first_name"]);
-            $woocommerce->customer->set_billing_last_name($billing["last_name"]);
-            $woocommerce->customer->set_billing_company($billing["company"]);
-            $woocommerce->customer->set_billing_address_1($billing["address_1"]);
-            $woocommerce->customer->set_billing_address_2($billing["address_2"]);
-            $woocommerce->customer->set_billing_city($billing["city"]);
-            $woocommerce->customer->set_billing_state($billing["state"]);
-            $woocommerce->customer->set_billing_postcode($billing["postcode"]);
-            $woocommerce->customer->set_billing_country($billing["country"]);
-            $woocommerce->customer->set_billing_email($billing["email"]);
-            $woocommerce->customer->set_billing_phone($billing["phone"]);
-        }
-
-        if (!empty($data['coupon_lines'])) {
-            $coupons = $data['coupon_lines'];
-            foreach ($coupons as $coupon) {
-                $woocommerce->cart->add_discount($coupon['code']);
+            if (isset($shipping)) {
+                $woocommerce->customer->set_shipping_first_name($shipping["first_name"]);
+                $woocommerce->customer->set_shipping_last_name($shipping["last_name"]);
+                $woocommerce->customer->set_shipping_company($shipping["company"]);
+                $woocommerce->customer->set_shipping_address_1($shipping["address_1"]);
+                $woocommerce->customer->set_shipping_address_2($shipping["address_2"]);
+                $woocommerce->customer->set_shipping_city($shipping["city"]);
+                $woocommerce->customer->set_shipping_state($shipping["state"]);
+                $woocommerce->customer->set_shipping_postcode($shipping["postcode"]);
+                $woocommerce->customer->set_shipping_country($shipping["country"]);
             }
-        }
 
-        if (!empty($data['shipping_lines'])) {
-            $shippingLines = $data['shipping_lines'];
-            $shippingMethod = $shippingLines[0]['method_id'];
-            WC()->session->set('chosen_shipping_methods', array($shippingMethod));
-        }
-        if (!empty($data['payment_method'])) {
-            WC()->session->set('chosen_payment_method', $data['payment_method']);
-        }
-        if (isset($data['customer_note']) && !empty($data['customer_note'])) {
-            $_POST["order_comments"] = sanitize_text_field($data['customer_note']);
-            $checkout_fields = WC()->checkout->__get("checkout_fields");
-            $checkout_fields["order"] = ["order_comments" => ["type" => "textarea", "class" => [], "label" => "Order notes", "placeholder" => "Notes about your order, e.g. special notes for delivery."]];
-            WC()->checkout->__set("checkout_fields", $checkout_fields);
+            if (isset($billing)) {
+                $woocommerce->customer->set_billing_first_name($billing["first_name"]);
+                $woocommerce->customer->set_billing_last_name($billing["last_name"]);
+                $woocommerce->customer->set_billing_company($billing["company"]);
+                $woocommerce->customer->set_billing_address_1($billing["address_1"]);
+                $woocommerce->customer->set_billing_address_2($billing["address_2"]);
+                $woocommerce->customer->set_billing_city($billing["city"]);
+                $woocommerce->customer->set_billing_state($billing["state"]);
+                $woocommerce->customer->set_billing_postcode($billing["postcode"]);
+                $woocommerce->customer->set_billing_country($billing["country"]);
+                $woocommerce->customer->set_billing_email($billing["email"]);
+                $woocommerce->customer->set_billing_phone($billing["phone"]);
+            }
+
+            if (!empty($data['coupon_lines'])) {
+                $coupons = $data['coupon_lines'];
+                foreach ($coupons as $coupon) {
+                    $woocommerce->cart->add_discount($coupon['code']);
+                }
+            }
+
+            if (!empty($data['shipping_lines'])) {
+                $shippingLines = $data['shipping_lines'];
+                $shippingMethod = $shippingLines[0]['method_id'];
+                WC()->session->set('chosen_shipping_methods', array($shippingMethod));
+            }
+            if (!empty($data['payment_method'])) {
+                WC()->session->set('chosen_payment_method', $data['payment_method']);
+            }
+            if (isset($data['customer_note']) && !empty($data['customer_note'])) {
+                $_POST["order_comments"] = sanitize_text_field($data['customer_note']);
+                $checkout_fields = WC()->checkout->__get("checkout_fields");
+                $checkout_fields["order"] = ["order_comments" => ["type" => "textarea", "class" => [], "label" => "Order notes", "placeholder" => "Notes about your order, e.g. special notes for delivery."]];
+                WC()->checkout->__set("checkout_fields", $checkout_fields);
+            }
         }
     }
 

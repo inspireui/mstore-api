@@ -395,6 +395,8 @@ class FlutterUserController extends FlutterBaseController
         $usernameReq = $params["username"];
         $emailReq = $params["email"];
         $role = $params["role"];
+        $dokan_enable_selling  = $params['dokan_enable_selling'];
+        $wcfm_membership_application_status = $params['wcfm_membership_application_status'];
         if (isset($role)) {
             if (!in_array($role, ['subscriber', 'wcfm_vendor', 'seller', 'wcfm_delivery_boy', 'driver'], true)) {
                 return parent::sendError("invalid_role", "Role is invalid.", 400);
@@ -467,6 +469,14 @@ class FlutterUserController extends FlutterBaseController
             wp_new_user_notification($user_id, '', '');
         }
 
+        if(isset( $wcfm_membership_application_status) &&  $wcfm_membership_application_status == 'pending'){
+            update_user_meta($user_id,'wcfm_membership_application_status',$wcfm_membership_application_status);
+        }
+
+        if(isset($dokan_enable_selling) && $dokan_enable_selling == false){
+            update_user_meta($user_id,'dokan_enable_selling',$dokan_enable_selling);
+        }
+
         $cookie = generateCookieByUserId($user_id, $seconds);
 
         return array(
@@ -530,6 +540,7 @@ class FlutterUserController extends FlutterBaseController
         } else {
             $avatar = $avatar[0];
         }
+        $is_driver_available = false;
         if(is_plugin_active('delivery-drivers-for-woocommerce/delivery-drivers-for-woocommerce.php')){
 			$is_driver_available = get_user_meta( $user->ID, 'ddwc_driver_availability', true );
 		}
@@ -996,17 +1007,7 @@ class FlutterUserController extends FlutterBaseController
 
         }
 
-        if (isset($params->deviceToken)) {
-            if (isset($params->is_manager) && $params->is_manager) {
-                update_user_meta($user_id, "mstore_manager_device_token", $params->deviceToken);
-            } else if (isset($params->is_delivery) && $params->is_delivery) {
-                update_user_meta($user_id, "mstore_delivery_device_token", $params->deviceToken);
-            }
 
-            if (!isset($params->is_delivery) && !isset($params->is_manager)) {
-                update_user_meta($user_id, "mstore_device_token", $params->deviceToken);
-            }
-        }
         $user_data = wp_update_user($user_update);
 
         if (is_wp_error($user_data)) {
@@ -1014,6 +1015,21 @@ class FlutterUserController extends FlutterBaseController
             echo 'Error.';
         }
         $user = get_userdata($user_id);
+
+        if (isset($params->deviceToken)) {
+            if (isset($params->is_manager) && $params->is_manager) {
+                update_user_meta($user_id, "mstore_manager_device_token", $params->deviceToken);
+            } else if (isset($params->is_delivery) && $params->is_delivery) {
+                update_user_meta($user_id, "mstore_delivery_device_token", $params->deviceToken);
+            }
+            if (!isset($params->is_delivery) && !isset($params->is_manager)) {
+                update_user_meta($user_id, "mstore_device_token", $params->deviceToken);
+            }
+            if(in_array('wcfm_delivery_boy', (array)$user->roles) || in_array('driver',(array)$user->roles)){
+                update_user_meta($user_id, "mstore_delivery_device_token", $params->deviceToken);
+            }
+        }
+
         return $this->getResponseUserInfo($user);
     }
 
@@ -1121,9 +1137,11 @@ class FlutterUserController extends FlutterBaseController
         return ["deviceToken" => $deviceToken, 'serverKey' => $serverKey, 'status' => $status];
     }
 
-    function chat_notification($request)
+    function chat_notification()
     {
-        $token = $request['token'];
+        $json = file_get_contents('php://input');
+        $params = json_decode($json, TRUE);
+        $token = $params['token'];
         if (isset($token)) {
             $cookie = urldecode(base64_decode($token));
         } else {
@@ -1133,8 +1151,8 @@ class FlutterUserController extends FlutterBaseController
         if (!$user_id) {
             return parent::sendError("invalid_login", "You do not exist in this world. Please re-check your existence with your Creator :)", 401);
         }
-        $receiver_email = $request['receiver'];
-        $sender_name = $request['sender'];
+        $receiver_email = $params['receiver'];
+        $sender_name = $params['sender'];
         if (is_email($sender_name)) {
             $sender = get_user_by('email', $sender_name);
             $sender_name = $sender->display_name;
@@ -1145,7 +1163,7 @@ class FlutterUserController extends FlutterBaseController
             return parent::sendError("invalid_user", "User does not exist in this world. Please re-check user's existence with the Creator :)", 401);
         }
 
-        $message = $request['message'];
+        $message = $params['message'];
 
         $deviceToken = get_user_meta($receiver->ID, 'mstore_device_token', true);
         $manager_device_token = get_user_meta($receiver->ID, 'mstore_manager_device_token', true);
