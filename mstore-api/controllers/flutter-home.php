@@ -148,17 +148,25 @@ class FlutterHome extends WP_REST_Controller
             $array = json_decode($fileContent, true);
 
             //get products for horizontal layout
+            $countDataLayout = 0;
             $results = [];
             $horizontalLayout = $array["HorizonLayout"];
             foreach ($horizontalLayout as $layout) {
                 if (isset($layout['category']) || isset($layout['tag'])) {
-                    $layout["data"] = $this->getProductsByLayout($layout, $api, $request);
+                    if($countDataLayout <  4){
+                        $layout["data"] = $this->getProductsByLayout($layout, $api, $request);
+                        $countDataLayout += 1;
+                    }
                     $results[] = $layout;
                 } else {
                     if (isset($layout["items"]) && count($layout["items"]) > 0) {
                         $items = [];
                         foreach ($layout["items"] as $item) {
-                            $item["data"] = $this->getProductsByLayout($item, $api, $request);
+                            if($countDataLayout <  4){
+                                $item["data"] = $this->getProductsByLayout($item, $api, $request);
+                                $countDataLayout += 1;
+                            }
+                            
                             $items[] = $item;
                         }
                         $layout["items"] = $items;
@@ -172,7 +180,10 @@ class FlutterHome extends WP_REST_Controller
             if (isset($array["VerticalLayout"])) {
                 $layout = $array["VerticalLayout"];
                 if (isset($layout['category'])) {
-                    $layout["data"] = $this->getProductsByLayout($layout, $api, $request);
+                    if($countDataLayout <  4){
+                        $layout["data"] = $this->getProductsByLayout($layout, $api, $request);
+                        $countDataLayout += 1;
+                    }
                     $array['VerticalLayout'] = $layout;
                 }
             }
