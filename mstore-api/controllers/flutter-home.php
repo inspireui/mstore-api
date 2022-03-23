@@ -19,7 +19,7 @@ class FlutterHome extends WP_REST_Controller
     protected $namespace_v3 = 'wc/v3/flutter';
     private $whilelist = ['id','name','slug', 'permalink','date_created','date_created_gmt','date_modified','date_modified_gmt','type','status','featured','catalog_visibility','description','short_description','sku','price','regular_price','sale_price','date_on_sale_from','date_on_sale_from_gmt','date_on_sale_to','date_on_sale_to_gmt','price_html','on_sale','purchasable','total_sales','virtual','downloadable','downloads','download_limit','download_expiry','external_url','button_text','tax_status','tax_class','manage_stock','stock_quantity','stock_status','backorders','backorders_allowed','backordered','sold_individually','weight','dimensions','shipping_required','shipping_taxable','shipping_class','shipping_class_id','reviews_allowed','average_rating','rating_count','related_ids','upsell_ids','cross_sell_ids','parent_id','purchase_note','categories','tags','images','attributes','default_attributes','variations','grouped_products','menu_order','meta_data','store','attributesData'];
     private $metaDataWhilelist = ['wc_appointments_','_aftership_', '_wcfmd_','_orddd_','_minmax_product_','product_id','order_id','staff_ids','_video_url','_woofv_video_embed','_product_addons'];
-
+    private $supportedLayouts = ["fourColumn","threeColumn","twoColumn","staggered","saleOff","card","listTile","largeCardHorizontalListItems","largeCard","simpleVerticalListItems","simpleList"];
     /**
      * Register all routes releated with stores
      *
@@ -152,7 +152,7 @@ class FlutterHome extends WP_REST_Controller
             $results = [];
             $horizontalLayout = $array["HorizonLayout"];
             foreach ($horizontalLayout as $layout) {
-                if (isset($layout['category']) || isset($layout['tag'])) {
+                if ((isset($layout['category']) || isset($layout['tag'])) && in_array($layout['layout'], $this->supportedLayouts)) {
                     if($countDataLayout <  4){
                         $layout["data"] = $this->getProductsByLayout($layout, $api, $request);
                         $countDataLayout += 1;
@@ -162,7 +162,7 @@ class FlutterHome extends WP_REST_Controller
                     if (isset($layout["items"]) && count($layout["items"]) > 0) {
                         $items = [];
                         foreach ($layout["items"] as $item) {
-                            if($countDataLayout <  4){
+                            if($countDataLayout <  4 && in_array($item['layout'], $this->supportedLayouts)){
                                 $item["data"] = $this->getProductsByLayout($item, $api, $request);
                                 $countDataLayout += 1;
                             }
