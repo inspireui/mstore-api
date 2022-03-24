@@ -599,13 +599,15 @@ class ProductManagementHelper
                 }
 
 
-            if (isset($tags)) {
-                $tags = array_filter(explode(",", $tags));
-                wp_set_object_terms($post_id, $tags, "product_tag");
-            }
-				$product->set_sku($sku);
-				
-				
+                if (isset($tags)) {
+                    $tags = array_filter(explode(",", $tags));
+                    wp_set_object_terms($post_id, $tags, "product_tag");
+                }
+                update_post_meta($product->get_id(),'_sku',$sku);
+                wp_update_post([
+                    "ID" => $product->get_id(),
+                    "post_status" => $requestStatus,
+                ]);
 
                 wp_update_post([
                     "ID" => $product->get_id(),

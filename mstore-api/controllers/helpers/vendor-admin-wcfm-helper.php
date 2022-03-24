@@ -218,7 +218,7 @@ class VendorAdminWCFMHelper
             $vendor_data["mobile_banner"] = $img_id;
         }
 
-        if (isset($data["banner"]) && isset($data["banner_type"])) {
+        if (isset($data["banner"])) {
             $img_id = $this->upload_image_from_mobile(
                 sanitize_text_field($data["banner"]),
                 $count,
@@ -226,6 +226,8 @@ class VendorAdminWCFMHelper
             );
             $count++;
             $vendor_data["banner"] = $img_id;
+        }
+        if ( isset($data["banner_type"])) {
             $vendor_data["banner_type"] = $data["banner_type"];
         }
 
@@ -255,7 +257,7 @@ class VendorAdminWCFMHelper
             $vendor_data["banner_type"] =  sanitize_text_field($data["banner_type"]);
         }
 
-        if (isset($data["list_banner"]) && isset($data["list_banner_type"])) {
+        if (isset($data["list_banner"])) {
             $img_id = $this->upload_image_from_mobile(
                 sanitize_text_field($data["list_banner"]),
                 $count,
@@ -263,15 +265,14 @@ class VendorAdminWCFMHelper
             );
             $count++;
             $vendor_data["list_banner"] = $img_id;
+        }
+        if (isset($data["list_banner_type"])) {
             $vendor_data["list_banner_type"] =  sanitize_text_field($data["list_banner_type"]);
         }
-
         if (
-            isset($data["list_banner_video"]) &&
-            isset($data["list_banner_type"])
-        ) {
+            isset($data["list_banner_video"])
+        ){
             $vendor_data["list_banner_video"] =  sanitize_text_field($data["list_banner_video"]);
-            $vendor_data["list_banner_type"] =  sanitize_text_field($data["list_banner_type"]);
         }
 
         $vendor_data["shop_description"] =  sanitize_text_field($data["shop_description"]);
