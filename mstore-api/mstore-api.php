@@ -358,6 +358,14 @@ function custom_woocommerce_rest_prepare_product_variation_object($response, $ob
 function prepare_checkout()
 {
 
+    if(empty($_GET)){
+		$url_components = parse_url($_SERVER['HTTP_REFERER']);
+		parse_str($url_components['query'], $params);
+		if(!empty($params)){
+			$_GET = $params;
+		}
+	}
+    
     if (isset($_GET['mobile']) && isset($_GET['code'])) {
 
         $code = sanitize_text_field($_GET['code']);
