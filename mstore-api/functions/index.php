@@ -466,7 +466,10 @@ function customProductResponse($response, $object, $request)
         } else {
             $label = $attr->get_name();
         }
-        $attr["options"] = wc_get_product_terms($response->data['id'], $attr["name"]);
+        $attrOptions = wc_get_product_terms($response->data['id'], $attr["name"]);
+        $attr["options"] = empty($attrOptions) ? array_map(function ($v){
+            return ['name'=>$v, 'slug' => $v];
+        },$attr["options"]) : $attrOptions;
         $attributesData[] = array_merge($attr->get_data(), ["label" => $label]);
     }
     $response->data['attributesData'] = $attributesData;
