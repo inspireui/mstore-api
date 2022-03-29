@@ -639,7 +639,7 @@ function mstore_register_order_refund_requested_order_status()
 add_action('init', 'mstore_register_order_refund_requested_order_status');
 
 
-function add_custom_order_statuses($order_statuses)
+function mstore_add_custom_order_statuses($order_statuses)
 {
     // Create new status array.
     $new_order_statuses = array();
@@ -656,7 +656,7 @@ function add_custom_order_statuses($order_statuses)
     return $new_order_statuses;
 }
 
-add_filter('wc_order_statuses', 'add_custom_order_statuses');
+add_filter('wc_order_statuses', 'mstore_add_custom_order_statuses');
 
 
 function custom_status_bulk_edit($actions)
