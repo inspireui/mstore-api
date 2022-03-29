@@ -342,6 +342,7 @@ class ProductManagementHelper
 		
 		$product_attributes = $request['product_attributes'];
         $variations = $request['variation_products'];
+        $stock_status = $request['stock_status'];
 
 		
         $count = 1;
@@ -462,12 +463,15 @@ class ProductManagementHelper
                 }
 
                 // Stock status.
-                if (!empty($manage_stock) && is_bool($manage_stock) && $manage_stock && !empty($stock_quantity) && $stock_quantity > 0) {
-                    $stock_status = 'instock';
-                } else {
-                    $stock_status = $product->get_stock_status();
+                if(!isset($stock_status)){
+                    if (!empty($manage_stock) && is_bool($manage_stock) && $manage_stock && !empty($stock_quantity) && $stock_quantity > 0) {
+                        $stock_status = 'instock';
+                    } else {
+                        $stock_status = $product->get_stock_status();
+                    }
                 }
-
+                $product->set_stock_status($stock_status);
+                
                 // Stock data.
                 if ("yes" === get_option("woocommerce_manage_stock")) {
                     // Manage stock.
@@ -475,9 +479,6 @@ class ProductManagementHelper
                         $product->set_manage_stock($manage_stock);
                     }
 					if ($product->get_manage_stock()){
-                        if (!$product->is_type('variable')) {
-                            $product->set_stock_status($stock_status);
-                        }
 						// Stock quantity.
                         if (!empty($stock_quantity)) {
                             $product->set_stock_quantity(wc_stock_amount($stock_quantity));
@@ -485,11 +486,8 @@ class ProductManagementHelper
                         	// Don't manage stock.
                         	$product->set_manage_stock("no");
                         	$product->set_stock_quantity("");
-                        	$product->set_stock_status($stock_status);
                     	}
 					}
-                } else if (!$product->is_type("variable")) {
-                    $product->set_stock_status($stock_status);
                 }
 
                 //Assign categories
