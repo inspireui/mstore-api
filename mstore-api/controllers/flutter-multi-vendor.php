@@ -114,7 +114,7 @@ class FlutterMultiVendor
             ),
         ));
 
-        register_rest_route($this->namespace, '/product-categories/', array(
+        register_rest_route($this->namespace, '/product-categories', array(
             array(
                 'methods' => "GET",
                 'callback' => array($this, 'flutter_get_product_categories'),

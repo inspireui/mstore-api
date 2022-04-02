@@ -493,7 +493,7 @@ class FlutterVendor extends FlutterBaseController
                 'post_type' => 'product',
                 'posts_per_page' => $limit,
                 'offset' => $page,
-                'post_status' => 'published',
+                'post_status' => 'publish',
             );
 
             if (isset($request['on_sale']) && $request['on_sale'] == 'true') {
