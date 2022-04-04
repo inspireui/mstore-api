@@ -229,6 +229,26 @@ class FlutterUserController extends FlutterBaseController
                 }
             ),
         ));
+
+        register_rest_route($this->namespace, '/digits/register', array(
+            array(
+                'methods' => 'POST',
+                'callback' => array($this, 'digits_register'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
+
+        register_rest_route($this->namespace, '/digits/login', array(
+            array(
+                'methods' => 'POST',
+                'callback' => array($this, 'digits_login'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
     }
 
 
@@ -1169,5 +1189,88 @@ class FlutterUserController extends FlutterBaseController
         $manager_device_token = get_user_meta($receiver->ID, 'mstore_manager_device_token', true);
         pushNotification($sender_name, $message, $deviceToken);
         pushNotification($sender_name, $message, $manager_device_token);
+    }
+
+    function mstore_digrest_set_variables()
+    {
+        $json = file_get_contents('php://input');
+        $params = json_decode($json, TRUE);
+
+        $_POST['digits'] = 1;
+        $_REQUEST['login'] = 2;
+
+        if (isset($params['mobile'])) {
+            $_POST['digits_reg_mail'] = $params['mobile'];
+        }
+        if (isset($params['email'])) {
+            $_POST['dig_reg_mail'] = $params['email'];
+        }
+        if (isset($params['username'])) {
+            $_POST['digits_reg_username'] = $params['username'];
+        }
+        if (isset($params['country_code'])) {
+            $_POST['digregcode'] = $params['country_code'];
+        }
+        if (isset($params['otp'])) {
+            $_POST['dig_otp'] = $params['otp'];
+        }
+        $_POST['ftoken'] = $params['ftoken'];
+        $_REQUEST['ftoken'] = $params['ftoken'];
+
+        $_REQUEST['csrf'] = wp_create_nonce('crsf-otp');
+        $_POST['csrf'] = wp_create_nonce('crsf-otp');
+
+        $_POST['dig_nounce'] = wp_create_nonce('dig_form');
+        $_POST['crsf-otp'] = wp_create_nonce('crsf-otp');
+
+        $_REQUEST['json'] = 1;
+    }
+
+    function digits_register()
+    {
+        if(!function_exists('digits_create_user')) { 
+            return parent::sendError("plugin_not_found", "Please install  the  DIGITS: Wordpress Mobile Number Signup and Login  plugin", 400);
+        }
+
+        $this->mstore_digrest_set_variables();
+        
+        $data = digits_create_user();
+        if ($data['success'] === false) {
+            return parent::sendError("invalid_data", explode("<br />",  $data['data']['msg'])[0], 400);
+        } else {
+            $user_id = $data['data']['user_id'];
+            $cookie = generateCookieByUserId($user_id);
+            $user = get_userdata($user_id);
+
+            $response['wp_user_id'] = $user_id;
+            $response['cookie'] = $cookie;
+            $response['user_login'] = $user->user_login;
+            $response['user'] = $this->getResponseUserInfo($user);
+            return $response;
+        }
+    }
+
+    function digits_login()
+    {
+        if(!function_exists('dig_validateMobileNumber')) { 
+            return parent::sendError("plugin_not_found", "Please install  the  DIGITS: Wordpress Mobile Number Signup and Login  plugin", 400);
+        }
+
+        $this->mstore_digrest_set_variables();
+    
+        $otp = $_POST['dig_otp'];
+        $validateMob = dig_validateMobileNumber($_POST['digregcode'], $_POST['digits_reg_mail'], $otp, null, 1, null, false);
+    
+        if ($validateMob['success'] === false) {
+            return parent::sendError("invalid_data",$validateMob['msg'], 400);
+        }
+    
+        $user = getUserFromPhone($validateMob['countrycode'] . $validateMob['mobile']);
+        $cookie = generateCookieByUserId($user->ID);
+        $response['wp_user_id'] = $user->ID;
+        $response['cookie'] = $cookie;
+        $response['user_login'] = $user->user_login;
+        $response['user'] = $this->getResponseUserInfo($user);
+        return $response;
     }
 }
