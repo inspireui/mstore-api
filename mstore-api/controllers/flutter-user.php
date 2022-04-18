@@ -230,6 +230,16 @@ class FlutterUserController extends FlutterBaseController
             ),
         ));
 
+        register_rest_route($this->namespace, '/digits/register/check', array(
+            array(
+                'methods' => 'POST',
+                'callback' => array($this, 'digits_register_check'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
+
         register_rest_route($this->namespace, '/digits/register', array(
             array(
                 'methods' => 'POST',
@@ -240,6 +250,16 @@ class FlutterUserController extends FlutterBaseController
             ),
         ));
 
+        register_rest_route($this->namespace, '/digits/login/check', array(
+            array(
+                'methods' => 'POST',
+                'callback' => array($this, 'digits_login_check'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
+        
         register_rest_route($this->namespace, '/digits/login', array(
             array(
                 'methods' => 'POST',
@@ -1226,6 +1246,46 @@ class FlutterUserController extends FlutterBaseController
         $_REQUEST['json'] = 1;
     }
 
+    function digits_register_check()
+    {
+        if(!function_exists('digits_create_user')) { 
+            return parent::sendError("plugin_not_found", "Please install  the  DIGITS: Wordpress Mobile Number Signup and Login  plugin", 400);
+        }
+
+        $json = file_get_contents('php://input');
+        $params = json_decode($json, TRUE);
+
+        if(empty($params['email'])){
+            return parent::sendError("invalid_email", 'Email is required', 400);
+        }
+        if (!empty($params['email']) && email_exists($params['email'])) {
+            return parent::sendError("invalid_email", 'Email already in use!', 400);
+        }
+
+        if(empty($params['username'])){
+            return parent::sendError("invalid_username", 'Username is required', 400);
+        }
+        if (!empty($params['username']) && username_exists($params['username'])) {
+            return parent::sendError("invalid_username", 'Username already in use!', 400);
+        }
+
+        if(empty($params['country_code'])){
+            return parent::sendError("invalid_country_code", 'Country code is required', 400);
+        }
+
+        if(empty($params['mobile'])){
+            return parent::sendError("invalid_mobile", 'Mobile is required', 400);
+        }
+
+        $mob = $params['country_code'].$params['mobile'];
+        $mobuser = getUserFromPhone($mob);
+        if ($mobuser != null  || username_exists($mob)) {
+            return parent::sendError("invalid_mobile", 'Mobile Number already in use!', 400);
+        } 
+
+        return  true;
+    }
+
     function digits_register()
     {
         if(!function_exists('digits_create_user')) { 
@@ -1248,6 +1308,32 @@ class FlutterUserController extends FlutterBaseController
             $response['user'] = $this->getResponseUserInfo($user);
             return $response;
         }
+    }
+
+    function digits_login_check()
+    {
+        if(!function_exists('digits_create_user')) { 
+            return parent::sendError("plugin_not_found", "Please install  the  DIGITS: Wordpress Mobile Number Signup and Login  plugin", 400);
+        }
+
+        $json = file_get_contents('php://input');
+        $params = json_decode($json, TRUE);
+
+        if(empty($params['country_code'])){
+            return parent::sendError("invalid_country_code", 'Country code is required', 400);
+        }
+
+        if(empty($params['mobile'])){
+            return parent::sendError("invalid_mobile", 'Mobile is required', 400);
+        }
+
+        $mob = $params['country_code'].$params['mobile'];
+        $mobuser = getUserFromPhone($mob);
+        if ($mobuser == null) {
+            return parent::sendError("invalid_mobile", 'Phone number is not registered!', 400);
+        } 
+
+        return  true;
     }
 
     function digits_login()
