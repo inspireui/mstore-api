@@ -103,10 +103,13 @@ function sendNotificationToUser($userId, $orderId, $previous_status, $next_statu
     if (!isset($message) || $message == false) {
         $message = "Hi {{name}}, Your order: #{{orderId}} changed from {{prevStatus}} to {{nextStatus}}";
     }
+    $previous_status_label = wc_get_order_status_name( $previous_status );
+    $next_status_label = wc_get_order_status_name( $next_status );
+    
     $message = str_replace("{{name}}", $user->display_name, $message);
     $message = str_replace("{{orderId}}", $orderId, $message);
-    $message = str_replace("{{prevStatus}}", $previous_status, $message);
-    $message = str_replace("{{nextStatus}}", $next_status, $message);
+    $message = str_replace("{{prevStatus}}", $previous_status_label, $message);
+    $message = str_replace("{{nextStatus}}", $next_status_label, $message);
 
     if (isset($deviceToken) && $deviceToken != false) {
         pushNotification($title, $message, $deviceToken);
@@ -127,7 +130,8 @@ function sendNewOrderNotificationToDelivery($order_id, $status)
 {
     global $wpdb;
     $title = "Order notification";
-    $message = "The order #{$order_id} has been {$status}";
+    $statusLabel = wc_get_order_status_name( $status );
+    $message = "The order #{$order_id} has been {$statusLabel}";
     if (is_plugin_active('wc-frontend-manager-delivery/wc-frontend-manager-delivery.php')) {
         if ($status == 'cancelled' || $status == 'refunded') {
             $sql = "SELECT `{$wpdb->prefix}wcfm_delivery_orders`.delivery_boy FROM `{$wpdb->prefix}wcfm_delivery_orders`";

@@ -102,7 +102,7 @@ class DeliveryWooHelper
             $sql = "SELECT ID FROM {$table_1} INNER JOIN {$table_2} ON {$table_1}.ID = {$table_2}.post_id";
             $sql .= " WHERE `{$table_2}`.`meta_key` = 'ddwc_driver_id' AND `{$table_2}`.`meta_value` = {$user_id}";
             $total = count($wpdb->get_results($sql));
-            $pending_sql = $sql . " AND (`{$table_1}`.`post_status` = 'wc-driver-assigned' OR `{$table_1}`.`post_status` = 'wc-out-for-delivery')";
+            $pending_sql = $sql . " AND (`{$table_1}`.`post_status` = 'wc-driver-assigned' OR `{$table_1}`.`post_status` = 'wc-out-for-delivery' OR `{$table_1}`.`post_status` = 'wc-processing')";
             $delivered_sql = $sql . " AND `{$table_1}`.`post_status` = 'wc-completed'";
 
             $pending_count = count($wpdb->get_results($pending_sql));
@@ -197,13 +197,13 @@ class DeliveryWooHelper
             if (isset($request['status']) && !empty($request['status'])) {
                 $status = sanitize_text_field($request['status']);
                 if ($status == 'pending') {
-                    $sql .= " AND (`{$table_1}`.`post_status` = 'wc-driver-assigned' OR `{$table_1}`.`post_status` = 'wc-out-for-delivery')";
+                    $sql .= " AND (`{$table_1}`.`post_status` = 'wc-driver-assigned' OR `{$table_1}`.`post_status` = 'wc-out-for-delivery' OR `{$table_1}`.`post_status` = 'wc-processing')";
                 }
                 if ($status == 'delivered') {
                     $sql .= " AND `{$table_1}`.`post_status` = 'wc-completed'";
                 }
             } else {
-                $sql .= " AND (`{$table_1}`.`post_status` = 'wc-driver-assigned' OR `{$table_1}`.`post_status` = 'wc-out-for-delivery' OR `{$table_1}`.`post_status` = 'wc-completed')";
+                $sql .= " AND (`{$table_1}`.`post_status` = 'wc-driver-assigned' OR `{$table_1}`.`post_status` = 'wc-out-for-delivery' OR `{$table_1}`.`post_status` = 'wc-completed' OR `{$table_1}`.`post_status` = 'wc-processing')";
             }
             if (isset($request['search'])) {
                 $order_search = sanitize_text_field($request['search']);
