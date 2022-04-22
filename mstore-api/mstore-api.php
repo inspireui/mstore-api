@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 3.4.8
+ * Version: 3.5.0
  * Author: InspireUI
  * Author URI: https://inspireui.com
  *
@@ -32,7 +32,7 @@ include_once plugin_dir_path(__FILE__) . "controllers/flutter-paid-memberships-p
 
 class MstoreCheckOut
 {
-    public $version = '3.4.8';
+    public $version = '3.5.0';
 
     public function __construct()
     {
@@ -359,6 +359,14 @@ function custom_woocommerce_rest_prepare_product_variation_object($response, $ob
 function prepare_checkout()
 {
 
+    if(empty($_GET) && isset($_SERVER['HTTP_REFERER'])){
+		$url_components = parse_url($_SERVER['HTTP_REFERER']);
+		parse_str($url_components['query'], $params);
+		if(!empty($params)){
+			$_GET = $params;
+		}
+	}
+    
     if (isset($_GET['mobile']) && isset($_GET['code'])) {
 
         $code = sanitize_text_field($_GET['code']);
@@ -376,74 +384,97 @@ function prepare_checkout()
 
         if (isset($data['token'])) {
             // Validate the cookie token
-            $userId = wp_validate_auth_cookie($data['token'], 'logged_in');
-            if (isset($billing)) {
-                update_user_meta($userId, 'billing_first_name', $billing["first_name"]);
-                update_user_meta($userId, 'billing_last_name', $billing["last_name"]);
-                update_user_meta($userId, 'billing_company', $billing["company"]);
-                update_user_meta($userId, 'billing_address_1', $billing["address_1"]);
-                update_user_meta($userId, 'billing_address_2', $billing["address_2"]);
-                update_user_meta($userId, 'billing_city', $billing["city"]);
-                update_user_meta($userId, 'billing_state', $billing["state"]);
-                update_user_meta($userId, 'billing_postcode', $billing["postcode"]);
-                update_user_meta($userId, 'billing_country', $billing["country"]);
-                update_user_meta($userId, 'billing_email', $billing["email"]);
-                update_user_meta($userId, 'billing_phone', $billing["phone"]);
-
-                update_user_meta($userId, 'shipping_first_name', $billing["first_name"]);
-                update_user_meta($userId, 'shipping_last_name', $billing["last_name"]);
-                update_user_meta($userId, 'shipping_company', $billing["company"]);
-                update_user_meta($userId, 'shipping_address_1', $billing["address_1"]);
-                update_user_meta($userId, 'shipping_address_2', $billing["address_2"]);
-                update_user_meta($userId, 'shipping_city', $billing["city"]);
-                update_user_meta($userId, 'shipping_state', $billing["state"]);
-                update_user_meta($userId, 'shipping_postcode', $billing["postcode"]);
-                update_user_meta($userId, 'shipping_country', $billing["country"]);
-                update_user_meta($userId, 'shipping_email', $billing["email"]);
-                update_user_meta($userId, 'shipping_phone', $billing["phone"]);
-            } else {
-                $billing = [];
-                $shipping = [];
-
-                $billing["first_name"] = get_user_meta($userId, 'billing_first_name', true);
-                $billing["last_name"] = get_user_meta($userId, 'billing_last_name', true);
-                $billing["company"] = get_user_meta($userId, 'billing_company', true);
-                $billing["address_1"] = get_user_meta($userId, 'billing_address_1', true);
-                $billing["address_2"] = get_user_meta($userId, 'billing_address_2', true);
-                $billing["city"] = get_user_meta($userId, 'billing_city', true);
-                $billing["state"] = get_user_meta($userId, 'billing_state', true);
-                $billing["postcode"] = get_user_meta($userId, 'billing_postcode', true);
-                $billing["country"] = get_user_meta($userId, 'billing_country', true);
-                $billing["email"] = get_user_meta($userId, 'billing_email', true);
-                $billing["phone"] = get_user_meta($userId, 'billing_phone', true);
-
-                $shipping["first_name"] = get_user_meta($userId, 'shipping_first_name', true);
-                $shipping["last_name"] = get_user_meta($userId, 'shipping_last_name', true);
-                $shipping["company"] = get_user_meta($userId, 'shipping_company', true);
-                $shipping["address_1"] = get_user_meta($userId, 'shipping_address_1', true);
-                $shipping["address_2"] = get_user_meta($userId, 'shipping_address_2', true);
-                $shipping["city"] = get_user_meta($userId, 'shipping_city', true);
-                $shipping["state"] = get_user_meta($userId, 'shipping_state', true);
-                $shipping["postcode"] = get_user_meta($userId, 'shipping_postcode', true);
-                $shipping["country"] = get_user_meta($userId, 'shipping_country', true);
-                $shipping["email"] = get_user_meta($userId, 'shipping_email', true);
-                $shipping["phone"] = get_user_meta($userId, 'shipping_phone', true);
-
-                if (isset($billing["first_name"]) && !isset($shipping["first_name"])) {
-                    $shipping = $billing;
+            $userId = validateCookieLogin($data['token']);
+            if(!is_wp_error($userId)){
+                if (isset($billing)) {
+                    if(isset($billing["first_name"]) && !empty($billing["first_name"])){
+                        update_user_meta($userId, 'billing_first_name', $billing["first_name"]);
+                        update_user_meta($userId, 'shipping_first_name', $billing["first_name"]);
+                    }
+                    if(isset($billing["last_name"]) && !empty($billing["last_name"])){
+                        update_user_meta($userId, 'billing_last_name', $billing["last_name"]);
+                        update_user_meta($userId, 'shipping_last_name', $billing["last_name"]);
+                    }
+                    if(isset($billing["company"]) && !empty($billing["company"])){
+                        update_user_meta($userId, 'billing_company', $billing["company"]);
+                        update_user_meta($userId, 'shipping_company', $billing["company"]);
+                    }
+                    if(isset($billing["address_1"]) && !empty($billing["address_1"])){
+                        update_user_meta($userId, 'billing_address_1', $billing["address_1"]);
+                        update_user_meta($userId, 'shipping_address_1', $billing["address_1"]);
+                    }
+                    if(isset($billing["address_2"]) && !empty($billing["address_2"])){
+                        update_user_meta($userId, 'billing_address_2', $billing["address_2"]);
+                        update_user_meta($userId, 'shipping_address_2', $billing["address_2"]);
+                    }
+                    if(isset($billing["city"]) && !empty($billing["city"])){
+                        update_user_meta($userId, 'billing_city', $billing["city"]);
+                        update_user_meta($userId, 'shipping_city', $billing["city"]);
+                    }
+                    if(isset($billing["state"]) && !empty($billing["state"])){
+                        update_user_meta($userId, 'billing_state', $billing["state"]);
+                        update_user_meta($userId, 'shipping_state', $billing["state"]);
+                    }
+                    if(isset($billing["postcode"]) && !empty($billing["postcode"])){
+                        update_user_meta($userId, 'billing_postcode', $billing["postcode"]);
+                        update_user_meta($userId, 'shipping_postcode', $billing["postcode"]);
+                    }
+                    if(isset($billing["country"]) && !empty($billing["country"])){
+                        update_user_meta($userId, 'billing_country', $billing["country"]);
+                        update_user_meta($userId, 'shipping_country', $billing["country"]);
+                    }
+                    if(isset($billing["email"]) && !empty($billing["email"])){
+                        update_user_meta($userId, 'billing_email', $billing["email"]);
+                        update_user_meta($userId, 'shipping_email', $billing["email"]);
+                    }
+                    if(isset($billing["phone"]) && !empty($billing["phone"])){
+                        update_user_meta($userId, 'billing_phone', $billing["phone"]);
+                        update_user_meta($userId, 'shipping_phone', $billing["phone"]);
+                    }
+                } else {
+                    $billing = [];
+                    $shipping = [];
+    
+                    $billing["first_name"] = get_user_meta($userId, 'billing_first_name', true);
+                    $billing["last_name"] = get_user_meta($userId, 'billing_last_name', true);
+                    $billing["company"] = get_user_meta($userId, 'billing_company', true);
+                    $billing["address_1"] = get_user_meta($userId, 'billing_address_1', true);
+                    $billing["address_2"] = get_user_meta($userId, 'billing_address_2', true);
+                    $billing["city"] = get_user_meta($userId, 'billing_city', true);
+                    $billing["state"] = get_user_meta($userId, 'billing_state', true);
+                    $billing["postcode"] = get_user_meta($userId, 'billing_postcode', true);
+                    $billing["country"] = get_user_meta($userId, 'billing_country', true);
+                    $billing["email"] = get_user_meta($userId, 'billing_email', true);
+                    $billing["phone"] = get_user_meta($userId, 'billing_phone', true);
+    
+                    $shipping["first_name"] = get_user_meta($userId, 'shipping_first_name', true);
+                    $shipping["last_name"] = get_user_meta($userId, 'shipping_last_name', true);
+                    $shipping["company"] = get_user_meta($userId, 'shipping_company', true);
+                    $shipping["address_1"] = get_user_meta($userId, 'shipping_address_1', true);
+                    $shipping["address_2"] = get_user_meta($userId, 'shipping_address_2', true);
+                    $shipping["city"] = get_user_meta($userId, 'shipping_city', true);
+                    $shipping["state"] = get_user_meta($userId, 'shipping_state', true);
+                    $shipping["postcode"] = get_user_meta($userId, 'shipping_postcode', true);
+                    $shipping["country"] = get_user_meta($userId, 'shipping_country', true);
+                    $shipping["email"] = get_user_meta($userId, 'shipping_email', true);
+                    $shipping["phone"] = get_user_meta($userId, 'shipping_phone', true);
+    
+                    if (isset($billing["first_name"]) && !isset($shipping["first_name"])) {
+                        $shipping = $billing;
+                    }
+                    if (!isset($billing["first_name"]) && isset($shipping["first_name"])) {
+                        $billing = $shipping;
+                    }
                 }
-                if (!isset($billing["first_name"]) && isset($shipping["first_name"])) {
-                    $billing = $shipping;
+    
+                // Check user and authentication
+                $user = get_userdata($userId);
+                if ($user && (!is_user_logged_in() || get_current_user_id() != $userId)) {
+                    wp_set_current_user($userId, $user->user_login);
+                    wp_set_auth_cookie($userId);
+    
+                    header("Refresh:0");
                 }
-            }
-
-            // Check user and authentication
-            $user = get_userdata($userId);
-            if ($user && (!is_user_logged_in() || get_current_user_id() != $userId)) {
-                wp_set_current_user($userId, $user->user_login);
-                wp_set_auth_cookie($userId);
-
-                header("Refresh:0");
             }
         } else {
             if (is_user_logged_in()) {
@@ -550,8 +581,8 @@ function prepare_checkout()
 
     if (isset($_GET['cookie'])) {
         $cookie = urldecode(base64_decode(sanitize_text_field($_GET['cookie'])));
-        $userId = wp_validate_auth_cookie($cookie, 'logged_in');
-        if ($userId !== false) {
+        $userId = validateCookieLogin($cookie);
+        if (!is_wp_error($userId)) {
             $user = get_userdata($userId);
             if ($user !== false) {
                 wp_set_current_user($userId, $user->user_login);
@@ -609,7 +640,7 @@ function mstore_register_order_refund_requested_order_status()
 add_action('init', 'mstore_register_order_refund_requested_order_status');
 
 
-function add_custom_order_statuses($order_statuses)
+function mstore_add_custom_order_statuses($order_statuses)
 {
     // Create new status array.
     $new_order_statuses = array();
@@ -626,7 +657,7 @@ function add_custom_order_statuses($order_statuses)
     return $new_order_statuses;
 }
 
-add_filter('wc_order_statuses', 'add_custom_order_statuses');
+add_filter('wc_order_statuses', 'mstore_add_custom_order_statuses');
 
 
 function custom_status_bulk_edit($actions)

@@ -103,10 +103,13 @@ function sendNotificationToUser($userId, $orderId, $previous_status, $next_statu
     if (!isset($message) || $message == false) {
         $message = "Hi {{name}}, Your order: #{{orderId}} changed from {{prevStatus}} to {{nextStatus}}";
     }
+    $previous_status_label = wc_get_order_status_name( $previous_status );
+    $next_status_label = wc_get_order_status_name( $next_status );
+    
     $message = str_replace("{{name}}", $user->display_name, $message);
     $message = str_replace("{{orderId}}", $orderId, $message);
-    $message = str_replace("{{prevStatus}}", $previous_status, $message);
-    $message = str_replace("{{nextStatus}}", $next_status, $message);
+    $message = str_replace("{{prevStatus}}", $previous_status_label, $message);
+    $message = str_replace("{{nextStatus}}", $next_status_label, $message);
 
     if (isset($deviceToken) && $deviceToken != false) {
         pushNotification($title, $message, $deviceToken);
@@ -127,7 +130,8 @@ function sendNewOrderNotificationToDelivery($order_id, $status)
 {
     global $wpdb;
     $title = "Order notification";
-    $message = "The order #{$order_id} has been {$status}";
+    $statusLabel = wc_get_order_status_name( $status );
+    $message = "The order #{$order_id} has been {$statusLabel}";
     if (is_plugin_active('wc-frontend-manager-delivery/wc-frontend-manager-delivery.php')) {
         if ($status == 'cancelled' || $status == 'refunded') {
             $sql = "SELECT `{$wpdb->prefix}wcfm_delivery_orders`.delivery_boy FROM `{$wpdb->prefix}wcfm_delivery_orders`";
@@ -355,7 +359,7 @@ function parseMetaDataForBookingProduct($product)
         //add meta_data to $_POST to use for booking product
         $meta_data = [];
         foreach ($product["meta_data"] as $key => $value) {
-            if ($value["key"] == "staff_ids") {
+            if ($value["key"] == "staff_ids" && isset($value["value"]) && is_array($value["value"])) {
                 $staffs = json_decode($value["value"], true);
                 if (count($staffs) > 0) {
                     $meta_data["wc_appointments_field_staff"] = sanitize_text_field($staffs[0]);
@@ -466,7 +470,10 @@ function customProductResponse($response, $object, $request)
         } else {
             $label = $attr->get_name();
         }
-        $attr["options"] = wc_get_product_terms($response->data['id'], $attr["name"]);
+        $attrOptions = wc_get_product_terms($response->data['id'], $attr["name"]);
+        $attr["options"] = empty($attrOptions) ? array_map(function ($v){
+            return ['name'=>$v, 'slug' => $v];
+        },$attr["options"]) : $attrOptions;
         $attributesData[] = array_merge($attr->get_data(), ["label" => $label]);
     }
     $response->data['attributesData'] = $attributesData;
@@ -506,5 +513,18 @@ function generateCookieByUserId($user_id, $seconds = 1209600){
     $expiration = time() + 365 * DAY_IN_SECONDS;
     $cookie = wp_generate_auth_cookie($user_id, $expiration, 'logged_in');
     return $cookie;
+}
+
+function validateCookieLogin($cookie){
+    if(isset($cookie) && strlen($cookie) > 0){
+        $userId = wp_validate_auth_cookie($cookie, 'logged_in');
+        if($userId == false){
+            return new WP_Error("invalid_login", "Your session has expired. Please logout and login again.", array('status' => 401));
+        }else{
+            return $userId;
+        }
+    }else{
+        return new WP_Error("invalid_login", "Cookie is required", array('status' => 401));
+    }
 }
 ?>

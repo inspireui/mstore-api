@@ -157,12 +157,15 @@ class ProductManagementHelper
         }
 
         $table_name = $wpdb->prefix . "posts";
+        $postmeta_table = $wpdb->prefix . "postmeta";
         $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_author` = $vendor_id AND `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
 
         if (isset($request["search"])) {
             $search =  sanitize_text_field($request["search"]);
             $search = "%$search%";
-            $sql .= " AND (`$table_name`.`post_content` LIKE '$search' OR `$table_name`.`post_title` LIKE '$search' OR `$table_name`.`post_excerpt` LIKE '$search')";
+
+            $sql = "SELECT DISTINCT `$table_name`.ID, `$table_name`.* FROM `$table_name` LEFT JOIN `$postmeta_table` ON {$table_name}.ID = {$postmeta_table}.post_id WHERE `$table_name`.`post_author` = $vendor_id AND `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
+            $sql .= " AND (`$table_name`.`post_content` LIKE '$search' OR `$table_name`.`post_title` LIKE '$search' OR `$table_name`.`post_excerpt` LIKE '$search' OR (`$postmeta_table`.`meta_key` = '_sku' AND `$postmeta_table`.`meta_value` LIKE '$search'))";
         }
         $sql .= " ORDER BY `ID` DESC LIMIT $limit OFFSET $page";
 
@@ -342,6 +345,7 @@ class ProductManagementHelper
 		
 		$product_attributes = $request['product_attributes'];
         $variations = $request['variation_products'];
+        $stock_status = $request['stock_status'];
 
 		
         $count = 1;
@@ -462,12 +466,15 @@ class ProductManagementHelper
                 }
 
                 // Stock status.
-                if (!empty($manage_stock) && is_bool($manage_stock) && $manage_stock && !empty($stock_quantity) && $stock_quantity > 0) {
-                    $stock_status = 'instock';
-                } else {
-                    $stock_status = $product->get_stock_status();
+                if(!isset($stock_status)){
+                    if (!empty($manage_stock) && is_bool($manage_stock) && $manage_stock && !empty($stock_quantity) && $stock_quantity > 0) {
+                        $stock_status = 'instock';
+                    } else {
+                        $stock_status = $product->get_stock_status();
+                    }
                 }
-
+                $product->set_stock_status($stock_status);
+                
                 // Stock data.
                 if ("yes" === get_option("woocommerce_manage_stock")) {
                     // Manage stock.
@@ -475,9 +482,6 @@ class ProductManagementHelper
                         $product->set_manage_stock($manage_stock);
                     }
 					if ($product->get_manage_stock()){
-                        if (!$product->is_type('variable')) {
-                            $product->set_stock_status($stock_status);
-                        }
 						// Stock quantity.
                         if (!empty($stock_quantity)) {
                             $product->set_stock_quantity(wc_stock_amount($stock_quantity));
@@ -485,11 +489,8 @@ class ProductManagementHelper
                         	// Don't manage stock.
                         	$product->set_manage_stock("no");
                         	$product->set_stock_quantity("");
-                        	$product->set_stock_status($stock_status);
                     	}
 					}
-                } else if (!$product->is_type("variable")) {
-                    $product->set_stock_status($stock_status);
                 }
 
                 //Assign categories
@@ -599,13 +600,15 @@ class ProductManagementHelper
                 }
 
 
-            if (isset($tags)) {
-                $tags = array_filter(explode(",", $tags));
-                wp_set_object_terms($post_id, $tags, "product_tag");
-            }
-				$product->set_sku($sku);
-				
-				
+                if (isset($tags)) {
+                    $tags = array_filter(explode(",", $tags));
+                    wp_set_object_terms($post_id, $tags, "product_tag");
+                }
+                update_post_meta($product->get_id(),'_sku',$sku);
+                wp_update_post([
+                    "ID" => $product->get_id(),
+                    "post_status" => $requestStatus,
+                ]);
 
                 wp_update_post([
                     "ID" => $product->get_id(),

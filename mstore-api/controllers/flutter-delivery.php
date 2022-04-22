@@ -279,9 +279,10 @@ class FlutterDelivery extends FlutterBaseController
         } else {
             return parent::sendError("unauthorized", "You are not allowed to do this", 401);
         }
-        $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-        if (!$user_id) {
-            return parent::sendError("invalid_login", "You do not exist in this world. Please re-check your existence with your Creator :)", 401);
+        
+        $user_id = validateCookieLogin($cookie);
+        if (is_wp_error($user_id)) {
+            return $user_id;
         }
 
         return apply_filters("authorize_user", $user_id, $token);

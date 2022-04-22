@@ -18,7 +18,8 @@ class FlutterHome extends WP_REST_Controller
     protected $namespace = 'wc/v2/flutter';//prefix must be wc/ or wc- to reuse check permission function in woo commerce
     protected $namespace_v3 = 'wc/v3/flutter';
     private $whilelist = ['id','name','slug', 'permalink','date_created','date_created_gmt','date_modified','date_modified_gmt','type','status','featured','catalog_visibility','description','short_description','sku','price','regular_price','sale_price','date_on_sale_from','date_on_sale_from_gmt','date_on_sale_to','date_on_sale_to_gmt','price_html','on_sale','purchasable','total_sales','virtual','downloadable','downloads','download_limit','download_expiry','external_url','button_text','tax_status','tax_class','manage_stock','stock_quantity','stock_status','backorders','backorders_allowed','backordered','sold_individually','weight','dimensions','shipping_required','shipping_taxable','shipping_class','shipping_class_id','reviews_allowed','average_rating','rating_count','related_ids','upsell_ids','cross_sell_ids','parent_id','purchase_note','categories','tags','images','attributes','default_attributes','variations','grouped_products','menu_order','meta_data','store','attributesData'];
-
+    private $metaDataWhilelist = ['wc_appointments_','_aftership_', '_wcfmd_','_orddd_','_minmax_product_','product_id','order_id','staff_ids','_video_url','_woofv_video_embed','_product_addons'];
+    private $supportedLayouts = ["fourColumn","threeColumn","twoColumn","staggered","saleOff","card","listTile","largeCardHorizontalListItems","largeCard","simpleVerticalListItems","simpleList"];
     /**
      * Register all routes releated with stores
      *
@@ -108,6 +109,17 @@ class FlutterHome extends WP_REST_Controller
         return $results;	
     }
 
+    private function arrayMetaDataWhitelist($array) {
+        return array_values(array_filter($array, function($v, $k) {
+            foreach ($this->metaDataWhilelist as $whilelist) {
+                if (strpos($v->__get('key'), $whilelist) !== false) {
+                    return true;
+                }
+            }
+            return false;
+        }, ARRAY_FILTER_USE_BOTH));
+    }
+
     /**
      * Get Home Data for caching
      *
@@ -136,17 +148,25 @@ class FlutterHome extends WP_REST_Controller
             $array = json_decode($fileContent, true);
 
             //get products for horizontal layout
+            $countDataLayout = 0;
             $results = [];
             $horizontalLayout = $array["HorizonLayout"];
             foreach ($horizontalLayout as $layout) {
-                if (isset($layout['category']) || isset($layout['tag'])) {
-                    $layout["data"] = $this->getProductsByLayout($layout, $api, $request);
+                if ((isset($layout['category']) || isset($layout['tag'])) && in_array($layout['layout'], $this->supportedLayouts)) {
+                    if($countDataLayout <  4){
+                        $layout["data"] = $this->getProductsByLayout($layout, $api, $request);
+                        $countDataLayout += 1;
+                    }
                     $results[] = $layout;
                 } else {
                     if (isset($layout["items"]) && count($layout["items"]) > 0) {
                         $items = [];
                         foreach ($layout["items"] as $item) {
-                            $item["data"] = $this->getProductsByLayout($item, $api, $request);
+                            if($countDataLayout <  4 && in_array($item['layout'], $this->supportedLayouts)){
+                                $item["data"] = $this->getProductsByLayout($item, $api, $request);
+                                $countDataLayout += 1;
+                            }
+                            
                             $items[] = $item;
                         }
                         $layout["items"] = $items;
@@ -160,7 +180,10 @@ class FlutterHome extends WP_REST_Controller
             if (isset($array["VerticalLayout"])) {
                 $layout = $array["VerticalLayout"];
                 if (isset($layout['category'])) {
-                    $layout["data"] = $this->getProductsByLayout($layout, $api, $request);
+                    if($countDataLayout <  4){
+                        $layout["data"] = $this->getProductsByLayout($layout, $api, $request);
+                        $countDataLayout += 1;
+                    }
                     $array['VerticalLayout'] = $layout;
                 }
             }
@@ -202,7 +225,13 @@ class FlutterHome extends WP_REST_Controller
 
         $response = $api->get_items($request);
         $products = $response->get_data();
-        return $this->arrayWhitelist($products, $this->whilelist);
+        $products = $this->arrayWhitelist($products, $this->whilelist);
+        foreach ($products as &$value) {
+            if(isset($value['meta_data'])){
+                $value['meta_data'] =  $this->arrayMetaDataWhitelist($value['meta_data']);
+            }
+        }
+        return $products;
     }
 
 

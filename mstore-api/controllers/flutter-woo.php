@@ -256,9 +256,9 @@ class FlutterWoo extends FlutterBaseController
         } else {
             return parent::sendError("unauthorized", "You are not allowed to do this", 401);
         }
-        $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-        if (!$user_id) {
-            return parent::sendError("invalid_login", "You do not exist in this world. Please re-check your existence with your Creator :)", 401);
+        $user_id = validateCookieLogin($cookie);
+        if (is_wp_error($user_id)) {
+            return $user_id;
         }
 		
 		$is_approved = get_option( 'comment_moderation' ) ;
@@ -300,9 +300,9 @@ class FlutterWoo extends FlutterBaseController
         } else {
             return parent::sendError("unauthorized", "You are not allowed to do this", 401);
         }
-        $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-        if (!$user_id) {
-            return parent::sendError("invalid_login", "You do not exist in this world. Please re-check your existence with your Creator :)", 401);
+        $user_id = validateCookieLogin($cookie);
+        if (is_wp_error($user_id)) {
+            return $user_id;
         }
 		if($user_id != $author){
 			return parent::sendError("unauthorized", "You are not allowed to do this", 401);
@@ -360,9 +360,9 @@ class FlutterWoo extends FlutterBaseController
                     } else {
                         return parent::sendError("unauthorized", "You are not allowed to do this", 401);
                     }
-                    $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-                    if (!$user_id) {
-                        return parent::sendError("invalid_login", "You do not exist in this world. Please re-check your existence with your Creator :)", 401);
+                    $user_id = validateCookieLogin($cookie);
+                    if (is_wp_error($user_id)) {
+                        return $user_id;
                     }
 
 
@@ -424,8 +424,8 @@ class FlutterWoo extends FlutterBaseController
         }
         $cookie = $request->get_header("User-Cookie");
         if (isset($cookie) && $cookie != null) {
-            $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-            if (!$user_id) {
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
                 return false;
             }
             return is_super_admin( $user_id );
@@ -782,9 +782,9 @@ class FlutterWoo extends FlutterBaseController
 
         $cookie = $request->get_header("User-Cookie");
         if (isset($cookie) && $cookie != null) {
-            $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-            if (!$user_id) {
-                return parent::sendError("no_permission", "You need to login again to refresh cookie", 400);
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
+                return $user_id;
             }
             wp_set_current_user($user_id);
         } elseif (isset($body['customer_id']) && $body['customer_id'] != null) {
@@ -965,9 +965,9 @@ class FlutterWoo extends FlutterBaseController
             return parent::sendError("invalid_login", "You must include a 'cookie' var in your request.", 401);
         }
 
-        $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-        if (!$user_id) {
-            return parent::sendError("invalid_login", "Invalid cookie", 401);
+        $user_id = validateCookieLogin($cookie);
+        if (is_wp_error($user_id)) {
+            return $user_id;
         }
 
         // Get an instance of the WC_Session_Handler Object
@@ -1155,9 +1155,9 @@ class FlutterWoo extends FlutterBaseController
             return parent::sendError("invalid_login", "You must include a 'cookie' var in your request.", 401);
         }
 
-        $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-        if (!$user_id) {
-            return parent::sendError("invalid_login", "Invalid cookie", 401);
+        $user_id = validateCookieLogin($cookie);
+        if (is_wp_error($user_id)) {
+            return $user_id;
         }
         if ('yes' === get_option('wc_points_rewards_partial_redemption_enabled')) {
             $myPoints = WC_Points_Rewards_Manager::get_users_points($user_id);
@@ -1185,9 +1185,9 @@ class FlutterWoo extends FlutterBaseController
         if (!isset($cookie)) {
             return parent::sendError("invalid_login", "You must include a 'cookie' var in your request.", 401);
         }
-        $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-        if (!$user_id) {
-            return parent::sendError("invalid_login", "Invalid cookie", 401);
+        $user_id = validateCookieLogin($cookie);
+        if (is_wp_error($user_id)) {
+            return $user_id;
         }
 
         $user = get_user_by('ID', $user_id);

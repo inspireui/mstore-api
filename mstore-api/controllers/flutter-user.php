@@ -229,6 +229,46 @@ class FlutterUserController extends FlutterBaseController
                 }
             ),
         ));
+
+        register_rest_route($this->namespace, '/digits/register/check', array(
+            array(
+                'methods' => 'POST',
+                'callback' => array($this, 'digits_register_check'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
+
+        register_rest_route($this->namespace, '/digits/register', array(
+            array(
+                'methods' => 'POST',
+                'callback' => array($this, 'digits_register'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
+
+        register_rest_route($this->namespace, '/digits/login/check', array(
+            array(
+                'methods' => 'POST',
+                'callback' => array($this, 'digits_login_check'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
+        
+        register_rest_route($this->namespace, '/digits/login', array(
+            array(
+                'methods' => 'POST',
+                'callback' => array($this, 'digits_login'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
     }
 
 
@@ -801,9 +841,9 @@ class FlutterUserController extends FlutterBaseController
         if (!isset($cookie)) {
             return parent::sendError("invalid_login", "You must include a 'cookie' var in your request. Use the `generate_auth_cookie` method.", 401);
         }
-        $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-        if (!$user_id) {
-            return parent::sendError("invalid_login", "Invalid cookie. Use the `generate_auth_cookie` method.", 401);
+        $user_id = validateCookieLogin($cookie);
+        if (is_wp_error($user_id)) {
+            return $user_id;
         }
         if (!$request["post_id"]) {
             return parent::sendError("invalid_data", "No post specified. Include 'post_id' var in your request.", 400);
@@ -853,9 +893,9 @@ class FlutterUserController extends FlutterBaseController
             return parent::sendError("invalid_login", "You must include a 'cookie' var in your request. Use the `generate_auth_cookie` method.", 401);
         }
 
-        $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-        if (!$user_id) {
-            return parent::sendError("invalid_token", "Invalid cookie", 401);
+        $user_id = validateCookieLogin($cookie);
+        if (is_wp_error($user_id)) {
+            return $user_id;
         }
         $user = get_userdata($user_id);
         return array(
@@ -911,9 +951,9 @@ class FlutterUserController extends FlutterBaseController
         if (!isset($cookie)) {
             return parent::sendError("invalid_login", "You must include a 'cookie' var in your request. Use the `generate_auth_cookie` method.", 401);
         }
-        $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-        if (!$user_id) {
-            return parent::sendError("invalid_token", "Invalid cookie` method.", 401);
+        $user_id = validateCookieLogin($cookie);
+        if (is_wp_error($user_id)) {
+            return $user_id;
         }
 
         $user_update = array('ID' => $user_id);
@@ -1147,9 +1187,9 @@ class FlutterUserController extends FlutterBaseController
         } else {
             return parent::sendError("unauthorized", "You are not allowed to do this", 401);
         }
-        $user_id = wp_validate_auth_cookie($cookie, 'logged_in');
-        if (!$user_id) {
-            return parent::sendError("invalid_login", "You do not exist in this world. Please re-check your existence with your Creator :)", 401);
+        $user_id = validateCookieLogin($cookie);
+        if (is_wp_error($user_id)) {
+            return $user_id;
         }
         $receiver_email = $params['receiver'];
         $sender_name = $params['sender'];
@@ -1169,5 +1209,154 @@ class FlutterUserController extends FlutterBaseController
         $manager_device_token = get_user_meta($receiver->ID, 'mstore_manager_device_token', true);
         pushNotification($sender_name, $message, $deviceToken);
         pushNotification($sender_name, $message, $manager_device_token);
+    }
+
+    function mstore_digrest_set_variables()
+    {
+        $json = file_get_contents('php://input');
+        $params = json_decode($json, TRUE);
+
+        $_POST['digits'] = 1;
+        $_REQUEST['login'] = 2;
+
+        if (isset($params['mobile'])) {
+            $_POST['digits_reg_mail'] = $params['mobile'];
+        }
+        if (isset($params['email'])) {
+            $_POST['dig_reg_mail'] = $params['email'];
+        }
+        if (isset($params['username'])) {
+            $_POST['digits_reg_username'] = $params['username'];
+        }
+        if (isset($params['country_code'])) {
+            $_POST['digregcode'] = $params['country_code'];
+        }
+        if (isset($params['otp'])) {
+            $_POST['dig_otp'] = $params['otp'];
+        }
+        $_POST['ftoken'] = $params['ftoken'];
+        $_REQUEST['ftoken'] = $params['ftoken'];
+
+        $_REQUEST['csrf'] = wp_create_nonce('crsf-otp');
+        $_POST['csrf'] = wp_create_nonce('crsf-otp');
+
+        $_POST['dig_nounce'] = wp_create_nonce('dig_form');
+        $_POST['crsf-otp'] = wp_create_nonce('crsf-otp');
+
+        $_REQUEST['json'] = 1;
+    }
+
+    function digits_register_check()
+    {
+        if(!function_exists('digits_create_user')) { 
+            return parent::sendError("plugin_not_found", "Please install  the  DIGITS: Wordpress Mobile Number Signup and Login  plugin", 400);
+        }
+
+        $json = file_get_contents('php://input');
+        $params = json_decode($json, TRUE);
+
+        if(empty($params['email'])){
+            return parent::sendError("invalid_email", 'Email is required', 400);
+        }
+        if (!empty($params['email']) && email_exists($params['email'])) {
+            return parent::sendError("invalid_email", 'Email already in use!', 400);
+        }
+
+        if(empty($params['username'])){
+            return parent::sendError("invalid_username", 'Username is required', 400);
+        }
+        if (!empty($params['username']) && username_exists($params['username'])) {
+            return parent::sendError("invalid_username", 'Username already in use!', 400);
+        }
+
+        if(empty($params['country_code'])){
+            return parent::sendError("invalid_country_code", 'Country code is required', 400);
+        }
+
+        if(empty($params['mobile'])){
+            return parent::sendError("invalid_mobile", 'Mobile is required', 400);
+        }
+
+        $mob = $params['country_code'].$params['mobile'];
+        $mobuser = getUserFromPhone($mob);
+        if ($mobuser != null  || username_exists($mob)) {
+            return parent::sendError("invalid_mobile", 'Mobile Number already in use!', 400);
+        } 
+
+        return  true;
+    }
+
+    function digits_register()
+    {
+        if(!function_exists('digits_create_user')) { 
+            return parent::sendError("plugin_not_found", "Please install  the  DIGITS: Wordpress Mobile Number Signup and Login  plugin", 400);
+        }
+
+        $this->mstore_digrest_set_variables();
+        
+        $data = digits_create_user();
+        if ($data['success'] === false) {
+            return parent::sendError("invalid_data", explode("<br />",  $data['data']['msg'])[0], 400);
+        } else {
+            $user_id = $data['data']['user_id'];
+            $cookie = generateCookieByUserId($user_id);
+            $user = get_userdata($user_id);
+
+            $response['wp_user_id'] = $user_id;
+            $response['cookie'] = $cookie;
+            $response['user_login'] = $user->user_login;
+            $response['user'] = $this->getResponseUserInfo($user);
+            return $response;
+        }
+    }
+
+    function digits_login_check()
+    {
+        if(!function_exists('digits_create_user')) { 
+            return parent::sendError("plugin_not_found", "Please install  the  DIGITS: Wordpress Mobile Number Signup and Login  plugin", 400);
+        }
+
+        $json = file_get_contents('php://input');
+        $params = json_decode($json, TRUE);
+
+        if(empty($params['country_code'])){
+            return parent::sendError("invalid_country_code", 'Country code is required', 400);
+        }
+
+        if(empty($params['mobile'])){
+            return parent::sendError("invalid_mobile", 'Mobile is required', 400);
+        }
+
+        $mob = $params['country_code'].$params['mobile'];
+        $mobuser = getUserFromPhone($mob);
+        if ($mobuser == null) {
+            return parent::sendError("invalid_mobile", 'Phone number is not registered!', 400);
+        } 
+
+        return  true;
+    }
+
+    function digits_login()
+    {
+        if(!function_exists('dig_validateMobileNumber')) { 
+            return parent::sendError("plugin_not_found", "Please install  the  DIGITS: Wordpress Mobile Number Signup and Login  plugin", 400);
+        }
+
+        $this->mstore_digrest_set_variables();
+    
+        $otp = $_POST['dig_otp'];
+        $validateMob = dig_validateMobileNumber($_POST['digregcode'], $_POST['digits_reg_mail'], $otp, null, 1, null, false);
+    
+        if ($validateMob['success'] === false) {
+            return parent::sendError("invalid_data",$validateMob['msg'], 400);
+        }
+    
+        $user = getUserFromPhone($validateMob['countrycode'] . $validateMob['mobile']);
+        $cookie = generateCookieByUserId($user->ID);
+        $response['wp_user_id'] = $user->ID;
+        $response['cookie'] = $cookie;
+        $response['user_login'] = $user->user_login;
+        $response['user'] = $this->getResponseUserInfo($user);
+        return $response;
     }
 }

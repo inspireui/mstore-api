@@ -2,7 +2,7 @@
 Contributors:      InspireUI Ltd
 Tags:              mstore, fluxstore, react-native, flutter, inspireui, ios, android
 Requires at least: 4.4
-Tested up to:      5.8.1
+Tested up to:      5.9.2
 Stable tag:        3.4.6
 License:           GPL-2.0
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
