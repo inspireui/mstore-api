@@ -359,8 +359,8 @@ function parseMetaDataForBookingProduct($product)
         //add meta_data to $_POST to use for booking product
         $meta_data = [];
         foreach ($product["meta_data"] as $key => $value) {
-            if ($value["key"] == "staff_ids" && isset($value["value"]) && is_array($value["value"])) {
-                $staffs = json_decode($value["value"], true);
+            if ($value["key"] == "staff_ids" && isset($value["value"])) {
+                $staffs = is_array($value["value"]) ? $value["value"] : json_decode($value["value"], true);
                 if (count($staffs) > 0) {
                     $meta_data["wc_appointments_field_staff"] = sanitize_text_field($staffs[0]);
                 }

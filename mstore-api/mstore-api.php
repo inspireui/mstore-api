@@ -499,7 +499,9 @@ function prepare_checkout()
                 $attributes = [];
                 if (isset($product["meta_data"])) {
                     foreach ($product["meta_data"] as $item) {
-                        $attributes[strtolower($item["key"])] = $item["value"];
+                        if($item["value"] != null){
+                            $attributes[strtolower($item["key"])] = $item["value"];
+                        }
                     }
                 }
 
