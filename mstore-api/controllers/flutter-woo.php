@@ -195,6 +195,22 @@ class FlutterWoo extends FlutterBaseController
                 }
             ),
         ));
+
+        register_rest_route( $this->namespace,  '/products'. '/(?P<id>[\d]+)'.'/check', array(
+            'args' => array(
+                'id' => array(
+                    'description' => __('Unique identifier for the resource.', 'woocommerce'),
+                    'type' => 'integer',
+                ),
+            ),
+			array(
+				'methods' => "GET",
+				'callback' => array( $this, 'check_product' ),
+				'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+			),
+		));
     }
 
     protected function upload_image_from_mobile($image, $count, $user_id)
@@ -1276,6 +1292,67 @@ class FlutterWoo extends FlutterBaseController
             return $arr;
         }
     }
+
+    function check_product($request){
+        $params = $request->get_url_params();
+		$token = sanitize_text_field($request['token']);
+		$postid = sanitize_text_field($params['id']);
+
+        if (!empty($token)) {
+            $cookie = urldecode(base64_decode($token));
+        }
+        if(!empty($cookie)){
+            $userid = validateCookieLogin($cookie);
+            if (is_wp_error($userid)) {
+                return $userid;
+            }
+            wp_set_current_user($userid);
+        }else{
+            wp_set_current_user(0);
+        }
+
+        if (!is_plugin_active('indeed-membership-pro/indeed-membership-pro.php')) {
+            return parent::sendError("invalid_plugin", "You need to install Ultimate Membership Pro plugin to use this api", 404);
+        }
+
+        $meta_arr = ihc_post_metas($postid);
+        $errMsg = null;
+        if(isset($meta_arr['ihc_mb_type']) && $meta_arr['ihc_mb_type'] == 'block'){
+            $errMsg = 'This item is blocked';
+        }else {
+            if(isset($meta_arr['ihc_mb_who'])){
+                //getting current user type and target user types
+                $current_user = ihc_get_user_type();
+                if($meta_arr['ihc_mb_who']!=-1 && $meta_arr['ihc_mb_who']!=''){
+                    $target_users = explode(',', $meta_arr['ihc_mb_who']);
+                } else {
+                    $target_users = FALSE;
+                }
+                //test if current user must be redirect
+                if($current_user=='admin'){
+                     return true;//show always for admin
+                }
+
+                $result = ihc_test_if_must_block($meta_arr['ihc_mb_type'], $current_user, $target_users, $postid);
+
+                if($result == 0){
+                    return true;
+                }
+                if($result == 2){
+                    $errMsg = 'This item is expired';
+                }else {
+                    $errMsg = 'This item is blocked';
+                }
+
+                if($meta_arr['ihc_mb_block_type']=='redirect'){
+                    return parent::sendError('redirect', $errMsg, 401);
+                }else{
+                    return parent::sendError('replace_content', $meta_arr['ihc_replace_content'], 401);
+                }
+            }
+            return true;
+        }
+	}
 }
 
 new FlutterWoo;
