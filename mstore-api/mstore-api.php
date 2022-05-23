@@ -360,10 +360,12 @@ function prepare_checkout()
 
     if(empty($_GET) && isset($_SERVER['HTTP_REFERER'])){
 		$url_components = parse_url($_SERVER['HTTP_REFERER']);
-		parse_str($url_components['query'], $params);
-		if(!empty($params)){
-			$_GET = $params;
-		}
+        if (isset($url_components['query'])) {
+            parse_str($url_components['query'], $params);
+            if(!empty($params)){
+                $_GET = $params;
+            }
+        }
 	}
     
     if (isset($_GET['mobile']) && isset($_GET['code'])) {
