@@ -60,17 +60,17 @@ class FlutterBlog extends FlutterBaseController
     function get_blog_from_dynamic_link($request)
     {
         $helper = new FlutterBlogHelper();
-        return $helper->get_blog_from_dynamic_link($request, parent::sendError);
+        return $helper->get_blog_from_dynamic_link($request);
     }
     
     function create_blog($request){
 		$helper = new FlutterBlogHelper();
-        return $helper->create_blog($request, parent::sendError);
+        return $helper->create_blog($request);
 	}
 
     function create_comment($request){
 		$helper = new FlutterBlogHelper();
-        return $helper->create_comment($request, parent::sendError);
+        return $helper->create_comment($request);
 	}
 }
 

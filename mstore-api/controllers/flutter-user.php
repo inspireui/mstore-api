@@ -362,7 +362,7 @@ class FlutterUserController extends FlutterBaseController
         $emailReq = $params["email"];
         $role = $params["role"];
         if (isset($role)) {
-            if (!in_array($role, ['subscriber', 'wcfm_vendor', 'seller', 'wcfm_delivery_boy', 'driver'], true)) {
+            if (!in_array($role, ['subscriber', 'wcfm_vendor', 'seller', 'wcfm_delivery_boy', 'driver','owner'], true)) {
                 return parent::sendError("invalid_role", "Role is invalid.", 400);
             }
         }
@@ -438,7 +438,7 @@ class FlutterUserController extends FlutterBaseController
         $dokan_enable_selling  = $params['dokan_enable_selling'];
         $wcfm_membership_application_status = $params['wcfm_membership_application_status'];
         if (isset($role)) {
-            if (!in_array($role, ['subscriber', 'wcfm_vendor', 'seller', 'wcfm_delivery_boy', 'driver'], true)) {
+            if (!in_array($role, ['subscriber', 'wcfm_vendor', 'seller', 'wcfm_delivery_boy', 'driver','owner'], true)) {
                 return parent::sendError("invalid_role", "Role is invalid.", 400);
             }
         }

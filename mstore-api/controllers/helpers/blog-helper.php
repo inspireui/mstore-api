@@ -2,7 +2,7 @@
 
 class FlutterBlogHelper
 {
-    public function get_blog_from_dynamic_link($request, $onSendError)
+    public function get_blog_from_dynamic_link($request)
     {
         if (isset($request['url'])) {
             $url = $request['url'];
@@ -18,10 +18,10 @@ class FlutterBlogHelper
                 return $data;
             }
         }
-        return $onSendError("invalid_url", "Not Found", 404);
+        return new WP_Error("invalid_url", "Not Found", array('status' => 404));
     }
     
-    public function create_blog($request,  $onSendError){
+    public function create_blog($request){
 		$title = sanitize_text_field($request['title']);
 		$content = sanitize_text_field($request['content']);
 		$author = sanitize_text_field($request['author']);
@@ -34,17 +34,17 @@ class FlutterBlogHelper
         if (isset($token)) {
             $cookie = urldecode(base64_decode($token));
         } else {
-            return  $onSendError("unauthorized", "You are not allowed to do this", 401);
+            return new WP_Error("unauthorized", "You are not allowed to do this", array('status' => 401));
         }
         $user_id = validateCookieLogin($cookie);
         if (is_wp_error($user_id)) {
             return $user_id;
         }
 		if($user_id != $author){
-			return  $onSendError("unauthorized", "You are not allowed to do this", 401);
+            return new WP_Error("unauthorized", "You are not allowed to do this", array('status' => 401));
 		}
 		if($status == 'publish' || $status == 'published'){
-            return  $onSendError("unauthorized", "You are not allowed to publish this post", 401);
+            return new WP_Error("unauthorized", "You are not allowed to publish this post", array('status' => 401));
         }
         $my_post = array(
             'post_author' => $user_id,
@@ -72,7 +72,7 @@ class FlutterBlogHelper
         );
 	}
 
-    public function create_comment($request,  $onSendError){
+    public function create_comment($request){
 		$content = sanitize_text_field($request['content']);
 		$token = sanitize_text_field($request['token']);
 		$post_id = sanitize_text_field($request['post_id']);
@@ -80,7 +80,7 @@ class FlutterBlogHelper
         if (!empty($token)) {
             $cookie = urldecode(base64_decode($token));
         } else {
-            return $onSendError("unauthorized", "You are not allowed to do this", 401);
+            return new WP_Error("unauthorized", "You are not allowed to do this", array('status' => 401));
         }
         $user_id = validateCookieLogin($cookie);
         if (is_wp_error($user_id)) {
@@ -104,10 +104,10 @@ class FlutterBlogHelper
             if ( ! is_wp_error( $comment_id ) ) {
                 return true;
             }else{
-                return  $onSendError("error",$comment_id, 400);
+                return new WP_Error("error", $comment_id, array('status' => 400));
             }
         }else{
-            return  $onSendError("comments_open","This post doesn't allow to  comment", 400);
+            return new WP_Error("comments_open", "This post doesn't allow to  comment", array('status' => 400));
         }
 	}
 }

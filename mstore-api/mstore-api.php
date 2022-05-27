@@ -43,7 +43,7 @@ class MstoreCheckOut
         /**
          * Prepare data before checkout by webview
          */
-        add_action('template_redirect', 'prepare_checkout');
+        add_action('template_redirect', 'flutter_prepare_checkout');
 
         include_once(ABSPATH . 'wp-admin/includes/plugin.php');
         if (is_plugin_active('woocommerce/woocommerce.php') == false) {
@@ -252,13 +252,13 @@ function load_mstore_templater()
 }
 
 //custom rest api
-function mstore_users_routes()
+function flutter_users_routes()
 {
     $controller = new FlutterUserController();
     $controller->register_routes();
 }
 
-add_action('rest_api_init', 'mstore_users_routes');
+add_action('rest_api_init', 'flutter_users_routes');
 add_action('rest_api_init', 'mstore_check_payment_routes');
 function mstore_check_payment_routes()
 {
@@ -358,7 +358,7 @@ function custom_woocommerce_rest_prepare_product_variation_object($response, $ob
 }
 
 // Prepare data before checkout by webview
-function prepare_checkout()
+function flutter_prepare_checkout()
 {
 
     if(empty($_GET) && isset($_SERVER['HTTP_REFERER'])){
