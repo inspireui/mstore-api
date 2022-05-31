@@ -97,7 +97,17 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
                 }
             }
         }
-        return $this->create_item($request);
+        
+        $response = $this->create_item($request);
+		$data = $response->get_data();
+
+        // Send the customer invoice email.
+       	$order = wc_get_order( $data['id'] );
+		WC()->payment_gateways();
+		WC()->shipping();
+		WC()->mailer()->customer_invoice( $order );
+
+        return  $response;
     }
 }
 
