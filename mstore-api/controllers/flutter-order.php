@@ -97,7 +97,7 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
                 }
             }
         }
-        
+
         $response = $this->create_item($request);
 		$data = $response->get_data();
 
@@ -106,7 +106,10 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
 		WC()->payment_gateways();
 		WC()->shipping();
 		WC()->mailer()->customer_invoice( $order );
-
+        WC()->mailer()->emails['WC_Email_New_Order']->trigger( $order->get_id(), $order, true );
+        add_filter( 'woocommerce_new_order_email_allows_resend', '__return_true' );
+		WC()->mailer()->emails['WC_Email_New_Order']->trigger( $order->get_id(), $order, true );
+        
         return  $response;
     }
 }
