@@ -269,6 +269,14 @@ class FlutterUserController extends FlutterBaseController
                 }
             ),
         ));
+
+        register_rest_route($this->namespace, '/delete_account', array(
+            array(
+                'methods' => WP_REST_Server::DELETABLE,
+                'callback' => array($this, 'delete_account'),
+                'permission_callback' => array($this, 'custom_delete_item_permissions_check'),
+            ),
+        ));
     }
 
 
@@ -1358,5 +1366,25 @@ class FlutterUserController extends FlutterBaseController
         $response['user_login'] = $user->user_login;
         $response['user'] = $this->getResponseUserInfo($user);
         return $response;
+    }
+
+    function custom_delete_item_permissions_check($request)
+    {
+        $cookie = $request->get_header("User-Cookie");
+        if (isset($cookie) && $cookie != null && parent::checkApiPermission()) {
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
+                return false;
+            }
+            $request["id"] = $user_id;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function delete_account($request)
+    {
+        return wp_delete_user($request["id"]);
     }
 }
