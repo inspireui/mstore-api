@@ -3,7 +3,7 @@ Contributors:      InspireUI Ltd
 Tags:              mstore, fluxstore, react-native, flutter, inspireui, ios, android
 Requires at least: 4.4
 Tested up to:      5.9.2
-Stable tag:        3.5.2
+Stable tag:        3.5.4
 License:           GPL-2.0
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -43,6 +43,13 @@ Faster- Smoother- Closer.
 1. Click Install.
 
 == Changelog ==
+= 3.5.4 =
+  * Fix wordpress 6
+
+= 3.5.3 =
+  * Sending email after creating order
+  * Delete user api
+
 = 3.5.2 =
   * Support Listing Api
 

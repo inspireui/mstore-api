@@ -1696,8 +1696,11 @@ class Template extends WP_REST_Posts_Controller
 
         public function __construct()
         {
-            /* extends from parent */
-            parent::__construct('job_listing');
+            global $wp_version;
+            if(floatval($wp_version) < 6.0){
+                /* extends from parent */
+                parent::__construct('job_listing');
+            }
 
             $isChild = strstr(strtolower(wp_get_theme()) , "child");
             if ($isChild == 'child')
