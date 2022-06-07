@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 3.5.5
+ * Version: 3.5.6
  * Author: InspireUI
  * Author URI: https://inspireui.com
  *
@@ -33,7 +33,7 @@ include_once plugin_dir_path(__FILE__) . "controllers/flutter-blog.php";
 
 class MstoreCheckOut
 {
-    public $version = '3.5.5';
+    public $version = '3.5.6';
 
     public function __construct()
     {
@@ -67,6 +67,65 @@ class MstoreCheckOut
         if ($order) {
             add_filter('woocommerce_is_checkout', '__return_true');
         }
+
+		add_filter( 'woocommerce_get_item_data', 'display_custom_product_field_data_mstore_api', 10, 2 );
+
+		function display_custom_product_field_data_mstore_api( $cart_data, $cart_item ) {
+
+			if( !empty( $cart_data ) )
+				$custom_items = $cart_data;
+
+				$code = sanitize_text_field($_GET['code']) ?: get_transient( 'mstore_code' );
+				set_transient( 'mstore_code', $code, 600 );
+
+				global $wpdb;
+				$table_name = $wpdb->prefix . "mstore_checkout";
+				$item = $wpdb->get_row("SELECT * FROM $table_name WHERE code = '$code'");
+				if ($item) {
+					$data = json_decode(urldecode(base64_decode($item->order)), true);
+					$line_items = $data['line_items'];
+					$product_ids = [];
+					foreach($line_items as $line => $item) {
+						$product_ids[$item['product_id']] = $item;
+					}
+
+					if (array_key_exists($cart_item['product_id'], $product_ids)) {
+						if ($varian = $product_ids[$cart_item['product_id']]) {
+							$variations = $varian['meta_data'];
+							foreach($variations as $v => $f) {
+								preg_match('#\((.*?)\)#', $f['key'], $match);
+								$val = $match[1];
+								$custom_items[] = array(
+									'key'       => $f['value'],
+									'value'     => $val,
+									'display'   => $val,
+								);
+							}
+						}
+					}
+				}
+
+			return $custom_items;
+		}
+
+
+		add_action( 'woocommerce_before_calculate_totals', 'add_custom_price_mstore_api' );
+
+		function add_custom_price_mstore_api( $cart_object ) {
+			foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
+				$add_price = 0;
+				if ($variations = $cart_item['variation']) {
+					foreach($variations as $v => $f) {
+						preg_match('#\((.*?)\)#', $v, $match);
+						$val = $match[1];
+						$cents = filter_var($val, FILTER_SANITIZE_NUMBER_INT);
+						$add_price += floatval($cents / 100);
+					}
+				}
+				$new_price = $cart_item['data']->get_price() + $add_price;
+				$cart_item['data']->set_price($new_price);   
+			}
+		}
 
         add_action('wp_print_scripts', array($this, 'handle_received_order_page'));
 
@@ -494,6 +553,7 @@ function flutter_prepare_checkout()
             WC()->cart->empty_cart();
 
             $products = $data['line_items'];
+
             foreach ($products as $product) {
                 $productId = absint($product['product_id']);
 
@@ -531,7 +591,9 @@ function flutter_prepare_checkout()
                             $cart_item_data['recharge_amount'] = $product['total'];
                         }
                     }
+
                     $woocommerce->cart->add_to_cart($productId, $quantity, 0, $attributes, $cart_item_data);
+
                 }
             }
 
@@ -576,6 +638,7 @@ function flutter_prepare_checkout()
             if (!empty($data['payment_method'])) {
                 WC()->session->set('chosen_payment_method', $data['payment_method']);
             }
+
             if (isset($data['customer_note']) && !empty($data['customer_note'])) {
                 $_POST["order_comments"] = sanitize_text_field($data['customer_note']);
                 $checkout_fields = WC()->checkout->__get("checkout_fields");
