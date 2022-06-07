@@ -79,7 +79,6 @@ class FlutterPaidMembershipsPro extends FlutterBaseController
 		    elseif(!empty($expiration_text))
                 $cost_text = $expiration_text;
 
- 
                 $plans[] = [
                     'id'=>$level->id,
                     'name' => $level->name,
@@ -95,7 +94,8 @@ class FlutterPaidMembershipsPro extends FlutterBaseController
                     'allow_signups' => $level->allow_signups,
                     'expiration_number' => $level->expiration_number,
                     'expiration_period' => $level->expiration_period,
-                    'cost_text' => $cost_text
+                    'cost_text' => $cost_text,
+                    'is_free_level' => pmpro_isLevelFree( $level )
                 ];
         }
         return $plans;
@@ -228,7 +228,8 @@ class FlutterPaidMembershipsPro extends FlutterBaseController
             $gateway = pmpro_getOption( "gateway" );
         }
 
-        if($gateway == 'stripe'){
+        $pmpro_level = pmpro_getLevelAtCheckout($planId);
+        if($gateway == 'stripe' && !pmpro_isLevelFree( $pmpro_level )){
             $card = $params['card'];
             $key = PMProGateway_stripe::get_secretkey();
             $s = new FlutterStripe($key);
@@ -287,32 +288,41 @@ class FlutterPaidMembershipsPro extends FlutterBaseController
             return parent::sendError("plugin_not_found", "Please install Paid Memberships Pro", 404);
         }
 
-        global $wpdb, $gateway, $username, $password, $password2, $bfirstname, $blastname, $baddress1, $baddress2, $bcity, $bstate, $bzipcode, $bcountry, $bphone, $bemail, $bconfirmemail, $CardType, $AccountNumber, $ExpirationMonth, $ExpirationYear;
+        global $wpdb, $gateway, $username, $password, $password2, $bfirstname, $blastname, $baddress1, $baddress2, $bcity, $bstate, $bzipcode, $bcountry, $bphone, $bemail, $bconfirmemail, $CardType, $AccountNumber, $ExpirationMonth, $ExpirationYear, $pmpro_requirebilling;
         $errMsg = $this->init_params();
         if(isset($errMsg)){
             return parent::sendError('invalid_card', $errMsg, 400);	
         }
         $pmpro_level = pmpro_getLevelAtCheckout();
-        $morder = pmpro_build_order_for_checkout();
-        $pmpro_processed = $morder->process();
-        if ( ! empty( $pmpro_processed ) ) {
-            $pmpro_msg       = __( "Payment accepted.", 'paid-memberships-pro' );
-            $pmpro_msgt      = "pmpro_success";
-            $pmpro_confirmed = true;
+        if ( ! pmpro_isLevelFree( $pmpro_level ) ) {
+            $pmpro_requirebilling = true;
         } else {
-            $pmpro_msg = !empty( $morder->error ) ? $morder->error : null;
-            if ( empty( $pmpro_msg ) ) {
-                $pmpro_msg = __( "Unknown error generating account. Please contact us to set up your membership.", 'paid-memberships-pro' );
-            }
-            
-            if ( ! empty( $morder->error_type ) ) {
-                $pmpro_msgt = $morder->error_type;
-            } else {
-                $pmpro_msgt = "pmpro_error";
-            }	
-            return parent::sendError($pmpro_msgt, $pmpro_msg, 400);			
+            $pmpro_requirebilling = false;
         }
+        $pmpro_requirebilling = apply_filters( 'pmpro_require_billing', $pmpro_requirebilling, $pmpro_level );
 
+        if($pmpro_requirebilling){
+            $morder = pmpro_build_order_for_checkout();
+            $pmpro_processed = $morder->process();
+            if ( ! empty( $pmpro_processed ) ) {
+                $pmpro_msg       = __( "Payment accepted.", 'paid-memberships-pro' );
+                $pmpro_msgt      = "pmpro_success";
+                $pmpro_confirmed = true;
+            } else {
+                $pmpro_msg = !empty( $morder->error ) ? $morder->error : null;
+                if ( empty( $pmpro_msg ) ) {
+                    $pmpro_msg = __( "Unknown error generating account. Please contact us to set up your membership.", 'paid-memberships-pro' );
+                }
+                
+                if ( ! empty( $morder->error_type ) ) {
+                    $pmpro_msgt = $morder->error_type;
+                } else {
+                    $pmpro_msgt = "pmpro_error";
+                }	
+                return parent::sendError($pmpro_msgt, $pmpro_msg, 400);			
+            }
+        }
+        
         //insert user
 		$new_user_array = apply_filters( 'pmpro_checkout_new_user_array', array(
                 "user_login" => $username,
