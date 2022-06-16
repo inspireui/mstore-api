@@ -78,7 +78,7 @@ function pushNotification($title, $message, $deviceToken)
 {
     $serverKey = get_option("mstore_firebase_server_key");
     if (isset($serverKey) && $serverKey != false) {
-        $body = ["notification" => ["title" => $title, "body" => $message, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], 
+        $body = ["notification" => ["title" => $title, "body" => $message, "click_action" => "FLUTTER_NOTIFICATION_CLICK", "sound"=>"default"], 
         "data" => ["title" => $title, "body" => $message, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], 
         "apns" => ["headers"=>["apns-priority" => "10"], "payload"=>["aps" => ["sound"=>"default"],],],
         "to" => $deviceToken];
