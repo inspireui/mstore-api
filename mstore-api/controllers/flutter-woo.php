@@ -713,7 +713,10 @@ class FlutterWoo extends FlutterBaseController
             WC()->customer->set_shipping_postcode($shipping["postcode"]);
             WC()->customer->set_shipping_country($shipping["country"]);
         }
-
+        //Fix to show COD based on the country for WooCommerce Multilingual & Multicurrency
+        $_GET['wc-ajax'] = 'update_order_review';
+        $_POST['country'] = $shipping["country"];
+        
         $error = $this->add_items_to_cart($body['line_items']);
         if (is_string($error)) {
             return parent::sendError("invalid_item", $error, 400);
