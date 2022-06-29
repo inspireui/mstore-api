@@ -39,7 +39,9 @@ class Template extends WP_REST_Posts_Controller
             $this->_isListify = 1;
         }
 
-        $this->_isMyListing = 1;
+        if($this->_isListeo != 1 && $this->_isListingPro != 1 && $this->_isListable != 1 && $this->_isListify != 1){
+            $this->_isMyListing = 1;
+        }
 
         add_action('init', array(
             $this,
