@@ -665,6 +665,12 @@ class FlutterWoo extends FlutterBaseController
 		}
 
         $shipping_methods = WC()->shipping->calculate_shipping(WC()->cart->get_shipping_packages());
+        $required_shipping = WC()->cart->needs_shipping() && WC()->cart->show_shipping();
+
+        if(count( $shipping_methods) == 0){
+            return new WP_Error(400, 'No Shipping', array('required_shipping' => $required_shipping));
+        }
+
         $results = [];
         foreach ($shipping_methods as $shipping_method) {
             $rates = $shipping_method['rates'];
@@ -714,7 +720,7 @@ class FlutterWoo extends FlutterBaseController
             WC()->customer->set_shipping_country($shipping["country"]);
         }
         //Fix to show COD based on the country for WooCommerce Multilingual & Multicurrency
-        if(is_plugin_active('woocommerce-multilingual/wpml-woocommerce.php') || !is_plugin_active('elementor-pro/elementor-pro.php')){
+        if(is_plugin_active('woocommerce-multilingual/wpml-woocommerce.php') && !is_plugin_active('elementor-pro/elementor-pro.php')){
 			$_GET['wc-ajax'] = 'update_order_review';
             $_POST['country'] = $shipping["country"];
 		}
