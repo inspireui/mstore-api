@@ -1383,6 +1383,7 @@ class FlutterUserController extends FlutterBaseController
 
     function delete_account($request)
     {
+        require_once(ABSPATH.'wp-admin/includes/user.php');
         return wp_delete_user($request["id"]);
     }
 }
