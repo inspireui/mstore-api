@@ -186,6 +186,9 @@ class Template extends WP_REST_Posts_Controller
                     $this,
                     'check_availability'
                 ) ,
+                'permission_callback' => function () {
+                    return true;
+                }
             ));
             register_rest_route('wp/v2', '/get-slots', array(
                 'methods' => 'GET',
@@ -193,6 +196,9 @@ class Template extends WP_REST_Posts_Controller
                     $this,
                     'check_availability'
                 ) ,
+                'permission_callback' => function () {
+                    return true;
+                }
             ));
 
             register_rest_route('wp/v2', '/booking', array(
@@ -201,6 +207,9 @@ class Template extends WP_REST_Posts_Controller
                     $this,
                     'booking'
                 ) ,
+                'permission_callback' => function () {
+                    return true;
+                }
             ));
             register_rest_route('wp/v2', '/get-bookings', array(
                 'methods' => 'GET',
@@ -208,6 +217,9 @@ class Template extends WP_REST_Posts_Controller
                     $this,
                     'get_bookings'
                 ) ,
+                'permission_callback' => function () {
+                    return true;
+                }
             ));
 
             register_rest_route('wp/v2', '/payment', array(
@@ -216,6 +228,9 @@ class Template extends WP_REST_Posts_Controller
                     $this,
                     'get_payment_methods'
                 ) ,
+                'permission_callback' => function () {
+                    return true;
+                }
             ));
         }
 
@@ -244,6 +259,9 @@ class Template extends WP_REST_Posts_Controller
                         }
                     ) ,
                 ) ,
+                'permission_callback' => function () {
+                    return true;
+                }
             ));
         }
 
@@ -289,6 +307,9 @@ class Template extends WP_REST_Posts_Controller
                 $this,
                 'get_rating'
             ) ,
+            'permission_callback' => function () {
+                return true;
+            }
         ));
 
         register_rest_route('wp/v2', '/getReviews/(?P<id>\d+)', array(
@@ -297,6 +318,9 @@ class Template extends WP_REST_Posts_Controller
                 $this,
                 'get_reviews'
             ) ,
+            'permission_callback' => function () {
+                return true;
+            }
         ));
 
         register_rest_route('wp/v2', '/submitReview', array(
@@ -326,7 +350,10 @@ class Template extends WP_REST_Posts_Controller
                         return is_numeric($param);
                     }
                 )
-            )
+                ),
+                'permission_callback' => function () {
+                    return true;
+                }
         ));
 
         register_rest_route('wp/v2', '/add-listing', array(
@@ -335,6 +362,9 @@ class Template extends WP_REST_Posts_Controller
                 $this,
                 'add_listing'
             ) ,
+            'permission_callback' => function () {
+                return true;
+            }
         ));
         
         register_rest_route('wp/v2', '/get-nearby-listings', array(
@@ -343,6 +373,9 @@ class Template extends WP_REST_Posts_Controller
                 $this,
                 'get_nearby_listings'
             ),
+            'permission_callback' => function () {
+                return true;
+            }
         ));
 
     }
@@ -1737,6 +1770,9 @@ class Template extends WP_REST_Posts_Controller
                         $this,
                         'get_case27_job_listing_tags'
                     ) ,
+                    'permission_callback' => function () {
+                        return true;
+                    }
                 ));
 
             }
@@ -1922,6 +1958,9 @@ class Template extends WP_REST_Posts_Controller
                         }
                     ) ,
                 ) ,
+                'permission_callback' => function () {
+                    return true;
+                }
             ));
 
             if ($this->_isMyListing)
@@ -1953,6 +1992,9 @@ class Template extends WP_REST_Posts_Controller
                             }
                         ) ,
                     ) ,
+                    'permission_callback' => function () {
+                        return true;
+                    }
                 ));
             }
         }
