@@ -450,7 +450,7 @@ function customProductResponse($response, $object, $request)
                     $attr_data['slug'] = $v;
                     $meta = get_post_meta($variation_id, 'attribute_'.$k, true);
                     $term = get_term_by('slug', $meta, $k);
-                    $attr_data['attribute_name'] = $term->name;
+                    $attr_data['attribute_name'] = $term == false ? null : $term->name;
                     $attr_arr[]=$attr_data;
                 }
                 $variation_data['attributes_arr'] = $attr_arr;

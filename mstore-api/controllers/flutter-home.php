@@ -162,7 +162,7 @@ class FlutterHome extends WP_REST_Controller
                     if (isset($layout["items"]) && count($layout["items"]) > 0) {
                         $items = [];
                         foreach ($layout["items"] as $item) {
-                            if($countDataLayout <  4 && in_array($item['layout'], $this->supportedLayouts)){
+                            if($countDataLayout <  4 && array_key_exists('layout', $item) && in_array($item['layout'], $this->supportedLayouts)){
                                 $item["data"] = $this->getProductsByLayout($item, $api, $request);
                                 $countDataLayout += 1;
                             }
