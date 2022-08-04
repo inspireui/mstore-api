@@ -14,6 +14,6 @@ class FlutterBaseController
 
     public function checkApiPermission()
     {
-        return get_option('mstore_purchase_code') === "1";
+        return get_option('mstore_purchase_code') === "1" || get_option('mstore_purchase_code') === true;
     }
 }
