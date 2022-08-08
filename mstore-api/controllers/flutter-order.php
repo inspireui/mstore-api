@@ -103,7 +103,7 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
 
         // Send the customer invoice email.
        	$order = wc_get_order( $data['id'] );
-        if($order->has_status( array( 'processing', 'completed' ) )){
+        if($order->get_payment_method() == 'cod' || $order->has_status( array( 'processing', 'completed' ) )){
             WC()->payment_gateways();
             WC()->shipping();
             WC()->mailer()->customer_invoice( $order );
