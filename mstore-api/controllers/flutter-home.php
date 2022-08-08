@@ -218,6 +218,7 @@ class FlutterHome extends WP_REST_Controller
         }
         $limit = get_option("mstore_limit_product");
         $limit = (!isset($limit) || $limit == false) ? 10 : $limit;
+        $limit = isset($layout['limit']) && is_int($layout['limit']) ? $layout['limit'] : $limit;
         $params['per_page'] = $limit;
         $params['page'] = 0;
 
