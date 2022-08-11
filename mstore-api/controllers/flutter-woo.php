@@ -424,7 +424,7 @@ class FlutterWoo extends FlutterBaseController
             if ($term != false) {
                 $controller = new WC_REST_Product_Categories_Controller();
                 $req = new WP_REST_Request('GET');
-                $params = array('include' => [$term->term_id]);
+                $params = array('include' => [$term->term_id], 'page'=>1, 'per_page'=>10);
                 $req->set_query_params($params);
                 $response = $controller->get_items($req);
                 return $response->get_data();
