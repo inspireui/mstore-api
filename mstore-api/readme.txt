@@ -3,7 +3,7 @@ Contributors:      InspireUI Ltd
 Tags:              mstore, fluxstore, react-native, flutter, inspireui, ios, android
 Requires at least: 4.4
 Tested up to:      6.0.0
-Stable tag:        3.6.4
+Stable tag:        3.6.5
 License:           GPL-2.0
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -43,6 +43,9 @@ Faster- Smoother- Closer.
 1. Click Install.
 
 == Changelog ==
+= 3.6.5 =
+  * Fix limit products in home cache api
+
 = 3.6.4 =
   * Support Flutterwave payment method
 
