@@ -43,6 +43,9 @@ Faster- Smoother- Closer.
 1. Click Install.
 
 == Changelog ==
+= 3.6.6 =
+  * Fix crash dynamic link for category
+
 = 3.6.5 =
   * Fix limit products in home cache api
 
