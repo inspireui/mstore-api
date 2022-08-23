@@ -496,7 +496,7 @@ function customProductResponse($response, $object, $request)
 
     /* Product Booking */
     if (is_plugin_active('woocommerce-appointments/woocommerce-appointments.php')) {
-        $terms = wp_get_post_terms($product->id, 'product_type');
+        $terms = wp_get_post_terms($response->data['id'], 'product_type');
         if ($terms != false && count($terms) > 0 && $terms[0]->name == 'appointment') {
             $response->data['type'] = 'appointment';
         }
