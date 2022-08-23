@@ -608,8 +608,7 @@ class FlutterUserController extends FlutterBaseController
             "billing" => $billing,
             "avatar" => $avatar,
             "is_driver_available" => $is_driver_available,
-            "dokan_enable_selling" => $user->dokan_enable_selling,
-            'meta_data'=>isset($user->meta_data) ? $user->meta_data : []
+            "dokan_enable_selling" => $user->dokan_enable_selling
         );
     }
 
@@ -1009,7 +1008,9 @@ class FlutterUserController extends FlutterBaseController
             update_user_meta($user_id, 'shipping_postcode', $params->shipping_postcode, '');
         }
         if (isset($params->meta_data) && is_array($params->meta_data)) {
-            update_user_meta($user_id, 'meta_data', $params->meta_data, []);
+            foreach ($params->meta_data as $item) {
+                update_user_meta($user_id, $item->key, $item->value, '');
+            }
         }
 
         if (isset($params->avatar)) {
