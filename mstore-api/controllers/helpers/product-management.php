@@ -153,12 +153,18 @@ class ProductManagementHelper
         }
 
         if ($user_id) {
+            $user = get_userdata($user_id);
+            $is_admin = $user != false ? in_array('administrator', (array)$user->roles) : false;
             $vendor_id = absint($user_id);
         }
 
         $table_name = $wpdb->prefix . "posts";
         $postmeta_table = $wpdb->prefix . "postmeta";
-        $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_author` = $vendor_id AND `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
+        if(isset($is_admin) && $is_admin == true){
+            $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
+        }else{
+            $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_author` = $vendor_id AND `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
+        }
 
         if (isset($request["search"])) {
             $search =  sanitize_text_field($request["search"]);

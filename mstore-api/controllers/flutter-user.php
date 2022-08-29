@@ -1238,6 +1238,10 @@ class FlutterUserController extends FlutterBaseController
         }
         if (isset($params['username'])) {
             $_POST['digits_reg_username'] = $params['username'];
+            $_POST['digits_reg_name'] = $params['username'];
+        }
+        if (isset($params['name'])) {
+            $_POST['digits_reg_name'] = $params['name'];
         }
         if (isset($params['country_code'])) {
             $_POST['digregcode'] = $params['country_code'];
