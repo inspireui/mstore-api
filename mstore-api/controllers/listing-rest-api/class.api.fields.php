@@ -1,5 +1,5 @@
 <?php
-class Template extends WP_REST_Posts_Controller
+class FlutterTemplate extends WP_REST_Posts_Controller
 {
 
     protected $_template = 'listable'; // get_template
@@ -1874,7 +1874,7 @@ class Template extends WP_REST_Posts_Controller
 
     }
 
-    class TemplateSearch extends Template
+    class TemplateSearch extends FlutterTemplate
     {
 
         public function __construct()
@@ -2137,7 +2137,7 @@ class Template extends WP_REST_Posts_Controller
         }
     }
 
-    new Template;
+    new FlutterTemplate;
     new TemplateExtendMyListing;
     new TemplateSearch;
     
