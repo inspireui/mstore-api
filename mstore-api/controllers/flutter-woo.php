@@ -638,6 +638,10 @@ class FlutterWoo extends FlutterBaseController
             return parent::sendError("invalid_item", $error, 400);
         }
 
+        if(isset($body['coupon_lines']) && is_array($body['coupon_lines']) && count($body['coupon_lines']) > 0){
+            WC()->cart->apply_coupon($body['coupon_lines'][0]['code']);
+        }
+        
         /* set calculation type if product is subscription to get shipping methods for subscription product have trial days */
         if (is_plugin_active('woocommerce-subscriptions/woocommerce-subscriptions.php')) {
             foreach ($body['line_items'] as $product) {
@@ -728,6 +732,9 @@ class FlutterWoo extends FlutterBaseController
         $error = $this->add_items_to_cart($body['line_items']);
         if (is_string($error)) {
             return parent::sendError("invalid_item", $error, 400);
+        }
+        if(isset($body['coupon_lines']) && is_array($body['coupon_lines']) && count($body['coupon_lines']) > 0){
+            WC()->cart->apply_coupon($body['coupon_lines'][0]['code']);
         }
         if (isset($body["shipping_lines"]) && !empty($body["shipping_lines"])) {
             $shippings = [];
@@ -1026,6 +1033,9 @@ class FlutterWoo extends FlutterBaseController
         $error = $this->add_items_to_cart($body['line_items']);
         if (is_string($error)) {
             return parent::sendError("invalid_item", $error, 400);
+        }
+        if(isset($body['coupon_lines']) && is_array($body['coupon_lines']) && count($body['coupon_lines']) > 0){
+            WC()->cart->apply_coupon($body['coupon_lines'][0]['code']);
         }
         if (isset($body["shipping_lines"]) && !empty($body["shipping_lines"])) {
             $shippings = [];
