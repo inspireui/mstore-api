@@ -111,6 +111,12 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
             add_filter( 'woocommerce_new_order_email_allows_resend', '__return_true' );
             WC()->mailer()->emails['WC_Email_New_Order']->trigger( $order->get_id(), $order, true );
         }
+
+        //add order note if payment method is tap
+        if (isset($params['payment_method']) && $params['payment_method'] == 'tap' && isset($params['transaction_id'])) {
+            $order->payment_complete();
+            $order->add_order_note('Tap payment successful.<br/>Tap ID: '.$params['transaction_id']);
+        }
 		
         return  $response;
     }
