@@ -129,13 +129,11 @@ class FlutterHome extends WP_REST_Controller
      */
     public function get_home_data($request)
     {
-        ob_start("ob_gzhandler");
         $lang = sanitize_text_field($request["lang"]);
         $homeCache  =  FlutterUtils::get_home_cache_path($lang);
         if($request["reset"]  == "false" && file_exists($homeCache)){
             $fileContent = file_get_contents($homeCache);
-			$gzdata = gzdecode($fileContent);
-            return  json_decode($gzdata, true);
+            return  json_decode($fileContent, true);
         }
 
         $api = new WC_REST_Products_Controller();
@@ -189,8 +187,7 @@ class FlutterHome extends WP_REST_Controller
             }
 
             //save data to  cache file
-            $gzdata = gzencode(json_encode($array), 9);
-            file_put_contents($homeCache, $gzdata);
+            file_put_contents($homeCache, json_encode($array));
 
             return $array;
         } else {
