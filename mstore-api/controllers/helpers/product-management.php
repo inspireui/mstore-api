@@ -285,7 +285,9 @@ class ProductManagementHelper
                         $attr_data['slug'] = $v;
                         $meta = get_post_meta($variation->ID, 'attribute_'.$k, true);
                         $term = get_term_by('slug', $meta, $k);
-                        $attr_data['attribute_name'] = $term->name;
+                        if($term){
+                            $attr_data['attribute_name'] = $term->name;
+                        }
                         $attr_arr[]=$attr_data;
                     }
                     $variation_data['attributes_arr'] = $attr_arr;
@@ -376,7 +378,20 @@ class ProductManagementHelper
 			}
 					
 			$product = wc_get_product($post_id);
+			if ($product->get_type() !== $type) {
+					
+                // Get the correct product classname from the new product type
+                $product_classname = WC_Product_Factory::get_product_classname(
+                    $product->get_id(),
+                    $type
+                );
+
 			
+                // Get the new product object from the correct classname
+                $product = new $product_classname($product->get_id());
+                $product->save();
+            }
+
 			if (isset($featured_image)) {
 			
                 if (!empty($featured_image)) {
@@ -426,21 +441,6 @@ class ProductManagementHelper
                 }
                 $product->set_gallery_image_ids($img_array);
             }
-		
-            if ($product->get_type() !== $type) {
-					
-                // Get the correct product classname from the new product type
-                $product_classname = WC_Product_Factory::get_product_classname(
-                    $product->get_id(),
-                    $type
-                );
-
-			
-                // Get the new product object from the correct classname
-                $product = new $product_classname($product->get_id());
-                $product->save();
-            }
-
           
             if (isset($product) && !is_wp_error($product)) {
                 $product->set_name($name);
