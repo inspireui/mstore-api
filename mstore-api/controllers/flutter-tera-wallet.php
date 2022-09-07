@@ -257,16 +257,7 @@ class FlutterTeraWallet extends FlutterBaseController
                 $error = sprintf(__('Your wallet balance is low. Please add %s to proceed with this transaction.', 'woo-wallet'), $order->get_total('edit') - woo_wallet()->wallet->get_wallet_balance(get_current_user_id(), 'edit'));
                 return parent::sendError("wallet_error", $error, 400);
             }
-            $wallet_response = woo_wallet()->wallet->debit(get_current_user_id(), $order->get_total('edit'), apply_filters('woo_wallet_order_payment_description', __('For order payment #', 'woo-wallet') . $order->get_order_number(), $order));
-
-            // Reduce stock levels
-            $order_id = $request['id'];
-            wc_reduce_stock_levels($order_id);
-
-            if ($wallet_response) {
-                $order->payment_complete($wallet_response);
-                do_action('woo_wallet_payment_processed', $order_id, $wallet_response);
-            }
+            $order->payment_complete();
 
             // Return thankyou redirect
             return array(
