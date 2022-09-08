@@ -627,7 +627,7 @@ class ProductManagementHelper
                 foreach (array_filter($p["gallery_image_ids"]) as $img) {
                     $image = wp_get_attachment_image_src($img, "full");
 
-                    if (!is_null($image[0])) {
+                    if (is_array($image) && count($image) > 0) {
                         $image_arr[] = $image[0];
                     }
                 }
