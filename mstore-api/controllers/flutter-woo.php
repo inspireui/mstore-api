@@ -1030,6 +1030,21 @@ class FlutterWoo extends FlutterBaseController
             WC()->customer->set_shipping_country($shipping["country"]);
         }
 
+        $billing = $body["billing"];
+        if (isset($billing)) {
+            WC()->customer->set_billing_first_name($billing["first_name"]);
+            WC()->customer->set_billing_last_name($billing["last_name"]);
+            WC()->customer->set_billing_company($billing["company"]);
+            WC()->customer->set_billing_address_1($billing["address_1"]);
+            WC()->customer->set_billing_address_2($billing["address_2"]);
+            WC()->customer->set_billing_city($billing["city"]);
+            WC()->customer->set_billing_state($billing["state"]);
+            WC()->customer->set_billing_postcode($billing["postcode"]);
+            WC()->customer->set_billing_country($billing["country"]);
+            WC()->customer->set_billing_email($billing["email"]);
+            WC()->customer->set_billing_phone($billing["phone"]);
+        }
+
         $error = $this->add_items_to_cart($body['line_items']);
         if (is_string($error)) {
             return parent::sendError("invalid_item", $error, 400);
