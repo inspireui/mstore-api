@@ -200,10 +200,6 @@ class FlutterVendor extends FlutterBaseController
     function set_vendor_vacation_option($request)
     {
         $cookie = $request["cookie"];
-        if (!isset($cookie)) {
-            return parent::sendError("invalid_login", "You must include a 'cookie' var in your request. Use the `generate_auth_cookie` method.", 401);
-        }
-
         $user_id = validateCookieLogin($cookie);
         if (is_wp_error($user_id)) {
             return $user_id;
@@ -366,10 +362,6 @@ class FlutterVendor extends FlutterBaseController
     public function flutter_create_product($request)
     {
         $cookie = $request["cookie"];
-        if (!isset($cookie)) {
-            return parent::sendError("invalid_login", "You must include a 'cookie' var in your request. Use the `generate_auth_cookie` method.", 401);
-        }
-
         $user_id = validateCookieLogin($cookie);
         if (is_wp_error($user_id)) {
             return $user_id;
@@ -443,10 +435,6 @@ class FlutterVendor extends FlutterBaseController
     public function flutter_delete_product($request)
     {
         $cookie = $request["cookie"];
-        if (!isset($cookie)) {
-            return parent::sendError("invalid_login", "You must include a 'cookie' var in your request. Use the `generate_auth_cookie` method.", 401);
-        }
-
         $user_id = validateCookieLogin($cookie);
         if (is_wp_error($user_id)) {
             return $user_id;
@@ -473,10 +461,6 @@ class FlutterVendor extends FlutterBaseController
     {
         $cookie = $request["cookie"];
         $id = $request["id"];
-        if (!isset($cookie) && !isset($id)) {
-            return parent::sendError("invalid_login", "You must include a 'cookie' or 'user id' var in your request. Use the `generate_auth_cookie` method.", 401);
-        }
-
         $user_id = isset($id) ? $id : validateCookieLogin($cookie);
         if (is_wp_error($user_id)) {
             return $user_id;
@@ -646,10 +630,6 @@ class FlutterVendor extends FlutterBaseController
         if (isset($request["token"])) {
             $cookie = urldecode(base64_decode($request["token"]));
         }
-        if (!isset($cookie)) {
-            return parent::sendError("invalid_login", "You must include a 'cookie' or 'user id' var in your request. Use the `generate_auth_cookie` method.", 401);
-        }
-
         $user_id = validateCookieLogin($cookie);
         if (is_wp_error($user_id)) {
             return $user_id;

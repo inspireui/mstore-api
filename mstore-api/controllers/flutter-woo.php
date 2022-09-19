@@ -887,10 +887,6 @@ class FlutterWoo extends FlutterBaseController
         if (isset($request["token"])) {
             $cookie = urldecode(base64_decode($request["token"]));
         }
-        if (!isset($cookie)) {
-            return parent::sendError("invalid_login", "You must include a 'cookie' var in your request.", 401);
-        }
-
         $user_id = validateCookieLogin($cookie);
         if (is_wp_error($user_id)) {
             return $user_id;
@@ -1095,10 +1091,6 @@ class FlutterWoo extends FlutterBaseController
         if (isset($request["token"])) {
             $cookie = urldecode(base64_decode($request["token"]));
         }
-        if (!isset($cookie)) {
-            return parent::sendError("invalid_login", "You must include a 'cookie' var in your request.", 401);
-        }
-
         $user_id = validateCookieLogin($cookie);
         if (is_wp_error($user_id)) {
             return $user_id;
@@ -1126,9 +1118,6 @@ class FlutterWoo extends FlutterBaseController
 
         $order_id = $body["order_id"];
         $cookie = $body["cookie"];
-        if (!isset($cookie)) {
-            return parent::sendError("invalid_login", "You must include a 'cookie' var in your request.", 401);
-        }
         $user_id = validateCookieLogin($cookie);
         if (is_wp_error($user_id)) {
             return $user_id;

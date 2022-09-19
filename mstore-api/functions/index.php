@@ -519,7 +519,7 @@ function validateCookieLogin($cookie){
     if(isset($cookie) && strlen($cookie) > 0){
         $userId = wp_validate_auth_cookie($cookie, 'logged_in');
         if($userId == false){
-            return new WP_Error("invalid_login", "Your session has expired. Please logout and login again.", array('status' => 401));
+            return new WP_Error("expired_cookie", "Your session has expired. Please logout and login again.", array('status' => 401));
         }else{
             return $userId;
         }

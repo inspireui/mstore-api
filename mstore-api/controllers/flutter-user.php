@@ -844,9 +844,6 @@ class FlutterUserController extends FlutterBaseController
     public function post_comment($request)
     {
         $cookie = $request["cookie"];
-        if (!isset($cookie)) {
-            return parent::sendError("invalid_login", "You must include a 'cookie' var in your request. Use the `generate_auth_cookie` method.", 401);
-        }
         $user_id = validateCookieLogin($cookie);
         if (is_wp_error($user_id)) {
             return $user_id;
@@ -895,10 +892,6 @@ class FlutterUserController extends FlutterBaseController
         if (isset($request["token"])) {
             $cookie = urldecode(base64_decode($request["token"]));
         }
-        if (!isset($cookie)) {
-            return parent::sendError("invalid_login", "You must include a 'cookie' var in your request. Use the `generate_auth_cookie` method.", 401);
-        }
-
         $user_id = validateCookieLogin($cookie);
         if (is_wp_error($user_id)) {
             return $user_id;
@@ -954,9 +947,6 @@ class FlutterUserController extends FlutterBaseController
         $json = file_get_contents('php://input');
         $params = json_decode($json);
         $cookie = $params->cookie;
-        if (!isset($cookie)) {
-            return parent::sendError("invalid_login", "You must include a 'cookie' var in your request. Use the `generate_auth_cookie` method.", 401);
-        }
         $user_id = validateCookieLogin($cookie);
         if (is_wp_error($user_id)) {
             return $user_id;
