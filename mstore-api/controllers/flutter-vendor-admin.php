@@ -255,7 +255,33 @@ class FlutterVendorAdmin extends FlutterBaseController
         $helper = new VendorAdminWCFMHelper();
         if (isset($request['platform'])) {
             if ($request['platform'] == 'woo' || $request['platform'] == 'dokan') {
-                return [];
+                $args = array(
+                    'role'    => 'driver',
+                );
+                $users = get_users( $args );
+
+                $results = [];
+                foreach ($users as $user) {
+                    $avatar = get_user_meta($user->ID, 'user_avatar', true);
+                    if (!isset($avatar) || $avatar == "" || is_bool($avatar)) {
+                        $avatar = get_avatar_url($user->ID);
+                    } else {
+                        $avatar = $avatar[0];
+                    }
+                    $results[] = [
+                        "id" => $user->ID,
+                        "name" => $user->display_name,
+                        "profile_picture" => $avatar,
+                    ];
+                }
+        
+                return new WP_REST_Response(
+                    [
+                        "status" => "success",
+                        "response" => $results,
+                    ],
+                    200
+                );
             }
 
         }
@@ -272,7 +298,23 @@ class FlutterVendorAdmin extends FlutterBaseController
         $helper = new VendorAdminWCFMHelper();
         if (isset($request['platform'])) {
             if ($request['platform'] == 'woo' || $request['platform'] == 'dokan') {
-                return [];
+                $order_id = sanitize_text_field($request["wcfm_tracking_order_id"]);
+                $delivery_boy = sanitize_text_field($request["wcfm_delivery_boy"]);
+                $meta_key   = 'ddwc_driver_id';
+
+                // Update driver ID for order.
+                update_post_meta( $order_id, $meta_key, $delivery_boy );
+
+                // Get order.
+                $order = new WC_Order( $order_id );
+                // Update order status.
+                $order->update_status( 'driver-assigned' );
+                return new WP_REST_Response(
+                    [
+                        "status" => "success",
+                    ],
+                    200
+                );
             }
 
         }
