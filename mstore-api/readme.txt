@@ -3,7 +3,7 @@ Contributors:      InspireUI Ltd
 Tags:              mstore, fluxstore, react-native, flutter, inspireui, ios, android
 Requires at least: 4.4
 Tested up to:      6.0.0
-Stable tag:        3.6.9
+Stable tag:        3.7.1
 License:           GPL-2.0
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -43,6 +43,12 @@ Faster- Smoother- Closer.
 1. Click Install.
 
 == Changelog ==
+= 3.7.1 =
+  * Update Active Api
+
+= 3.7.0 =
+  * Fix some issues for Fluxstore Manager
+
 = 3.6.9 =
   * Fix to upload image for variant product
 

@@ -1,6 +1,6 @@
 <?php
-define("ACTIVE_API", "https://active.fluxbuilder.com/api/v1/active");
-define("DEACTIVE_API", "https://active.fluxbuilder.com/api/v1/deactive");
+define("ACTIVE_API", "https://active2.inspireui.com/api/v1/active");
+define("DEACTIVE_API", "https://active2.inspireui.com/api/v1/deactive");
 define("ACTIVE_TOKEN", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmb28iOiJiYXIiLCJpYXQiOjE1ODY5NDQ3Mjd9.-umQIC6DuTS_0J0Jj8lcUuUYGjq9OXp3cIM-KquTWX0");
 
 function verifyPurchaseCode($code)
