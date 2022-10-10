@@ -545,14 +545,16 @@ class FlutterVendor extends FlutterBaseController
             $ids[] = $object->ID;
         }
         if (count($ids) > 0) {
-            $controller = new CUSTOM_WC_REST_Products_Controller();
+            add_filter( 'woocommerce_rest_check_permissions', '__return_true' );
+            $controller = new WC_REST_Products_Controller();
             $req = new WP_REST_Request('GET');
-            $params = array('status' => isset($id) ? 'published' : 'any', 'include' => $ids);
+            $params = array('status' => isset($id) ? 'published' : 'any', 'include' => $ids, 'page' => 1, 'per_page' => $limit, 'orderby'=>'title','order'=>'desc');
             if (isset($request['lang'])) {
                 $params['lang'] = $request['lang'];
             }
             $req->set_query_params($params);
             $response = $controller->get_items($req);
+            remove_filter( 'woocommerce_rest_check_permissions', '__return_true' );
             return $response->get_data();
         } else {
             return [];
