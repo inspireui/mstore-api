@@ -68,7 +68,7 @@ class FlutterUtils {
         $file_name = $file_to_upload['name'];
         //validate file name
         preg_match('/config_[a-z]{2}.json/',$file_name, $output_array);
-        if (count($output_array) == 0) {
+        if (count($output_array) == 0 || strlen($file_name) != 14) {
             return 'You need to upload config_xx.json file';
         }else{
           $source      = $file_to_upload['tmp_name'];
