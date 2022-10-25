@@ -531,6 +531,6 @@ function validateCookieLogin($cookie){
 function checkWhiteListAccounts ($user_id) {
     $whiteList = array('vendor@demo.com', 'delivery_demo', 'demo');
     $user_info = get_userdata($user_id);
-    return in_array($user_info->email, $whiteList) || in_array($user_info->user_login, $whiteList);
+    return in_array($user_info->user_email, $whiteList) || in_array($user_info->user_login, $whiteList);
 }
 ?>
