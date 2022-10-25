@@ -50,7 +50,11 @@ class CUSTOM_WC_REST_Customers_Controller extends WC_REST_Customers_Controller
 
     function delete_account($request)
     {
-        return $this->delete_item($request);
+        if(checkWhiteListAccounts($request["id"])){
+            return new WP_Error("invalid_account", "This account can't delete", array('status' => 400));
+        }else{
+            return $this->delete_item($request);
+        }
     }
 }
 

@@ -527,4 +527,10 @@ function validateCookieLogin($cookie){
         return new WP_Error("invalid_login", "Cookie is required", array('status' => 401));
     }
 }
+
+function checkWhiteListAccounts ($user_id) {
+    $whiteList = array('vendor@demo.com', 'delivery_demo', 'demo');
+    $user_info = get_userdata($user_id);
+    return in_array($user_info->email, $whiteList) || in_array($user_info->user_login, $whiteList);
+}
 ?>
