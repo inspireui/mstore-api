@@ -420,8 +420,8 @@ class FlutterUserController extends FlutterBaseController
                 } elseif (isset($params["phone"])) {
                     update_user_meta($user_id, 'billing_phone', $params["phone"]);
                     update_user_meta($user_id, 'registered_phone_number', $params["phone"]);
-                    wp_new_user_notification($user_id, '', '');
                 }
+                wp_new_user_notification($user_id, '', '');
             }
         }
 
@@ -512,8 +512,8 @@ class FlutterUserController extends FlutterBaseController
         } elseif (isset($params["phone"])) {
             update_user_meta($user_id, 'billing_phone', $params["phone"]);
             update_user_meta($user_id, 'registered_phone_number', $params["phone"]);
-            wp_new_user_notification($user_id, '', '');
         }
+        wp_new_user_notification($user_id, '', '');
 
         if(isset( $wcfm_membership_application_status) &&  $wcfm_membership_application_status == 'pending'){
             update_user_meta($user_id,'wcfm_membership_application_status',$wcfm_membership_application_status);
