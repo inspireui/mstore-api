@@ -421,10 +421,9 @@ class FlutterUserController extends FlutterBaseController
                     update_user_meta($user_id, 'billing_phone', $params["phone"]);
                     update_user_meta($user_id, 'registered_phone_number', $params["phone"]);
                 }
-                wp_new_user_notification($user_id, '', '');
             }
         }
-
+        wp_new_user_notification($user_id, null, 'both');
         $cookie = generateCookieByUserId($user_id,  $seconds);
 
         return array(
@@ -441,8 +440,12 @@ class FlutterUserController extends FlutterBaseController
         $usernameReq = $params["username"];
         $emailReq = $params["email"];
         $role = $params["role"];
-        $dokan_enable_selling  = $params['dokan_enable_selling'];
-        $wcfm_membership_application_status = $params['wcfm_membership_application_status'];
+        if(in_array('dokan_enable_selling', $params)){
+			$dokan_enable_selling  =  $params['dokan_enable_selling'];
+		}
+        if(in_array('wcfm_membership_application_status', $params)){
+			$wcfm_membership_application_status = $params['wcfm_membership_application_status'];
+		}
         if (isset($role)) {
             if (!in_array($role, ['subscriber', 'wcfm_vendor', 'seller', 'wcfm_delivery_boy', 'driver','owner'], true)) {
                 return parent::sendError("invalid_role", "Role is invalid.", 400);
@@ -513,7 +516,7 @@ class FlutterUserController extends FlutterBaseController
             update_user_meta($user_id, 'billing_phone', $params["phone"]);
             update_user_meta($user_id, 'registered_phone_number', $params["phone"]);
         }
-        wp_new_user_notification($user_id, '', '');
+        wp_new_user_notification($user_id, null, 'both');
 
         if(isset( $wcfm_membership_application_status) &&  $wcfm_membership_application_status == 'pending'){
             update_user_meta($user_id,'wcfm_membership_application_status',$wcfm_membership_application_status);
