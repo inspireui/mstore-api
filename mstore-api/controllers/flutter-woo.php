@@ -211,6 +211,22 @@ class FlutterWoo extends FlutterBaseController
                 }
 			),
 		));
+
+        register_rest_route( $this->namespace,  '/products'. '/(?P<id>[\d]+)'.'/rating_counts', array(
+            'args' => array(
+                'id' => array(
+                    'description' => __('Unique identifier for the resource.', 'woocommerce'),
+                    'type' => 'integer',
+                ),
+            ),
+			array(
+				'methods' => "GET",
+				'callback' => array( $this, 'get_product_rating_counts' ),
+				'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+			),
+		));
     }
 
     protected function upload_image_from_mobile($image, $count, $user_id)
@@ -1286,6 +1302,18 @@ class FlutterWoo extends FlutterBaseController
 		$helper = new FlutterBlogHelper();
         return $helper->create_comment($request);
 	}
+
+    function get_product_rating_counts($request){
+        $params = $request->get_url_params();
+		$productId = sanitize_text_field($params['id']);
+        $product = wc_get_product( $productId );
+        $rating_1 = $product->get_rating_count(1);
+        $rating_2 = $product->get_rating_count(2);
+        $rating_3 = $product->get_rating_count(3);
+        $rating_4 = $product->get_rating_count(4);
+        $rating_5 = $product->get_rating_count(5);
+        return ["rating_1" => $rating_1, "rating_2" => $rating_2, "rating_3" => $rating_3, "rating_4" => $rating_4, "rating_5" => $rating_5];
+    }
 }
 
 new FlutterWoo;
