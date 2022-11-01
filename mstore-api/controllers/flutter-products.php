@@ -5,6 +5,16 @@ class CUSTOM_WC_REST_Products_Controller extends WC_REST_Products_Controller
     public function get_items($request)
     {
         $query_args = $this->prepare_objects_query($request);
+        if ( is_bool( $request['in_stock'] ) ) {
+			$query_args['meta_query'] = $this->add_meta_query(
+				$query_args,
+				array(
+					'key'   => '_stock_status',
+					'value' => ['instock', 'onbackorder'],
+                    'compare' => 'IN',
+				)
+			);
+		}
         $query_results = $this->get_objects($query_args);
 
         $objects = array();
