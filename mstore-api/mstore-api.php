@@ -362,7 +362,7 @@ function mstore_init()
 }
 
 add_filter('woocommerce_rest_prepare_product_variation_object', 'custom_woocommerce_rest_prepare_product_variation_object', 20, 3);
-add_filter('woocommerce_rest_prepare_product_object', 'custom_change_product_response', 20, 3);
+add_filter('woocommerce_rest_prepare_product_object', 'flutter_custom_change_product_response', 20, 3);
 add_filter('woocommerce_rest_prepare_product_review', 'custom_product_review', 20, 3);
 add_filter('woocommerce_rest_prepare_product_cat', 'custom_product_category', 20, 3);
 
@@ -396,7 +396,7 @@ function custom_product_review($response, $object, $request)
 }
  
 
-function custom_change_product_response($response, $object, $request)
+function flutter_custom_change_product_response($response, $object, $request)
 {
     return customProductResponse($response, $object, $request);
 }
