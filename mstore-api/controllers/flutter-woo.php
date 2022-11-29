@@ -287,7 +287,7 @@ class FlutterWoo extends FlutterBaseController
 				if($type == 'product'){
 					$controller = new CUSTOM_WC_REST_Products_Controller();
             		$req = new WP_REST_Request('GET');
-            		$params = array('status' =>'published', 'include' => [$data]);
+            		$params = array('status' =>'published', 'include' => [$data], 'page'=>1, 'per_page'=>10);
                     $req->set_query_params($params);
             		$response = $controller->get_items($req);
             		return array(
@@ -415,7 +415,7 @@ class FlutterWoo extends FlutterBaseController
 
             $controller = new CUSTOM_WC_REST_Products_Controller();
             $req = new WP_REST_Request('GET');
-            $params = array('status' => 'published', 'include' => [$product_id]);
+            $params = array('status' => 'published', 'include' => [$product_id], 'page'=>1, 'per_page'=>10);
             $req->set_query_params($params);
 
             $response = $controller->get_items($req);
