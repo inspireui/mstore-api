@@ -409,13 +409,14 @@ class FlutterWoo extends FlutterBaseController
     {
         if (isset($request['url'])) {
             $url = $request['url'];
+            $langs = ["en", "ar", "vi"];
+			foreach( $langs as $lang ) {
+				$url = str_replace("/". $lang,"",$url);
+			 }
             $product_id = url_to_postid($url);
-
-            $product = wc_get_product($product_id);
-
             $controller = new CUSTOM_WC_REST_Products_Controller();
             $req = new WP_REST_Request('GET');
-            $params = array('status' => 'published', 'include' => [$product_id], 'page'=>1, 'per_page'=>10);
+            $params = array('status' => 'published', 'include[0]' => $product_id, 'page'=>1, 'per_page'=>10, 'lang'=>'en');
             $req->set_query_params($params);
 
             $response = $controller->get_items($req);
