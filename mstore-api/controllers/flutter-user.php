@@ -592,7 +592,9 @@ class FlutterUserController extends FlutterBaseController
         $is_driver_available = false;
         if(is_plugin_active('delivery-drivers-for-woocommerce/delivery-drivers-for-woocommerce.php')){
 			$is_driver_available = get_user_meta( $user->ID, 'ddwc_driver_availability', true );
-		}
+		}else{
+            $is_driver_available = in_array('administrator',$user->roles) || in_array('wcfm_delivery_boy',$user->roles);
+        }
         return array(
             "id" => $user->ID,
             "username" => $user->user_login,
