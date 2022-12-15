@@ -266,6 +266,18 @@ class DeliveryWCFMHelper
                     $order['wcfm_store'] = $vendor_data->data;
                 }
                 $order['delivery_status'] = $item->delivery_status;
+                if (apply_filters('wcfmmp_is_allow_checkout_user_location', true)) {
+                    $address = get_post_meta($order['id'], '_wcfmmp_user_location', true);
+                    $lat = get_post_meta($order['id'], '_wcfmmp_user_location_lat', true);
+                    $lng = get_post_meta($order['id'], '_wcfmmp_user_location_lng', true);
+                    if ($address) {
+                        $order['user_location'] = [
+                            "address" => $address,
+                            "lat" => $lat,
+                            "lng" => $lng,
+                        ];
+                    }
+                }
                 $results[] = $order;
             }
         }
