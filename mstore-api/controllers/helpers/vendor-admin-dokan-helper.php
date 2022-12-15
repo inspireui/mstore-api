@@ -623,7 +623,7 @@ class VendorAdminDokanHelper
                     $data[] = $this->prepare_reviews_for_response($comment, $request);
                 }
 
-                $total_count = $this->get_total_review_count($store_id, $post_type, $status);
+                $total_count = 0;
             }
         } else {
             return new WP_REST_Response(array(

@@ -559,6 +559,7 @@ function flutter_prepare_checkout()
         }
 
         if (is_plugin_active('woocommerce/woocommerce.php') == true) {
+            header("Content-Security-Policy: frame-ancestors 'self' *.yourdomain.com");
             global $woocommerce;
             WC()->session->set('refresh_totals', true);
             WC()->cart->empty_cart();
