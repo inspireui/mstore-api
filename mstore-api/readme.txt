@@ -43,6 +43,9 @@ Faster- Smoother- Closer.
 1. Click Install.
 
 == Changelog ==
+= 3.7.7 =
+  * Fix validate zh config json
+
 = 3.7.6 =
   * Add product rating counts api
 

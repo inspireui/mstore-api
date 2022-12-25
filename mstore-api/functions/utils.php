@@ -67,8 +67,9 @@ class FlutterUtils {
     public static function upload_file_by_admin($file_to_upload) {
         $file_name = $file_to_upload['name'];
         //validate file name
+        $isZH = $file_name == 'config_zh_CN.json' || $file_name == 'config_zh_TW.json';
         preg_match('/config_[a-z]{2}.json/',$file_name, $output_array);
-        if (count($output_array) == 0 || strlen($file_name) != 14) {
+        if (!$isZH && (count($output_array) == 0 || strlen($file_name) != 14)) {
             return 'You need to upload config_xx.json file';
         }else{
           $source      = $file_to_upload['tmp_name'];
