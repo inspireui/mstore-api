@@ -57,7 +57,7 @@ class FlutterBlogHelper
         $post_id = wp_insert_post( $my_post );
 		
 		if(isset($image)){
-            $img_id = $this->upload_image_from_mobile($image, 0 ,$user_id);
+            $img_id = upload_image_from_mobile($image, 0 ,$user_id);
             if($img_id != false){
                 set_post_thumbnail($post_id, $img_id);
             }

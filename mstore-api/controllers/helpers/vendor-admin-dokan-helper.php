@@ -15,51 +15,6 @@ class VendorAdminDokanHelper
         return wc_get_product($id);
     }
 
-
-    protected function upload_image_from_mobile($image, $count, $user_id)
-    {
-        require_once(ABSPATH . 'wp-admin/includes/image.php');
-        require_once(ABSPATH . 'wp-admin/includes/file.php');
-        require_once(ABSPATH . 'wp-admin/includes/media.php');
-        $imgdata = $image;
-        $imgdata = trim($imgdata);
-        $imgdata = str_replace('data:image/png;base64,', '', $imgdata);
-        $imgdata = str_replace('data:image/jpg;base64,', '', $imgdata);
-        $imgdata = str_replace('data:image/jpeg;base64,', '', $imgdata);
-        $imgdata = str_replace('data:image/gif;base64,', '', $imgdata);
-        $imgdata = str_replace(' ', '+', $imgdata);
-        $imgdata = base64_decode($imgdata);
-        $f = finfo_open();
-        $mime_type = finfo_buffer($f, $imgdata, FILEINFO_MIME_TYPE);
-        $type_file = explode('/', $mime_type);
-        $avatar = time() . '_' . $count . '.' . $type_file[1];
-
-        $uploaddir = wp_upload_dir();
-        $myDirPath = $uploaddir["path"];
-        $myDirUrl = $uploaddir["url"];
-
-        file_put_contents($uploaddir["path"] . '/' . $avatar, $imgdata);
-
-        $filename = $myDirUrl . '/' . basename($avatar);
-        $wp_filetype = wp_check_filetype(basename($filename), null);
-        $uploadfile = $uploaddir["path"] . '/' . basename($filename);
-
-        $attachment = array(
-            "post_mime_type" => 'image/jpeg',
-            "post_title" => preg_replace("/\.[^.]+$/", "", basename($filename)),
-            "post_content" => "",
-            "post_author" => $user_id,
-            "post_status" => "inherit",
-            'guid' => $myDirUrl . '/' . basename($filename),
-        );
-
-        $attachment_id = wp_insert_attachment($attachment, $uploadfile);
-        $attach_data = apply_filters('wp_generate_attachment_metadata', $attachment, $attachment_id, 'create');
-        // $attach_data = wp_generate_attachment_metadata($attachment_id, $uploadfile);
-        wp_update_attachment_metadata($attachment_id, $attach_data);
-        return $attachment_id;
-    }
-
     protected function find_image_id($image)
     {
         $image_id = attachment_url_to_postid(stripslashes($image));
@@ -201,7 +156,7 @@ class VendorAdminDokanHelper
             }
    
            if (isset($data["logo"])) {
-               $img_id = $this->upload_image_from_mobile(
+               $img_id = upload_image_from_mobile(
                    $data["logo"],
                    $count,
                    $user_id
@@ -211,7 +166,7 @@ class VendorAdminDokanHelper
            }
 
            if (isset($data["banner"]) && isset($data["banner_type"])) {
-                $img_id = $this->upload_image_from_mobile(
+                $img_id = upload_image_from_mobile(
                     $data["banner"],
                     $count,
                     $user_id
@@ -842,7 +797,7 @@ class VendorAdminDokanHelper
                         $featured_image_id = $this->find_image_id($featured_image);
                         $product->set_image_id($featured_image_id);
                     } else {
-                        $featured_image_id = $this->upload_image_from_mobile($featured_image, $count, $user_id);
+                        $featured_image_id = upload_image_from_mobile($featured_image, $count, $user_id);
                         $product->set_image_id($featured_image_id);
                         $count = $count + 1;
                     }
@@ -862,7 +817,7 @@ class VendorAdminDokanHelper
                             $img_id = $this->find_image_id($p_img);
                             array_push($img_array, $img_id);
                         } else {
-                            $img_id = $this->upload_image_from_mobile($p_img, $count, $user_id);
+                            $img_id = upload_image_from_mobile($p_img, $count, $user_id);
                             array_push($img_array, $img_id);
                             $count = $count + 1;
                         }
@@ -1206,7 +1161,7 @@ class VendorAdminDokanHelper
                     $featured_image_id = $this->find_image_id($featured_image);
                     $product->set_image_id($featured_image_id);
                 } else {
-                    $featured_image_id = $this->upload_image_from_mobile($featured_image, $count, $user_id);
+                    $featured_image_id = upload_image_from_mobile($featured_image, $count, $user_id);
                     $product->set_image_id($featured_image_id);
                     $count = $count + 1;
                 }
@@ -1226,7 +1181,7 @@ class VendorAdminDokanHelper
                         $img_id = $this->find_image_id($p_img);
                         array_push($img_array, $img_id);
                     } else {
-                        $img_id = $this->upload_image_from_mobile($p_img, $count, $user_id);
+                        $img_id = upload_image_from_mobile($p_img, $count, $user_id);
                         array_push($img_array, $img_id);
                         $count = $count + 1;
                     }
