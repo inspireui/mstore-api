@@ -72,6 +72,26 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
                 'schema' => array($this, 'get_public_item_schema'),
             )
         );
+
+        //some reasons can't use DELETE method
+        register_rest_route(
+            $this->namespace,
+            '/delete' . '/(?P<id>[\d]+)',
+            array(
+                'args' => array(
+                    'id' => array(
+                        'description' => __('Unique identifier for the resource.', 'woocommerce'),
+                        'type' => 'integer',
+                    ),
+                ),
+                array(
+                    'methods' => WP_REST_Server::CREATABLE,
+                    'callback' => array($this, 'new_delete_pending_order'),
+                    'permission_callback' => array($this, 'custom_delete_item_permissions_check'),
+                ),
+                'schema' => array($this, 'get_public_item_schema'),
+            )
+        );
     }
 
     function custom_create_item_permissions_check($request)
@@ -92,6 +112,23 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
             $params["customer_id"] = 0;
             $request->set_body_params($params);
             return true;
+        }
+    }
+
+    function custom_delete_item_permissions_check($request)
+    {
+        $cookie = $request->get_header("User-Cookie");
+        $json = file_get_contents('php://input');
+        $params = json_decode($json, TRUE);
+        if (isset($cookie) && $cookie != null) {
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
+                return false;
+            }
+            $order = wc_get_order($request['id'] );
+            return  $order->get_customer_id() == 0 || $order->get_customer_id() == $user_id;
+        } else {
+            return false;
         }
     }
 
@@ -140,6 +177,13 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
         }
 		
         return  $response;
+    }
+
+    function new_delete_pending_order($request){
+        add_filter( 'woocommerce_rest_check_permissions', '__return_true' );
+        $response = $this->delete_item($request);
+        remove_filter( 'woocommerce_rest_check_permissions', '__return_true' );
+        return $response;
     }
 }
 
