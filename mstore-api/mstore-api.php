@@ -599,7 +599,7 @@ function flutter_prepare_checkout()
                     $cart_item_data = array();
                     if (is_plugin_active('woo-wallet/woo-wallet.php')) {
                         $wallet_product = get_wallet_rechargeable_product();
-                        if ($wallet_product->id == $productId) {
+                        if ($wallet_product->get_id() == $productId) {
                             $cart_item_data['recharge_amount'] = $product['total'];
                         }
                     }
