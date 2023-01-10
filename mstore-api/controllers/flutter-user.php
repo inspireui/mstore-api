@@ -270,6 +270,26 @@ class FlutterUserController extends FlutterBaseController
             ),
         ));
 
+        register_rest_route($this->namespace, '/digits/send_otp', array(
+            array(
+                'methods' => 'POST',
+                'callback' => array($this, 'digits_send_otp'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
+
+        register_rest_route($this->namespace, '/digits/resend_otp', array(
+            array(
+                'methods' => 'POST',
+                'callback' => array($this, 'digits_resend_otp'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
+
         register_rest_route($this->namespace, '/delete_account', array(
             array(
                 'methods' => WP_REST_Server::DELETABLE,
@@ -1223,7 +1243,22 @@ class FlutterUserController extends FlutterBaseController
         $params = json_decode($json, TRUE);
 
         $_POST['digits'] = 1;
-        $_REQUEST['login'] = 2;
+
+        if (isset($params['type'])) {
+            $type = $params['type'];
+            if ($type == 'login') {
+                $_REQUEST['login'] = 1;
+            }
+            if ($type == 'register') {
+                $_REQUEST['login'] = 2;
+            } else if ($type == 'resetpass') {
+                $_REQUEST['login'] = 3;
+            } else if ($type == 'update') {
+                $_REQUEST['login'] = 11;
+            }
+        }else{
+            $_REQUEST['login'] = 2;
+        }
 
         if (isset($params['mobile'])) {
             $_POST['digits_reg_mail'] = $params['mobile'];
@@ -1370,6 +1405,67 @@ class FlutterUserController extends FlutterBaseController
         return $response;
     }
 
+    function digits_send_otp()
+    {
+        if(!function_exists('digits_create_user')) { 
+            return parent::sendError("plugin_not_found", "Please install  the  DIGITS: Wordpress Mobile Number Signup and Login  plugin", 400);
+        }
+
+        $json = file_get_contents('php://input');
+        $params = json_decode($json, TRUE);
+
+        if(empty($params['country_code'])){
+            return parent::sendError("invalid_country_code", 'Country code is required', 400);
+        }
+
+        if(empty($params['mobile'])){
+            return parent::sendError("invalid_mobile", 'Mobile is required', 400);
+        }
+
+        $_REQUEST['countrycode'] =  $params['country_code'];
+        $_REQUEST['mobileNo'] =  $params['mobile'];
+        $_REQUEST['type'] =  $params['type'];
+    
+        $this->mstore_digrest_set_variables();
+    
+    
+        $_REQUEST['csrf'] = wp_create_nonce('dig_form');
+        $_POST['csrf'] = wp_create_nonce('dig_form');
+    
+        do_action('wp_ajax_nopriv_digits_check_mob');
+    }
+
+    function digits_resend_otp()
+    {
+        if(!function_exists('digits_resendotp')) { 
+            return parent::sendError("plugin_not_found", "Please install  the  DIGITS: Wordpress Mobile Number Signup and Login  plugin", 400);
+        }
+
+        $json = file_get_contents('php://input');
+        $params = json_decode($json, TRUE);
+
+        if(empty($params['country_code'])){
+            return parent::sendError("invalid_country_code", 'Country code is required', 400);
+        }
+
+        if(empty($params['mobile'])){
+            return parent::sendError("invalid_mobile", 'Mobile is required', 400);
+        }
+
+        $_REQUEST['countrycode'] =  $params['country_code'];
+        $_REQUEST['mobileNo'] =  $params['mobile'];
+        $_REQUEST['type'] =  $params['type'];
+    
+        $this->mstore_digrest_set_variables();
+    
+    
+        $_REQUEST['csrf'] = wp_create_nonce('dig_form');
+        $_POST['csrf'] = wp_create_nonce('dig_form');
+    
+        digits_resendotp();
+    }
+
+    
     function custom_delete_item_permissions_check($request)
     {
         $cookie = $request->get_header("User-Cookie");
