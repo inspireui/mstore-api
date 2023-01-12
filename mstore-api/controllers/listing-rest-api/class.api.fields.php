@@ -1009,9 +1009,8 @@ class FlutterTemplate extends WP_REST_Posts_Controller
             global $wpdb;
             $sql = "SELECT * FROM {$wpdb->prefix}mylisting_locations WHERE listing_id = '$listing_id'"; //wp_it_job_details is job table
             $results = $wpdb->get_row($sql);
-                if(count($results) > 0) {
-                    //We have this post_id row in the table
-                    return $results->address;  //last_date is the column name, change to your's
+                if($results) {
+                    return $results->address;
             } else return ""; //return nothing 
         }
 
@@ -1021,9 +1020,8 @@ class FlutterTemplate extends WP_REST_Posts_Controller
             global $wpdb;
             $sql = "SELECT * FROM {$wpdb->prefix}mylisting_locations WHERE listing_id = '$listing_id'"; //wp_it_job_details is job table
             $results = $wpdb->get_row($sql);
-                if(count($results) > 0) {
-                    //We have this post_id row in the table
-                    return $results->lat;  //last_date is the column name, change to your's
+                if($results) {
+                    return $results->lat;
             } else return ""; //return nothing 
         } 
 
@@ -1033,9 +1031,8 @@ class FlutterTemplate extends WP_REST_Posts_Controller
             global $wpdb;
             $sql = "SELECT * FROM {$wpdb->prefix}mylisting_locations WHERE listing_id = '$listing_id'"; //wp_it_job_details is job table
             $results = $wpdb->get_row($sql);
-                if(count($results) > 0) {
-                    //We have this post_id row in the table
-                    return $results->lng;  //last_date is the column name, change to your's
+                if($results) {
+                    return $results->lng;
             } else return ""; //return nothing 
         }
 
@@ -2198,4 +2195,3 @@ class FlutterTemplate extends WP_REST_Posts_Controller
     new FlutterTemplate;
     new TemplateExtendMyListing;
     new TemplateSearch;
-    
