@@ -828,15 +828,23 @@ class FlutterUserController extends FlutterBaseController
         $json = file_get_contents('php://input');
         $params = json_decode($json, TRUE);
         $token = $params["token"];
+        $firstName = $params["first_name"];
+        $lastName = $params["last_name"];
         $decoded = $this->jwtDecode($token);
         $user_email = $decoded["email"];
         if (!isset($user_email)) {
             return parent::sendError("invalid_login", "Can't get the email to create account.", 400);
         }
         $display_name = explode("@", $user_email)[0];
+        if(isset($firstName) && isset($lastName) && !empty($firstName)){
+            $display_name = $firstName.' '.$lastName;
+        }else{
+            $firstName =  $display_name;
+            $lastName = "";
+        }
         $user_name = $display_name;
 
-        return $this->createSocialAccount($user_email, $display_name, $display_name, "", $user_name);
+        return $this->createSocialAccount($user_email, $display_name, $firstName, $lastName, $user_name);
     }
 
     public function google_login($request)
