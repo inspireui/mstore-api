@@ -1159,11 +1159,10 @@ class FlutterWoo extends FlutterBaseController
             if (isset($request['id'])) {
                 $helper = new FlutterWCFMHelper();
                 return $helper->generate_vendor_delivery_time_checkout_field($request['id']);
+            }else{
+                return parent::sendError("required_vendor_id", "id is required", 400);
             }
-        }
-
-        if (is_plugin_active('order-delivery-date/order_delivery_date.php')) {
-
+        }else if (is_plugin_active('order-delivery-date/order_delivery_date.php')) {
             $number_of_dates = get_option('orddd_number_of_dates');
             $options = ORDDD_Functions::orddd_get_dates_for_dropdown($number_of_dates);
             $arr = array();
@@ -1176,6 +1175,8 @@ class FlutterWoo extends FlutterBaseController
                 $arr[] = $date;
             }
             return $arr;
+        }else{
+            return parent::sendError("invalid_plugin", "You need to install Order Delivery Date for WooCommerce or WOOCOMMERCE FRONTEND MANAGER - DELIVERY plugin to use this api", 404);
         }
     }
 
