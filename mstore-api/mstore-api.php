@@ -581,6 +581,10 @@ function flutter_prepare_checkout()
                     }
                 }
 
+                if (isset($product['addons'])) {
+                    $_POST = $product['addons'];
+                }
+                
                 // Check the product variation
                 if (!empty($variationId)) {
                     $productVariable = new WC_Product_Variable($productId);
@@ -593,9 +597,6 @@ function flutter_prepare_checkout()
                     }
                 } else {
                     parseMetaDataForBookingProduct($product);
-                    if (isset($product['addons'])) {
-                        $_POST = $product['addons'];
-                    }
                     $cart_item_data = array();
                     if (is_plugin_active('woo-wallet/woo-wallet.php')) {
                         $wallet_product = get_wallet_rechargeable_product();
