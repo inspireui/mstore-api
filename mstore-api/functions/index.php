@@ -462,7 +462,7 @@ function customProductResponse($response, $object, $request)
 
     $attributes = $product->get_attributes();
     $attributesData = [];
-    foreach ($attributes as $attr) {
+    foreach ($attributes as $key => $attr) {
         $check = $attr->is_taxonomy();
         if ($check) {
             $taxonomy = $attr->get_taxonomy_object();
@@ -474,7 +474,7 @@ function customProductResponse($response, $object, $request)
         $attr["options"] = empty($attrOptions) ? array_map(function ($v){
             return ['name'=>$v, 'slug' => $v];
         },$attr["options"]) : $attrOptions;
-        $attributesData[] = array_merge($attr->get_data(), ["label" => $label]);
+        $attributesData[] = array_merge($attr->get_data(), ["label" => $label, "name" => urldecode($key)]);
     }
     $response->data['attributesData'] = $attributesData;
 
