@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 3.8.3
+ * Version: 3.8.4
  * Author: InspireUI
  * Author URI: https://inspireui.com
  *
@@ -36,7 +36,7 @@ include_once plugin_dir_path(__FILE__) . "controllers/flutter-blog.php";
 
 class MstoreCheckOut
 {
-    public $version = '3.8.3';
+    public $version = '3.8.4';
 
     public function __construct()
     {
@@ -703,6 +703,11 @@ function custom_woocommerce_rest_prepare_shop_order_object($response)
 
     }
     $response->data['line_items'] = $line_items;
+
+    // Get the value
+    $bacs_info = get_option( 'woocommerce_bacs_accounts');
+    $response->data['bacs_info'] = $bacs_info;
+    
     return $response;
 }
 
