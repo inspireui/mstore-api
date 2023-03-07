@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 3.8.4
+ * Version: 3.8.5
  * Author: InspireUI
  * Author URI: https://inspireui.com
  *
@@ -30,13 +30,14 @@ include_once plugin_dir_path(__FILE__) . "controllers/flutter-paytm.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-paystack.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-flutterwave.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-myfatoorah.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-midtrans.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-paid-memberships-pro.php";
 include_once plugin_dir_path(__FILE__) . "controllers/listing-rest-api/class.api.fields.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-blog.php";
 
 class MstoreCheckOut
 {
-    public $version = '3.8.4';
+    public $version = '3.8.5';
 
     public function __construct()
     {
@@ -64,6 +65,7 @@ class MstoreCheckOut
             include_once plugin_dir_path(__FILE__) . "controllers/helpers/vendor-admin-wcfm-helper.php";
             include_once plugin_dir_path(__FILE__) . "controllers/helpers/vendor-admin-dokan-helper.php";
             include_once plugin_dir_path(__FILE__) . "controllers/flutter-customer.php";
+            include_once plugin_dir_path(__FILE__) . "functions/video-setting-embed.php";
         }
 
         $order = filter_has_var(INPUT_GET, 'code') && strlen(filter_input(INPUT_GET, 'code')) > 0 ? true : false;

@@ -227,6 +227,16 @@ class FlutterWoo extends FlutterBaseController
                 }
 			),
 		));
+
+        register_rest_route($this->namespace, '/products/video', array(
+            array(
+                'methods' => "GET",
+                'callback' => array($this, 'get_products_video'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
     }
 
     function get_data_from_scanner($request){
@@ -1268,6 +1278,41 @@ class FlutterWoo extends FlutterBaseController
         $rating_5 = $product->get_rating_count(5);
         return ["rating_1" => $rating_1, "rating_2" => $rating_2, "rating_3" => $rating_3, "rating_4" => $rating_4, "rating_5" => $rating_5];
     }
+
+    function get_products_video($request){
+        global $wpdb;
+        $table_name = $wpdb->prefix . "postmeta";
+        $page = 1;
+        $per_page = 10;
+
+        if (isset($request['page'])) {
+            $page = sanitize_text_field($request['page']);
+            if(!is_numeric($page)){
+                $page = 1;
+            }
+        }
+        if (isset($request['per_page'])) {
+            $per_page = sanitize_text_field($request['per_page']);
+            if(!is_numeric($per_page)){
+                $per_page = 10;
+            }
+        }
+        $page = ($page - 1) * $per_page;
+        $items = $wpdb->get_results("SELECT * FROM $table_name WHERE meta_key='_mstore_video_url' AND meta_value IS NOT NULL AND meta_value <> '' LIMIT $per_page OFFSET $page");
+
+        if(count($items) > 0){
+            $controller = new CUSTOM_WC_REST_Products_Controller();
+            $req = new WP_REST_Request('GET');
+            $params = array('include' => array_map(function($item){
+                return $item->post_id;
+            }, $items));
+            $req->set_query_params($params);
+            $response = $controller->get_items($req);
+            return $response->get_data();
+        }else{
+            return [];
+        }
+	}
 }
 
 new FlutterWoo;

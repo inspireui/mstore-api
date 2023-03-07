@@ -487,8 +487,8 @@ class FlutterTemplate extends WP_REST_Posts_Controller
     // Listeo theme functions
     public function get_service_slots($object)
     {
-        $data = [];
-        if ($object['_slots_status'] == 'on')
+        $slots = [];
+        if ( isset($object['_slots_status']) && $object['_slots_status'] == 'on')
         {
             $slots = json_decode($object['_slots']);
 
@@ -1040,7 +1040,7 @@ class FlutterTemplate extends WP_REST_Posts_Controller
         public function get_blog_image_feature($object)
         {
             $image_feature = wp_get_attachment_image_src($object['featured_media']);
-            return $image_feature[0];
+            return is_array($image_feature) && count($image_feature) > 0 ? $image_feature[0] : null;
         }
 
         public function get_blog_author_name($object)
@@ -1183,7 +1183,7 @@ class FlutterTemplate extends WP_REST_Posts_Controller
                 $commentKey = '_case27_post_rating';
             }
 
-            $post_id = $object[0];
+            $post_id = isset($object[0]) ? $object[0] : '';
             $decimals = 1;
 
             if (empty($post_id))

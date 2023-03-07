@@ -305,8 +305,12 @@ class ProductManagementHelper
 		
 		$category_ids  = sanitize_text_field($request['category_ids']);   
 		
-		$featured_image = sanitize_text_field($request['featuredImage']);
-        $product_images = sanitize_text_field($request['images']);
+        if(isset($request['featuredImage'])){
+            $featured_image = sanitize_text_field($request['featuredImage']);
+        }
+		if(isset($request['images'])){
+            $product_images = sanitize_text_field($request['images']);
+        }
 		
 		$product_attributes = $request['product_attributes'];
         $variations = $request['variation_products'];
