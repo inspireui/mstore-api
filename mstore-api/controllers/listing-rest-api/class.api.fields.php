@@ -1,4 +1,6 @@
 <?php
+require_once(__DIR__ . '/mylisting-functions.php');
+
 class FlutterTemplate extends WP_REST_Posts_Controller
 {
 
@@ -441,20 +443,41 @@ class FlutterTemplate extends WP_REST_Posts_Controller
             endforeach;
         }
         if( $this->_isMyListing){
-            $sql = "SELECT p.*, ";
-            $sql .= " (6371 * acos (cos (radians($current_lat)) * cos(radians(t.lat)) * cos(radians(t.lng) - radians($current_long)) + ";
-            $sql .= "sin (radians($current_lat)) * sin(radians(t.lat)))) AS distance FROM (SELECT b.post_id, a.post_status, sum(if(";
-            $sql .= "meta_key = 'geolocation_lat', meta_value, 0)) AS lat, sum(if(meta_key = 'geolocation_long', ";
-            $sql .= "meta_value, 0)) AS lng FROM {$wpdb->prefix}posts a, {$wpdb->prefix}postmeta b WHERE a.id = b.post_id AND (";
-            $sql .= "b.meta_key='geolocation_lat' OR b.meta_key='geolocation_long') AND a.post_status='publish' GROUP BY b.post_id) AS t INNER ";
-            $sql .= "JOIN {$wpdb->prefix}posts as p on (p.ID=t.post_id) HAVING distance < {$radius}";
-            $posts = $wpdb->get_results($sql);
+            $bodyReq = ['proximity_units'=>'km','listing_type'=>'place', 'form_data'=>[
+                'page'=>$offset / $limit,
+                'per_page'=>$limit,
+                'search_keywords'=>'',
+                'proximity'=>$radius,
+                'lat'=>$current_lat,
+                'lng'=>$current_long,
+                'category'=>'',
+                'search_location'=>'',
+                'region'=>'',
+                'tags'=>'',
+                'sort'=>'nearby'
+                ]
+            ];
+			$posts =  myListingExploreListings($bodyReq);
             $items = (array)($posts);
-            // return $items;
             foreach ($items as $item):
                 $itemdata = $this->prepare_item_for_response($item, $request);
                 $data[] = $this->prepare_response_for_collection($itemdata);
             endforeach;
+
+            // $sql = "SELECT p.*, ";
+            // $sql .= " (6371 * acos (cos (radians($current_lat)) * cos(radians(t.lat)) * cos(radians(t.lng) - radians($current_long)) + ";
+            // $sql .= "sin (radians($current_lat)) * sin(radians(t.lat)))) AS distance FROM (SELECT b.post_id, a.post_status, sum(if(";
+            // $sql .= "meta_key = 'geolocation_lat', meta_value, 0)) AS lat, sum(if(meta_key = 'geolocation_long', ";
+            // $sql .= "meta_value, 0)) AS lng FROM {$wpdb->prefix}posts a, {$wpdb->prefix}postmeta b WHERE a.id = b.post_id AND (";
+            // $sql .= "b.meta_key='geolocation_lat' OR b.meta_key='geolocation_long') AND a.post_status='publish' GROUP BY b.post_id) AS t INNER ";
+            // $sql .= "JOIN {$wpdb->prefix}posts as p on (p.ID=t.post_id) HAVING distance < {$radius}";
+            // $posts = $wpdb->get_results($sql);
+            // $items = (array)($posts);
+            // // return $items;
+            // foreach ($items as $item):
+            //     $itemdata = $this->prepare_item_for_response($item, $request);
+            //     $data[] = $this->prepare_response_for_collection($itemdata);
+            // endforeach;
         }
         if($this->_isListingPro){
             $args = array(
