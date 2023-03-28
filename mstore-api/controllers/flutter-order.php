@@ -157,6 +157,9 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
         }
 
         $response = $this->create_item($request);
+        if(is_wp_error($response)){
+            return $response;
+        }
 		$data = $response->get_data();
 
         // Send the customer invoice email.

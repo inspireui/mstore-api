@@ -1037,7 +1037,7 @@ class FlutterWoo extends FlutterBaseController
         }
 
         $results = [];
-        if (wc_tax_enabled() && !WC()->cart->display_prices_including_tax()) {
+        if (wc_tax_enabled()) {
             $taxable_address = WC()->customer->get_taxable_address();
             $estimated_text = '';
 
@@ -1053,12 +1053,11 @@ class FlutterWoo extends FlutterBaseController
             } else {
                 $results[] = ["label" => WC()->countries->tax_or_vat() . $estimated_text, "value" => WC()->cart->get_taxes_total()];
             }
-        }
-        if ('yes' === get_option('woocommerce_prices_include_tax')) {
-            return ["items" => [], "taxes_total" => "0"];
-        } else {
-            return ["items" => $results, "taxes_total" => count($results) > 0 ? WC()->cart->get_taxes_total() : "0"];
-        }
+			
+			return ["items" => $results, "taxes_total" => count($results) > 0 ? WC()->cart->get_taxes_total() : "0", "is_including_tax" => WC()->cart->display_prices_including_tax()];
+        }else{
+			return ["items" => [], "taxes_total" => "0", "is_including_tax" => false];
+		}
     }
 
     public function get_points($request)

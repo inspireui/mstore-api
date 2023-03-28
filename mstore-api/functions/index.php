@@ -502,6 +502,8 @@ function customProductResponse($response, $object, $request)
         }
     }
 
+    $blackListKeys = ['yoast_head','yoast_head_json','_links'];
+    $response->data = array_diff_key($response->data,array_flip($blackListKeys));
     return $response;
 }
 
