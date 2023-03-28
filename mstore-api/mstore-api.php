@@ -34,6 +34,7 @@ include_once plugin_dir_path(__FILE__) . "controllers/flutter-midtrans.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-paid-memberships-pro.php";
 include_once plugin_dir_path(__FILE__) . "controllers/listing-rest-api/class.api.fields.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-blog.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-wholesale.php";
 
 class MstoreCheckOut
 {

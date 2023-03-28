@@ -470,18 +470,18 @@ class FlutterWoo extends FlutterBaseController
                 }
             }
 
-            if (!$product_data->is_purchasable()) {
-                $message = __('Sorry, this product cannot be purchased.', 'woocommerce');
-                /**
-                 * Filters message about product unable to be purchased.
-                 *
-                 * @param string $message Message.
-                 * @param WC_Product $product_data Product data.
-                 * @since 3.8.0
-                 */
-                $message = apply_filters('woocommerce_cart_product_cannot_be_purchased_message', $message, $product_data);
-                throw new Exception($message);
-            }
+            // if (!$product_data->is_purchasable()) {
+            //     $message = __('Sorry, this product cannot be purchased.', 'woocommerce');
+            //     /**
+            //      * Filters message about product unable to be purchased.
+            //      *
+            //      * @param string $message Message.
+            //      * @param WC_Product $product_data Product data.
+            //      * @since 3.8.0
+            //      */
+            //     $message = apply_filters('woocommerce_cart_product_cannot_be_purchased_message', $message, $product_data);
+            //     throw new Exception($message);
+            // }
 
             // Stock check - only check if we're managing stock and backorders are not allowed.
             if (!$product_data->is_in_stock()) {
