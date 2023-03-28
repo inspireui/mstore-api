@@ -1111,6 +1111,22 @@ class FlutterTemplate extends WP_REST_Posts_Controller
 
         }
 
+        function _rest_get_address_lat_lng_data($object)
+        {
+            //get the Post Id
+            $listing_id = $object['id'];
+            global $wpdb;
+            $sql = "SELECT * FROM {$wpdb->prefix}mylisting_locations WHERE listing_id = '$listing_id'"; //wp_it_job_details is job table
+            $results = $wpdb->get_row($sql);
+            $data = [];
+            if ($results) {
+                $data['address'] = $results->address;
+                $data['lat'] = $results->lat;
+                $data['lng'] = $results->lng;
+            }
+            return $data; 
+        }
+
         /* --- - ListingPro - ---*/
         public function get_post_gallery_images_listingPro($object)
         {
@@ -1544,6 +1560,15 @@ class FlutterTemplate extends WP_REST_Posts_Controller
                     }
                 }
                 $data['gallery_images'] = $results;
+            }
+
+            if ($this->_isMyListing) {
+                if (!empty($schema['properties']['id'])) {
+                    $location = $this->_rest_get_address_lat_lng_data($data);
+                    $data['newaddress'] = $location['address'];
+                    $data['newlat'] = $location['lat'];
+                    $data['newlng'] = $location['lng'];
+                }
             }
 
             $has_password_filter = false;
