@@ -1003,32 +1003,41 @@ class FlutterUserController extends FlutterBaseController
         }
         if (isset($params->first_name)) {
             $user_update['first_name'] = $params->first_name;
+            update_user_meta($user_id, 'shipping_first_name', $params->first_name, '');
             update_user_meta($user_id, 'billing_first_name', $params->first_name, '');
         }
         if (isset($params->last_name)) {
             $user_update['last_name'] = $params->last_name;
+            update_user_meta($user_id, 'shipping_last_name', $params->last_name, '');
             update_user_meta($user_id, 'billing_last_name', $params->last_name, '');
         }
         if (isset($params->shipping_company)) {
             update_user_meta($user_id, 'shipping_company', $params->shipping_company, '');
+            update_user_meta($user_id, 'billing_company', $params->shipping_company, '');
         }
         if (isset($params->shipping_state)) {
             update_user_meta($user_id, 'shipping_state', $params->shipping_state, '');
+            update_user_meta($user_id, 'billing_state', $params->shipping_state, '');
         }
         if (isset($params->shipping_address_1)) {
             update_user_meta($user_id, 'shipping_address_1', $params->shipping_address_1, '');
+            update_user_meta($user_id, 'billing_address_1', $params->shipping_address_1, '');
         }
         if (isset($params->shipping_address_2)) {
             update_user_meta($user_id, 'shipping_address_2', $params->shipping_address_2, '');
+            update_user_meta($user_id, 'billing_address_2', $params->shipping_address_2, '');
         }
         if (isset($params->shipping_city)) {
             update_user_meta($user_id, 'shipping_city', $params->shipping_city, '');
+            update_user_meta($user_id, 'billing_city', $params->shipping_city, '');
         }
         if (isset($params->shipping_country)) {
             update_user_meta($user_id, 'shipping_country', $params->shipping_country, '');
+            update_user_meta($user_id, 'billing_country', $params->shipping_country, '');
         }
         if (isset($params->shipping_postcode)) {
             update_user_meta($user_id, 'shipping_postcode', $params->shipping_postcode, '');
+            update_user_meta($user_id, 'billing_postcode', $params->shipping_postcode, '');
         }
         if (isset($params->meta_data) && is_array($params->meta_data)) {
             foreach ($params->meta_data as $item) {

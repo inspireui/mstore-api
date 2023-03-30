@@ -463,18 +463,20 @@ function customProductResponse($response, $object, $request)
     $attributes = $product->get_attributes();
     $attributesData = [];
     foreach ($attributes as $key => $attr) {
-        $check = $attr->is_taxonomy();
-        if ($check) {
-            $taxonomy = $attr->get_taxonomy_object();
-            $label = $taxonomy->attribute_label;
-        } else {
-            $label = $attr->get_name();
+        if(!is_string($attr)){
+            $check = $attr->is_taxonomy();
+            if ($check) {
+                $taxonomy = $attr->get_taxonomy_object();
+                $label = $taxonomy->attribute_label;
+            } else {
+                $label = $attr->get_name();
+            }
+            $attrOptions = wc_get_product_terms($response->data['id'], $attr["name"]);
+            $attr["options"] = empty($attrOptions) ? array_map(function ($v){
+                return ['name'=>$v, 'slug' => $v];
+            },$attr["options"]) : $attrOptions;
+            $attributesData[] = array_merge($attr->get_data(), ["label" => $label, "name" => urldecode($key)]);
         }
-        $attrOptions = wc_get_product_terms($response->data['id'], $attr["name"]);
-        $attr["options"] = empty($attrOptions) ? array_map(function ($v){
-            return ['name'=>$v, 'slug' => $v];
-        },$attr["options"]) : $attrOptions;
-        $attributesData[] = array_merge($attr->get_data(), ["label" => $label, "name" => urldecode($key)]);
     }
     $response->data['attributesData'] = $attributesData;
 

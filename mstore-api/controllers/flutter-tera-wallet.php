@@ -264,7 +264,7 @@ class FlutterTeraWallet extends FlutterBaseController
 				wc_reduce_stock_levels($order_id);
 
 				if ($wallet_response) {
-					$order->payment_complete($wallet_response);
+					//$order->payment_complete($wallet_response);
 					do_action('woo_wallet_payment_processed', $order_id, $wallet_response);
 				}
 			}else{
