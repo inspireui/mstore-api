@@ -637,6 +637,8 @@ class FlutterVendor extends FlutterBaseController
             return $user_id;
         }
 
+        $is_admin = checkIsAdmin($user_id);
+
         $api = new WC_REST_Orders_V1_Controller();
         $papi = new WC_REST_Products_Controller();
         $req = new WP_REST_Request('GET');
@@ -648,18 +650,26 @@ class FlutterVendor extends FlutterBaseController
 
         $orders = [];
         $results = [];
-        if (is_plugin_active('dokan-lite/dokan.php')) {
-            $orders = dokan_get_seller_orders($user_id, 'all', null, 10000000, 0);
-        }
-
-        if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
+        if($is_admin){
             global $wpdb;
-            $table_name = $wpdb->prefix . "wcfm_marketplace_orders";
-            $orders = $wpdb->get_results("SELECT * FROM $table_name WHERE vendor_id = '$user_id' AND is_trashed != 1 ORDER BY order_id DESC LIMIT $page,$limit");
+            $table_name = $wpdb->prefix . "posts";
+            $sql = "SELECT * FROM " . $table_name . " WHERE post_type LIKE 'shop_order'";
+            $sql .= " GROUP BY $table_name.`ID` ORDER BY $table_name.`ID` DESC LIMIT $limit OFFSET $page";
+            $orders = $wpdb->get_results($sql);
+        }else{
+            if (is_plugin_active('dokan-lite/dokan.php')) {
+                $orders = dokan_get_seller_orders($user_id, 'all', null, 10000000, 0);
+            }
+    
+            if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
+                global $wpdb;
+                $table_name = $wpdb->prefix . "wcfm_marketplace_orders";
+                $orders = $wpdb->get_results("SELECT * FROM $table_name WHERE vendor_id = '$user_id' AND is_trashed != 1 ORDER BY order_id DESC LIMIT $page,$limit");
+            }
         }
 
         foreach ($orders as $item) {
-            $order = wc_get_order($item->order_id);
+            $order = wc_get_order(isset($item->ID) ? $item->ID : $item->order_id);
             if ($order != false) {
                 $response = $api->prepare_item_for_response($order, $request);
                 $line_items = [];

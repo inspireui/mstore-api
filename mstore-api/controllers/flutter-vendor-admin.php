@@ -504,7 +504,8 @@ class FlutterVendorAdmin extends FlutterBaseController
 
         $helper = new VendorAdminWCFMHelper();
         if (isset($request['platform'])) {
-            if ($request['platform'] == 'woo') {
+            $is_admin = checkIsAdmin($user_id);
+            if ($request['platform'] == 'woo' || $is_admin) {
                 $helper = new VendorAdminWooHelper();
             }
             if ($request['platform'] == 'dokan') {
@@ -590,7 +591,8 @@ class FlutterVendorAdmin extends FlutterBaseController
 
         $helper = new VendorAdminWCFMHelper();
         if (isset($request['platform'])) {
-            if ($request['platform'] == 'woo') {
+            $is_admin = checkIsAdmin($user_id);
+            if ($request['platform'] == 'woo' || $is_admin) {
                 $helper = new VendorAdminWooHelper();
             }
             if ($request['platform'] == 'dokan') {

@@ -538,6 +538,13 @@ function checkWhiteListAccounts ($user_id) {
     return in_array($user_info->user_email, $whiteList) || in_array($user_info->user_login, $whiteList);
 }
 
+function checkIsAdmin($user_id){
+    $user = get_userdata( $user_id );
+    $user_roles = $user->roles;
+    $is_admin = in_array( 'administrator', $user_roles, true );
+    return $is_admin;
+}
+
 function upload_image_from_mobile($image, $count, $user_id)
 {
     require_once(ABSPATH . 'wp-admin/includes/image.php');
