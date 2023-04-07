@@ -658,7 +658,9 @@ class FlutterVendor extends FlutterBaseController
             $orders = $wpdb->get_results($sql);
         }else{
             if (is_plugin_active('dokan-lite/dokan.php')) {
-                $orders = dokan_get_seller_orders($user_id, 'all', null, 10000000, 0);
+                $order_count = dokan_get_seller_orders_number( ['seller_id'=>$user_id] );      
+                $args = ['offset'=>0, 'limit'=>$order_count];
+                $orders = dokan_get_seller_orders($user_id, $args);
             }
     
             if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
@@ -669,7 +671,7 @@ class FlutterVendor extends FlutterBaseController
         }
 
         foreach ($orders as $item) {
-            $order = wc_get_order(isset($item->ID) ? $item->ID : $item->order_id);
+            $order = wc_get_order(isset($item->ID) ? $item->ID : (isset($item->order_id) ? $item->order_id : $item->id));
             if ($order != false) {
                 $response = $api->prepare_item_for_response($order, $request);
                 $line_items = [];
