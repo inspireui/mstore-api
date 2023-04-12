@@ -1,5 +1,5 @@
 <?php
-class FlutterStripe {
+class FlutterStripeHelper {
     public $headers;
     public $url = 'https://api.stripe.com/v1/';
     public $method = null;

@@ -232,7 +232,7 @@ class FlutterPaidMembershipsPro extends FlutterBaseController
         if($gateway == 'stripe' && !pmpro_isLevelFree( $pmpro_level )){
             $card = $params['card'];
             $key = PMProGateway_stripe::get_secretkey();
-            $s = new FlutterStripe($key);
+            $s = new FlutterStripeHelper($key);
             $s->url .= 'payment_methods';
             $s->method = "POST";
             $s->fields['card'] = array(
