@@ -886,21 +886,23 @@ class FlutterWoo extends FlutterBaseController
         // Loop through cart items and get cart items details
         $product_controller = new WC_REST_Products_Controller();
         $product_variation_controller = new WC_REST_Product_Variations_Controller();
-        foreach ($cart_items as $cart_item_key => $cart_item) {
-            $product_id = $cart_item['product_id'];
-            $variation_id = $cart_item['variation_id'];
-            $quantity = $cart_item['quantity'];
-
-            $product = wc_get_product($product_id);
-            $product_data = $product_controller->prepare_object_for_response($product, $request)->get_data();
-
-            if ($variation_id != 0) {
-                $variation = new WC_Product_Variation($variation_id);
-                $variation_data = $product_variation_controller->prepare_object_for_response($variation, $request)->get_data();
-            } else {
-                $variation_data = null;
+        if(is_array($cart_items)){
+            foreach ($cart_items as $cart_item_key => $cart_item) {
+                $product_id = $cart_item['product_id'];
+                $variation_id = $cart_item['variation_id'];
+                $quantity = $cart_item['quantity'];
+    
+                $product = wc_get_product($product_id);
+                $product_data = $product_controller->prepare_object_for_response($product, $request)->get_data();
+    
+                if ($variation_id != 0) {
+                    $variation = new WC_Product_Variation($variation_id);
+                    $variation_data = $product_variation_controller->prepare_object_for_response($variation, $request)->get_data();
+                } else {
+                    $variation_data = null;
+                }
+                $items[] = ["product" => $product_data, "quantity" => $quantity, "variation" => $variation_data];
             }
-            $items[] = ["product" => $product_data, "quantity" => $quantity, "variation" => $variation_data];
         }
 
         return $items;

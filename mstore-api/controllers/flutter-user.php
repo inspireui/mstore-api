@@ -230,6 +230,16 @@ class FlutterUserController extends FlutterBaseController
             ),
         ));
 
+        register_rest_route($this->namespace, '/test_push_notification_created_order', array(
+            array(
+                'methods' => 'POST',
+                'callback' => array($this, 'test_push_notification_created_order'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
+
         register_rest_route($this->namespace, '/digits/register/check', array(
             array(
                 'methods' => 'POST',
@@ -460,10 +470,10 @@ class FlutterUserController extends FlutterBaseController
         $usernameReq = $params["username"];
         $emailReq = $params["email"];
         $role = $params["role"];
-        if(in_array('dokan_enable_selling', $params)){
+        if( isset($params['dokan_enable_selling'])){
 			$dokan_enable_selling  =  $params['dokan_enable_selling'];
 		}
-        if(in_array('wcfm_membership_application_status', $params)){
+        if(isset($params['wcfm_membership_application_status'])){
 			$wcfm_membership_application_status = $params['wcfm_membership_application_status'];
 		}
         if (isset($role)) {
@@ -540,6 +550,10 @@ class FlutterUserController extends FlutterBaseController
 
         if(isset( $wcfm_membership_application_status) &&  $wcfm_membership_application_status == 'pending'){
             update_user_meta($user_id,'wcfm_membership_application_status',$wcfm_membership_application_status);
+            update_user_meta($user_id,'store_name', $user['display_name']);
+            update_user_meta($user_id,'temp_wcfm_membership', -1);
+            global $WCFMvm;
+            $WCFMvm->send_approval_reminder_admin( $user_id );
         }
 
         if(isset($dokan_enable_selling) && $dokan_enable_selling == false){
@@ -1218,6 +1232,12 @@ class FlutterUserController extends FlutterBaseController
             $status = pushNotification("Fluxstore", "Test push notification", $deviceToken);
         }
         return ["deviceToken" => $deviceToken, 'serverKey' => $serverKey, 'status' => $status];
+    }
+
+    function test_push_notification_created_order(){
+        $json = file_get_contents('php://input');
+        $params = json_decode($json);
+        return trackNewOrder($params->order_id);
     }
 
     function chat_notification()

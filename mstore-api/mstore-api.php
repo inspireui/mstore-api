@@ -259,9 +259,11 @@ class MstoreCheckOut
         trackNewOrder($order_id);
     }
 
-    function track_api_new_order($object)
+    function track_api_new_order($object,$request)
     {
-        trackNewOrder($object->id);
+        if(isset($request['id']) && ((int) $request['id'] > 0)){
+            trackNewOrder($object->id);
+        }
     }
 
     public function handle_received_order_page()

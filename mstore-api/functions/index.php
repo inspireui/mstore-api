@@ -293,7 +293,7 @@ function trackNewOrder($order_id)
 
                         $store_name = wcfm_get_vendor_store($vendor_id);
                         if ($store_name) {
-                            $processed_vendors[$vendor_id] = $vendor_id;
+                            $processed_vendors[] = $vendor_id;
                         }
                     }
                 }

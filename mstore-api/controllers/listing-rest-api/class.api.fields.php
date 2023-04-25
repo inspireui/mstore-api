@@ -409,6 +409,7 @@ class FlutterTemplate extends WP_REST_Posts_Controller
     public function get_nearby_listings($request){
         $current_lat = $request['lat'];
         $current_long = $request['long'];
+        $search_location = $request['search_location'];
         $radius = 100; //in km
         if(isset($request['radius'])){
             $radius =  $request['radius'];
@@ -451,7 +452,7 @@ class FlutterTemplate extends WP_REST_Posts_Controller
                 'lat'=>$current_lat,
                 'lng'=>$current_long,
                 'category'=>'',
-                'search_location'=>'',
+                'search_location'=> $search_location ?? '',
                 'region'=>'',
                 'tags'=>'',
                 'sort'=>'nearby'
