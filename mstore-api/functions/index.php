@@ -263,49 +263,13 @@ function wcfm_message_on_new_order($order_id)
 
 function trackNewOrder($order_id)
 {
-    $order = wc_get_order($order_id);
-    if (is_plugin_active('dokan-lite/dokan.php')) {
-        if (dokan_is_order_already_exists($order_id)) {
-            return;
-        }
-
-        $order_seller_id = dokan_get_seller_id_by_order($order_id);
-        if (isset($order_seller_id) && $order_seller_id != false) {
-            sendNewOrderNotificationToVendor($order_seller_id, $order_id);
-        }
+    $seller_ids = getSellerIdsByOrderId($order_id);
+    if (empty($seller_ids)) {
+        return;
     }
-
-    if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
-        $processed_vendors = array();
-        if (function_exists('wcfm_get_vendor_store_by_post')) {
-            $order = wc_get_order($order_id);
-            if (is_a($order, 'WC_Order')) {
-                $items = $order->get_items('line_item');
-                if (!empty($items)) {
-                    foreach ($items as $order_item_id => $item) {
-                        $line_item = new WC_Order_Item_Product($item);
-                        $product = $line_item->get_product();
-                        $product_id = $line_item->get_product_id();
-                        $vendor_id = wcfm_get_vendor_id_by_post($product_id);
-
-                        if (!$vendor_id) continue;
-                        if (in_array($vendor_id, $processed_vendors)) continue;
-
-                        $store_name = wcfm_get_vendor_store($vendor_id);
-                        if ($store_name) {
-                            $processed_vendors[] = $vendor_id;
-                        }
-                    }
-                }
-            }
-        }
-        if (!empty($processed_vendors)) {
-            foreach ($processed_vendors as $vendor_id) {
-                sendNewOrderNotificationToVendor($vendor_id, $order_id);
-            }
-        }
+    foreach ($seller_ids as $vendor_id) {
+        sendNewOrderNotificationToVendor($vendor_id, $order_id);
     }
-
 }
 
 function getAddOns($categories)
@@ -586,5 +550,69 @@ function upload_image_from_mobile($image, $count, $user_id)
     $attach_data = apply_filters('wp_generate_attachment_metadata', $attachment, $attachment_id, 'create');
     wp_update_attachment_metadata($attachment_id, $attach_data);
     return $attachment_id;
+}
+
+function getSellerIdsByOrderId($order_id){
+    $seller_ids = [];
+    if (is_plugin_active('dokan-lite/dokan.php')) {
+        $order_seller_id = dokan_get_seller_id_by_order($order_id);
+        if (isset($order_seller_id) && $order_seller_id != false) {
+            $seller_ids[] = $order_seller_id;
+        }
+    }
+
+    if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
+        if (function_exists('wcfm_get_vendor_store_by_post')) {
+            $order = wc_get_order($order_id);
+            if (is_a($order, 'WC_Order')) {
+                $items = $order->get_items('line_item');
+                if (!empty($items)) {
+                    foreach ($items as $order_item_id => $item) {
+                        $line_item = new WC_Order_Item_Product($item);
+                        $product = $line_item->get_product();
+                        $product_id = $line_item->get_product_id();
+                        $vendor_id = wcfm_get_vendor_id_by_post($product_id);
+                        if (!$vendor_id) continue;
+                        if (in_array($vendor_id, $seller_ids)) continue;
+
+                        $store_name = wcfm_get_vendor_store($vendor_id);
+                        if ($store_name) {
+                            $seller_ids[] = $vendor_id;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return $seller_ids;
+}
+
+function sendNotificationForOrderStatusUpdated($order_id, $status)
+{
+    $seller_ids = getSellerIdsByOrderId($order_id);
+    if (empty($seller_ids)) {
+        return;
+    }
+
+    $title = "Update Order";
+
+    foreach ($seller_ids as $seller_id) {
+        $user = get_userdata($seller_id);
+        if ($status == 'refund-req') {
+            $message = "Hi {{name}}, The order #{{order}} is refunded.";
+        }else if($status == 'cancelled'){
+            $message = "Hi {{name}}, The order #{{order}} is cancelled.";
+        }else{
+            $message = "Hi {{name}}, The order #{{order}} is updated.";
+        }
+        $message = str_replace("{{name}}", $user->display_name, $message);
+        $message = str_replace("{{order}}", $order_id, $message);
+    
+        $managerDeviceToken = get_user_meta($seller_id, 'mstore_manager_device_token', true);
+        if (isset($managerDeviceToken) && $managerDeviceToken != false) {
+            pushNotification($title, $message, $managerDeviceToken);
+        }
+        one_signal_push_notification($title, $message, array($seller_id));
+    }
 }
 ?>

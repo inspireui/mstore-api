@@ -362,8 +362,9 @@ class ProductManagementHelper
                         $featured_image_id = $this->find_image_id(
                             $featured_image
                         );
-					
-                        $product->set_image_id($featured_image_id);
+                        if($featured_image_id > 0){
+                            $product->set_image_id($featured_image_id);
+                        }
                     } else {
                         $featured_image_id = upload_image_from_mobile(
                             $featured_image,
@@ -388,7 +389,9 @@ class ProductManagementHelper
                     if (!empty($p_img)) {
                         if ($this->http_check($p_img)) {
                             $img_id = $this->find_image_id($p_img);
-                            array_push($img_array, $img_id);
+                            if($img_id > 0){
+                                array_push($img_array, $img_id);
+                            }
                         } else {
                             $img_id = upload_image_from_mobile(
                                 $p_img,

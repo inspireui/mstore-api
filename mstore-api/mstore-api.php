@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 3.8.9
+ * Version: 3.9.0
  * Author: InspireUI
  * Author URI: https://inspireui.com
  *
@@ -39,7 +39,7 @@ include_once plugin_dir_path(__FILE__) . "controllers/flutter-stripe.php";
 
 class MstoreCheckOut
 {
-    public $version = '3.8.9';
+    public $version = '3.9.0';
 
     public function __construct()
     {
@@ -249,20 +249,28 @@ class MstoreCheckOut
         update_option("mstore_status_order_message", $message);
     }
 
+    // update order via website
     function track_order_status_changed($id, $previous_status, $next_status)
     {
         trackOrderStatusChanged($id, $previous_status, $next_status);
     }
 
+    // new order via website
     function track_new_order($order_id)
     {
         trackNewOrder($order_id);
     }
 
-    function track_api_new_order($object,$request)
+    //new order or update order via API
+    function track_api_new_order($object,$request, $creating)
     {
-        if(isset($request['id']) && ((int) $request['id'] > 0)){
+        if($creating){
             trackNewOrder($object->id);
+        }else{
+            $body = $request->get_body_params();
+            if(isset($body['status'])){
+                sendNotificationForOrderStatusUpdated($object->id, $body['status']);
+            }
         }
     }
 

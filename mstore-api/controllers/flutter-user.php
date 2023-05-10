@@ -1310,6 +1310,9 @@ class FlutterUserController extends FlutterBaseController
         if (isset($params['name'])) {
             $_POST['digits_reg_name'] = $params['name'];
         }
+        if (isset($params['last_name'])) {
+            $_POST['digits_reg_lastname'] = $params['last_name'];
+        }
         if (isset($params['country_code'])) {
             $_POST['digregcode'] = $params['country_code'];
         }
@@ -1325,6 +1328,7 @@ class FlutterUserController extends FlutterBaseController
         $_POST['dig_nounce'] = wp_create_nonce('dig_form');
         $_POST['crsf-otp'] = wp_create_nonce('crsf-otp');
 
+        $_POST['digits_reg_password'] = wp_generate_password();
         $_REQUEST['json'] = 1;
     }
 
