@@ -403,7 +403,9 @@ class ProductManagementHelper
                         }
                     }
                 }
-                $product->set_gallery_image_ids($img_array);
+                if(!empty($img_array)){
+                    $product->set_gallery_image_ids($img_array);
+                }
             }
           
             if (isset($product) && !is_wp_error($product)) {
