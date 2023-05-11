@@ -220,26 +220,6 @@ class FlutterUserController extends FlutterBaseController
             ),
         ));
 
-        register_rest_route($this->namespace, '/test_push_notification', array(
-            array(
-                'methods' => 'POST',
-                'callback' => array($this, 'test_push_notification'),
-                'permission_callback' => function () {
-                    return parent::checkApiPermission();
-                }
-            ),
-        ));
-
-        register_rest_route($this->namespace, '/test_push_notification_created_order', array(
-            array(
-                'methods' => 'POST',
-                'callback' => array($this, 'test_push_notification_created_order'),
-                'permission_callback' => function () {
-                    return parent::checkApiPermission();
-                }
-            ),
-        ));
-
         register_rest_route($this->namespace, '/digits/register/check', array(
             array(
                 'methods' => 'POST',
@@ -1191,53 +1171,6 @@ class FlutterUserController extends FlutterBaseController
         } else {
             return [];
         }
-    }
-
-    public function test_push_notification()
-    {
-        $json = file_get_contents('php://input');
-        $params = json_decode($json);
-        $email = $params->email;
-        $is_manager = $params->is_manager;
-        $is_delivery = $params->is_delivery;
-        $user = get_user_by('email', $email);
-        $user_id = $user->ID;
-        $serverKey = get_option("mstore_firebase_server_key");
-        $status = false;
-        $is_onesignal = $params->is_onesignal;
-        if($is_onesignal){
-            $status = one_signal_push_notification("Fluxstore", "Test push notification", array($user_id));
-            return ['status' => $status];
-        }
-        if (isset($is_manager)) {
-            if ($is_manager) {
-                $deviceToken = get_user_meta($user_id, 'mstore_manager_device_token', true);
-                if ($deviceToken) {
-                    $status = pushNotification("Fluxstore", "Test push notification", $deviceToken);
-                }
-            }
-            return ["deviceToken" => $deviceToken, 'serverKey' => $serverKey, 'status' => $status];
-        }
-        if (isset($is_delivery)) {
-            if ($is_delivery) {
-                $deviceToken = get_user_meta($user_id, 'mstore_delivery_device_token', true);
-                if ($deviceToken) {
-                    $status = pushNotification("Fluxstore", "Test push notification", $deviceToken);
-                }
-            }
-            return ["deviceToken" => $deviceToken, 'serverKey' => $serverKey, 'status' => $status];
-        }
-        $deviceToken = get_user_meta($user_id, 'mstore_device_token', true);
-        if ($deviceToken) {
-            $status = pushNotification("Fluxstore", "Test push notification", $deviceToken);
-        }
-        return ["deviceToken" => $deviceToken, 'serverKey' => $serverKey, 'status' => $status];
-    }
-
-    function test_push_notification_created_order(){
-        $json = file_get_contents('php://input');
-        $params = json_decode($json);
-        return trackNewOrder($params->order_id);
     }
 
     function chat_notification()

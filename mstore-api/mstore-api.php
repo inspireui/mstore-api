@@ -36,6 +36,7 @@ include_once plugin_dir_path(__FILE__) . "controllers/listing-rest-api/class.api
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-blog.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-wholesale.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-stripe.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-notification.php";
 
 class MstoreCheckOut
 {

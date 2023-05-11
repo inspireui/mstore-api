@@ -112,9 +112,9 @@ function sendNotificationToUser($userId, $orderId, $previous_status, $next_statu
     $message = str_replace("{{nextStatus}}", $next_status_label, $message);
 
     if (isset($deviceToken) && $deviceToken != false) {
-        pushNotification($title, $message, $deviceToken);
+        _pushNotificationFirebase($userId,$title, $message, $deviceToken);
     }
-    one_signal_push_notification($title,$message,array($userId));
+    _pushNotificationOneSignal($userId, $title,$message);
 }
 
 function trackOrderStatusChanged($id, $previous_status, $next_status)
@@ -141,15 +141,13 @@ function sendNewOrderNotificationToDelivery($order_id, $status)
             $sql .= " AND delivery_status = 'pending'";
             $result = $wpdb->get_results($sql);
 
-            $user_ids = array();
             foreach ($result as $item) {
-                $user_ids[]=$item->delivery_boy;
                 $deviceToken = get_user_meta($item->delivery_boy, 'mstore_delivery_device_token', true);
                 if (isset($deviceToken) && $deviceToken != false) {
-                    pushNotification($title, $message, $deviceToken);
+                    _pushNotificationFirebase($item->delivery_boy,$title, $message, $deviceToken);
                 }
+                _pushNotificationOneSignal($title,$message, $item->delivery_boy);
             }
-            one_signal_push_notification($title,$message, $user_ids);
         }
 
     }
@@ -175,7 +173,7 @@ function sendNewOrderNotificationToDelivery($order_id, $status)
             maybe_create_table($table_name, $sql);
             $deviceToken = get_user_meta($driver_id, 'mstore_delivery_device_token', true);
             if (isset($deviceToken) && $deviceToken != false) {
-                pushNotification($title, $message, $deviceToken);
+                _pushNotificationFirebase($driver_id,$title, $message, $deviceToken);
                 $wpdb->insert($table_name, array(
                     'message' => $message,
                     'order_id' => $order_id,
@@ -201,16 +199,16 @@ function sendNewOrderNotificationToVendor($order_seller_id, $order_id)
     $message = str_replace("{{name}}", $user->display_name, $message);
     $deviceToken = get_user_meta($order_seller_id, 'mstore_device_token', true);
     if (isset($deviceToken) && $deviceToken != false) {
-        pushNotification($title, $message, $deviceToken);
+        _pushNotificationFirebase($order_seller_id,$title, $message, $deviceToken);
     }
     $managerDeviceToken = get_user_meta($order_seller_id, 'mstore_manager_device_token', true);
     if (isset($managerDeviceToken) && $managerDeviceToken != false) {
-        pushNotification($title, $message, $managerDeviceToken);
+        _pushNotificationFirebase($order_seller_id,$title, $message, $managerDeviceToken);
         if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
             wcfm_message_on_new_order($order_id);
         }
     }
-    one_signal_push_notification($title, $message, array($order_seller_id));
+    _pushNotificationOneSignal($order_seller_id,$title, $message);
 }
 
 function wcfm_message_on_new_order($order_id)
@@ -610,9 +608,28 @@ function sendNotificationForOrderStatusUpdated($order_id, $status)
     
         $managerDeviceToken = get_user_meta($seller_id, 'mstore_manager_device_token', true);
         if (isset($managerDeviceToken) && $managerDeviceToken != false) {
-            pushNotification($title, $message, $managerDeviceToken);
+            _pushNotificationFirebase($seller_id, $title, $message, $managerDeviceToken);
         }
-        one_signal_push_notification($title, $message, array($seller_id));
+        _pushNotificationOneSignal($seller_id,$title, $message);
     }
+}
+
+function _pushNotificationFirebase($user_id, $title, $message, $deviceToken){
+    $is_on = isNotificationEnabled($user_id);
+    if($is_on){
+        pushNotification($title, $message, $deviceToken);
+    }
+}
+
+function _pushNotificationOneSignal($user_id, $title, $message){
+    $is_on = isNotificationEnabled($user_id);
+    if($is_on){
+        one_signal_push_notification($title,$message,array($userId));
+    }
+}
+
+function isNotificationEnabled($user_id){
+    $is_on = get_user_meta($user_id, "mstore_notification_status", true);
+    return  $is_on === "" || $is_on === "on";
 }
 ?>
