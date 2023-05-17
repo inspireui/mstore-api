@@ -742,14 +742,15 @@ class FlutterWoo extends FlutterBaseController
             return parent::sendError("invalid_item", $error, 400);
         }
 
-        if (isset($body["customer_id"]) && $body["customer_id"] != null) {
-            $userId = $body["customer_id"];
-            $user = get_userdata($userId);
-            if ($user) {
-                wp_set_current_user($userId, $user->user_login);
-                wp_set_auth_cookie($userId);
-                WC()->customer = new WC_Customer($userId, true);
+        $cookie = $request->get_header("User-Cookie");
+        if (isset($cookie) && $cookie != null) {
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
+                return $user_id;
             }
+            wp_set_current_user($user_id);
+            wp_set_auth_cookie($user_id);
+            WC()->customer = new WC_Customer($user_id, true);
         }
 
         $coupon_code = $body["coupon_code"];
