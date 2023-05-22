@@ -259,14 +259,19 @@ class FlutterTeraWallet extends FlutterBaseController
             }
             if($order->get_payment_method() == "wallet"){
 				$wallet_response = woo_wallet()->wallet->debit(get_current_user_id(), $order->get_total('edit'), apply_filters('woo_wallet_order_payment_description', __('For order payment #', 'woo-wallet') . $order->get_order_number(), $order));
-				// Reduce stock levels
-				$order_id = $request['id'];
-				wc_reduce_stock_levels($order_id);
-
 				if ($wallet_response) {
-					//$order->payment_complete($wallet_response);
-					do_action('woo_wallet_payment_processed', $order_id, $wallet_response);
-				}
+                    $order->set_transaction_id( $wallet_response );
+					do_action( 'woo_wallet_payment_processed', $params['order_id'], $wallet_response );
+					$order->save();
+
+                    // Reduce stock levels.
+                    wc_reduce_stock_levels( $params['order_id'] );
+
+                    // Complete order payment.
+                    $order->payment_complete();
+				}else{
+                    return parent::sendError("error_debit", "Something went wrong with processing payment please try again.", 400);
+                }
 			}else{
 				$order->payment_complete();
 			}

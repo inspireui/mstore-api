@@ -26,6 +26,18 @@ class FlutterWoo extends FlutterBaseController
     public function __construct()
     {
         add_action('rest_api_init', array($this, 'register_flutter_woo_routes'));
+        add_filter('wp_rest_cache/allowed_endpoints', array($this, 'wprc_add_flutter_endpoints'));
+    }
+
+    /**
+     * Register the flutter caching endpoints so they will be cached.
+     */
+    function wprc_add_flutter_endpoints($allowed_endpoints)
+    {
+        if (!isset($allowed_endpoints[$this->namespace])) {
+            $allowed_endpoints[$this->namespace][] = 'products/video';
+        }
+        return $allowed_endpoints;
     }
 
     public function register_flutter_woo_routes()
@@ -919,7 +931,15 @@ class FlutterWoo extends FlutterBaseController
             include_once WC_ABSPATH . 'includes/wc-cart-functions.php';
         }
 
-        $user_id = $body["customer_id"];
+        $cookie = $request->get_header("User-Cookie");
+        if (isset($cookie) && $cookie != null) {
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
+                return $user_id;
+            }
+        }else{
+            return parent::sendError("cookie_required","User-Cookie is required", 400);
+        }
 
         $session_expiring = time() + intval(apply_filters('wc_session_expiring', 60 * 60 * 47)); // 47 Hours.
         $session_expiration = time() + intval(apply_filters('wc_session_expiration', 60 * 60 * 48)); // 48 Hours.
