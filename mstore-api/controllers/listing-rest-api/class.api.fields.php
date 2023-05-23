@@ -380,17 +380,6 @@ class FlutterTemplate extends WP_REST_Posts_Controller
                     return true;
                 }
         ));
-
-        register_rest_route('wp/v2', '/add-listing', array(
-            'methods' => 'GET',
-            'callback' => array(
-                $this,
-                'add_listing'
-            ) ,
-            'permission_callback' => function () {
-                return true;
-            }
-        ));
         
         register_rest_route('wp/v2', '/get-nearby-listings', array(
             'methods' => 'GET',
@@ -1071,19 +1060,6 @@ class FlutterTemplate extends WP_REST_Posts_Controller
         {
             $user = get_userdata($object['author']);
             return $user->display_name;
-        }
-
-        //-----------------//
-        
-
-        public function add_listing($request)
-        {
-            $id = $request['id'];
-            wp_clear_auth_cookie();
-            wp_set_current_user($id);
-            wp_set_auth_cookie($id, true);
-            header("Location: " . $request['url']);
-            die();
         }
 
         /* --- - MyListing - ---*/
