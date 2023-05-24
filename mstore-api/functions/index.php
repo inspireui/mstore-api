@@ -546,6 +546,7 @@ function upload_image_from_mobile($image, $count, $user_id)
 
     $attachment_id = wp_insert_attachment($attachment, $uploadfile);
     $attach_data = apply_filters('wp_generate_attachment_metadata', $attachment, $attachment_id, 'create');
+    // $attach_data = wp_generate_attachment_metadata($attachment_id, $uploadfile);
     wp_update_attachment_metadata($attachment_id, $attach_data);
     return $attachment_id;
 }

@@ -1214,6 +1214,10 @@ class FlutterUserController extends FlutterBaseController
 
         $_POST['digits'] = 1;
 
+        if (dig_isWhatsAppEnabled() && $params['whatsapp'] == true) {
+            $_POST['whatsapp'] = 1;
+        }
+
         if (isset($params['type'])) {
             $type = $params['type'];
             if ($type == 'login') {
