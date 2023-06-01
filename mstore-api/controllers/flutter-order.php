@@ -126,10 +126,11 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
                 return false;
             }
             $order = wc_get_order($request['id'] );
-            return  $order->get_customer_id() == 0 || $order->get_customer_id() == $user_id;
-        } else {
-            return false;
-        }
+            if($order != false){
+                return  $order->get_customer_id() == 0 || $order->get_customer_id() == $user_id;
+            }
+        } 
+        return false;
     }
 
     function create_new_order($request)

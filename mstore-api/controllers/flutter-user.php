@@ -648,7 +648,7 @@ class FlutterUserController extends FlutterBaseController
         } else {
             $seconds = 1209600;
         }
-
+        $_POST['action'] = 'listeoajaxlogin'; //fix to return json if login error in listeo
         $user = wp_authenticate($username, $password);
 
         if (is_wp_error($user)) {
