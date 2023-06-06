@@ -531,19 +531,23 @@ class FlutterVendor extends FlutterBaseController
                     ),);
             }
 
-            $args['exclude_listing_booking'] = 'true';
-            $args['tax_query'][] = array(
-                'taxonomy' => 'product_cat',
-                'field' => 'slug',
-                'terms' => array('listeo-booking'),
-                'operator' => 'NOT IN'
-            );
-            $args['tax_query'][] = array(
-                'taxonomy' => 'product_type',
-                'field' => 'slug',
-                'terms' => array('listing_package'),
-                'operator' => 'NOT IN'
-            );
+            $theme = wp_get_theme();
+            $is_listeo = $theme->name == 'Listeo';
+            if($is_listeo){
+                $args['exclude_listing_booking'] = 'true';
+                $args['tax_query'][] = array(
+                    'taxonomy' => 'product_cat',
+                    'field' => 'slug',
+                    'terms' => array('listeo-booking'),
+                    'operator' => 'NOT IN'
+                );
+                $args['tax_query'][] = array(
+                    'taxonomy' => 'product_type',
+                    'field' => 'slug',
+                    'terms' => array('listing_package'),
+                    'operator' => 'NOT IN'
+                );
+            }
 
             $products = get_posts($args);
         } else {
