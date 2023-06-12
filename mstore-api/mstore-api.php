@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 3.9.5
+ * Version: 3.9.6
  * Author: InspireUI
  * Author URI: https://inspireui.com
  *
@@ -40,7 +40,7 @@ include_once plugin_dir_path(__FILE__) . "controllers/flutter-notification.php";
 
 class MstoreCheckOut
 {
-    public $version = '3.9.5';
+    public $version = '3.9.6';
 
     public function __construct()
     {
@@ -53,6 +53,11 @@ class MstoreCheckOut
         add_action('template_redirect', 'flutter_prepare_checkout');
 
         include_once(ABSPATH . 'wp-admin/includes/plugin.php');
+        include_once(ABSPATH . 'wp-includes/pluggable.php');
+
+        //migrate old versions to re-verify purchase code automatically
+        verifyPurchaseCodeAuto();
+
         if (is_plugin_active('woocommerce/woocommerce.php') == false) {
             return 0;
         }
@@ -207,47 +212,61 @@ class MstoreCheckOut
     }
 
     function mstore_delete_json_file(){
-        $id = sanitize_text_field($_REQUEST['id']);
-        $nonce = sanitize_text_field($_REQUEST['nonce']);
-        FlutterUtils::delete_config_file($id, $nonce);
+        if(current_user_can( 'edit_posts' )){
+            $id = sanitize_text_field($_REQUEST['id']);
+            $nonce = sanitize_text_field($_REQUEST['nonce']);
+            FlutterUtils::delete_config_file($id, $nonce);
+        }
     }
 
     function mstore_update_limit_product()
     {
-        $limit = sanitize_text_field($_REQUEST['limit']);
-        if (is_numeric($limit)) {
-            update_option("mstore_limit_product", intval($limit));
+        if(current_user_can( 'edit_posts' )){
+            $limit = sanitize_text_field($_REQUEST['limit']);
+            if (is_numeric($limit)) {
+                update_option("mstore_limit_product", intval($limit));
+            }
         }
     }
 
     function mstore_update_firebase_server_key()
     {
-        $serverKey = sanitize_text_field($_REQUEST['serverKey']);
-        update_option("mstore_firebase_server_key", $serverKey);
+        if(current_user_can( 'edit_posts' )){
+            $serverKey = sanitize_text_field($_REQUEST['serverKey']);
+            update_option("mstore_firebase_server_key", $serverKey);
+        }
     }
 
     function mstore_update_new_order_title()
     {
-        $title = sanitize_text_field($_REQUEST['title']);
-        update_option("mstore_new_order_title", $title);
+        if(current_user_can( 'edit_posts' )){
+            $title = sanitize_text_field($_REQUEST['title']);
+            update_option("mstore_new_order_title", $title);
+        }
     }
 
     function mstore_update_new_order_message()
     {
-        $message = sanitize_text_field($_REQUEST['message']);
-        update_option("mstore_new_order_message", $message);
+        if(current_user_can( 'edit_posts' )){
+            $message = sanitize_text_field($_REQUEST['message']);
+            update_option("mstore_new_order_message", $message);
+        }
     }
 
     function mstore_update_status_order_title()
     {
-        $title = sanitize_text_field($_REQUEST['title']);
-        update_option("mstore_status_order_title", $title);
+        if(current_user_can( 'edit_posts' )){
+            $title = sanitize_text_field($_REQUEST['title']);
+            update_option("mstore_status_order_title", $title);
+        }
     }
 
     function mstore_update_status_order_message()
     {
-        $message = sanitize_text_field($_REQUEST['message']);
-        update_option("mstore_status_order_message", $message);
+        if(current_user_can( 'edit_posts' )){
+            $message = sanitize_text_field($_REQUEST['message']);
+            update_option("mstore_status_order_message", $message);
+        }
     }
 
     // update order via website

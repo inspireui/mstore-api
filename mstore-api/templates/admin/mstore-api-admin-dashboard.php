@@ -4,7 +4,7 @@
         <div class="thanks">
             <p style="font-size: 16px;">Thank you for installing Mstore API plugins.</p>
             <?php
-            $verified = get_option("mstore_purchase_code");
+            $verified = isPurchaseCodeVerified();
             if (isset($verified) && $verified == "1") {
                 ?>
                 <p style="font-size: 16px;color: green">Your website have been license and all the API features are
@@ -15,7 +15,7 @@
         </div>
     </div>
 <?php
-$verified = get_option("mstore_purchase_code");
+$verified = isPurchaseCodeVerified();
 if (!isset($verified) || $verified === "" || $verified === false) {
     ?>
     <form action="" enctype="multipart/form-data" method="post" style="margin-bottom:50px">

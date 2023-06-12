@@ -82,7 +82,7 @@ class FlutterHome extends WP_REST_Controller
 
     public function flutter_get_items_permissions_check()
     {
-        return get_option('mstore_purchase_code') === "1";
+        return isPurchaseCodeVerified();
     }
 
     private function get_config_file_path($lang){

@@ -1,24 +1,44 @@
 <?php
-define("ACTIVE_API", "https://active2.inspireui.com/api/v1/active");
+define("ACTIVE_API", "https://active2.inspireui.com/api/v1/validate");
 define("DEACTIVE_API", "https://active2.inspireui.com/api/v1/deactive");
 define("ACTIVE_TOKEN", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmb28iOiJiYXIiLCJpYXQiOjE1ODY5NDQ3Mjd9.-umQIC6DuTS_0J0Jj8lcUuUYGjq9OXp3cIM-KquTWX0");
 
+// migrate for old versions
+function verifyPurchaseCodeAuto(){
+    $is_verified = (get_option('mstore_purchase_code') ==  true || get_option('mstore_purchase_code') ==  "1") && !empty(get_option('mstore_purchase_code_key'))  && empty(get_option('mstore_active_hash_code'));
+    if($is_verified){
+        verifyPurchaseCode(get_option('mstore_purchase_code_key'));
+    }
+}
+
+function isPurchaseCodeVerified(){
+    $random_key = get_option('mstore_active_random_key');
+    $hash_code = get_option('mstore_active_hash_code');
+    return md5('inspire@123%$'.$random_key) == $hash_code;
+}
+
 function verifyPurchaseCode($code)
 {
+    $random_key = wp_generate_password($length = 12, $include_standard_special_chars = false);
     $website = get_home_url();
-    $response = wp_remote_post(ACTIVE_API . "?token=" . ACTIVE_TOKEN, ["body" => ["code" => $code, "website" => $website, "plugin" => true], 'sslverify'   => false]);
+    $response = wp_remote_post(ACTIVE_API, ["body" => ["token" => ACTIVE_TOKEN, "code" => $code, "url" => $website, "key" => $random_key], 'sslverify'   => false]);
     if (is_wp_error($response)) {
         return $response->get_error_message();
     }
     $statusCode = wp_remote_retrieve_response_code($response);
     $success = $statusCode == 200;
+    $body = wp_remote_retrieve_body($response);
+    $body = json_decode($body, true);
+
+    delete_option('mstore_purchase_code'); // remove old key to  fix duplicate re-verify 
+
     if ($success) {
-        update_option("mstore_purchase_code", true);
+        update_option("mstore_active_random_key", $random_key);
+        update_option("mstore_active_hash_code", $body['data']);
         update_option("mstore_purchase_code_key", $code);
     } else {
-        $body = wp_remote_retrieve_body($response);
-        $body = json_decode($body, true);
-        return $body["error"];
+        delete_option('mstore_purchase_code_key'); // remove old key to  fix duplicate re-verify 
+        return $body["message"] ??  $body["error"];
     }
     return $success;
 }
@@ -305,7 +325,6 @@ function deactiveMStoreApi()
     $statusCode = wp_remote_retrieve_response_code($response);
     $success = $statusCode == 200;
     if ($success) {
-        update_option("mstore_purchase_code", false);
         update_option("mstore_purchase_code_key", "");
     } else {
         $body = wp_remote_retrieve_body($response);

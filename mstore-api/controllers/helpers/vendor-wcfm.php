@@ -979,20 +979,18 @@ class FlutterWCFMHelper
             $sql .= "AND `$table_name`.`post_author` = $store_id";
             $products = $wpdb->get_results($sql);
 
-            $productIDs = [];
-            foreach ($products as $object) {
-                $productIDs[] = $object->ID;
-            }
-            if(empty($productIDs)){
-                return [];
-            }
-
-            $args = array();
-            $args['include'] =  $productIDs;
-
             $theme = wp_get_theme();
             $is_listeo = $theme->name == 'Listeo';
             if($is_listeo){
+                $productIDs = [];
+                foreach ($products as $object) {
+                    $productIDs[] = $object->ID;
+                }
+                if(empty($productIDs)){
+                    return [];
+                }
+                $args = array();
+                $args['include'] =  $productIDs;
                 $args['exclude_listing_booking'] = 'true';
                 $args['tax_query'][] = array(
                     'taxonomy' => 'product_cat',
@@ -1006,13 +1004,12 @@ class FlutterWCFMHelper
                     'terms' => array('listing_package'),
                     'operator' => 'NOT IN'
                 );
+                $products = wc_get_products($args);
             }
             
-			$products = wc_get_products($args);
-
             $categoryIds = array();
             foreach ($products as $object) {
-                $terms = get_the_terms($object->get_id(), 'product_cat');
+                $terms = get_the_terms($object->ID ?? $object->get_id(), 'product_cat');
                 foreach ((array)$terms as $term) {
                     $cat_id = $term->term_id;
                     if (!in_array($cat_id, $categoryIds)) {

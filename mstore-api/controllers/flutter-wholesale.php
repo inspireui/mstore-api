@@ -74,6 +74,10 @@ class FlutterWholesale extends FlutterBaseController
         $emailReq = $params["email"];
         $role = $params["role"];
         
+        if (isset($role) && in_array($role, ['administrator','owner'], true)) {
+            return parent::sendError("invalid_role", "Role is invalid.", 400);
+        }
+
         $username = sanitize_user($usernameReq);
         $email = sanitize_email($emailReq);
 
