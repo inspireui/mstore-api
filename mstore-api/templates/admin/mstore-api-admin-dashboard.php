@@ -73,7 +73,7 @@ if (isset($verified) && $verified == "1") {
         $limit = get_option("mstore_limit_product");
         ?>
         <div class="form-group" style="margin-top:10px;margin-bottom:40px">
-            <input type="number" value="<?php echo (!isset($limit) || $limit == false) ? 10 : esc_attr($limit) ?>"
+            <input type="number" data-nonce="<?php echo wp_create_nonce('update_limit_product'); ?>" value="<?php echo (!isset($limit) || $limit == false) ? 10 : esc_attr($limit) ?>"
                    class="mstore-update-limit-product">
         </div>
     </form>
@@ -87,7 +87,7 @@ if (isset($verified) && $verified == "1") {
         $serverKey = get_option("mstore_firebase_server_key");
         ?>
         <div class="form-group" style="margin-top:10px;margin-bottom:40px">
-            <textarea class="mstore-update-firebase-server-key mstore_input"
+            <textarea data-nonce="<?php echo wp_create_nonce('update_firebase_server_key'); ?>" class="mstore-update-firebase-server-key mstore_input"
                       style="height: 120px"><?php echo esc_attr($serverKey) ?></textarea>
         </div>
     </form>
@@ -107,11 +107,11 @@ if (isset($verified) && $verified == "1") {
         }
         ?>
         <div class="form-group" style="margin-top:10px;">
-            <input type="text" placeholder="Title" value="<?php echo esc_attr($newOrderTitle); ?>"
+            <input type="text" placeholder="Title" data-nonce="<?php echo wp_create_nonce('update_new_order_title'); ?>" value="<?php echo esc_attr($newOrderTitle); ?>"
                    class="mstore-update-new-order-title mstore_input">
         </div>
         <div class="form-group" style="margin-top:10px;margin-bottom:40px">
-            <textarea placeholder="Message" class="mstore-update-new-order-message mstore_input"
+            <textarea placeholder="Message" data-nonce="<?php echo wp_create_nonce('update_new_order_message'); ?>" class="mstore-update-new-order-message mstore_input"
                       style="height: 120px"><?php echo esc_attr($newOrderMsg); ?></textarea>
         </div>
     </form>
@@ -131,11 +131,11 @@ if (isset($verified) && $verified == "1") {
         }
         ?>
         <div class="form-group" style="margin-top:10px;">
-            <input type="text" placeholder="Title" value="<?php echo esc_attr($statusOrderTitle); ?>"
+            <input type="text" placeholder="Title" data-nonce="<?php echo wp_create_nonce('update_status_order_title'); ?>" value="<?php echo esc_attr($statusOrderTitle); ?>"
                    class="mstore-update-status-order-title mstore_input">
         </div>
         <div class="form-group" style="margin-top:10px;margin-bottom:40px">
-            <textarea placeholder="Message" class="mstore-update-status-order-message mstore_input"
+            <textarea placeholder="Message" data-nonce="<?php echo wp_create_nonce('update_status_order_message'); ?>" class="mstore-update-status-order-message mstore_input"
                       style="height: 120px"><?php echo esc_attr($statusOrderMsg); ?></textarea>
         </div>
     </form>

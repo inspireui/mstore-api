@@ -21,12 +21,14 @@ jQuery(document).ready(function ($) {
 
     $(document).on('blur', '.mstore-update-limit-product', function () {
         var limit = $(this).val();
+        var nonce = $(this).data('nonce');
         $.ajax({
             type: 'post',
             url: MyAjax.ajaxurl,
             data: {
                 action: 'mstore_update_limit_product',
-                limit: limit
+                limit: limit,
+                nonce: nonce
             },
             success: function (result) {
                 if (result == 'success') {
@@ -38,12 +40,14 @@ jQuery(document).ready(function ($) {
 
     $(document).on('blur', '.mstore-update-firebase-server-key', function () {
         var serverKey = $(this).val();
+        var nonce = $(this).data('nonce');
         $.ajax({
             type: 'post',
             url: MyAjax.ajaxurl,
             data: {
                 action: 'mstore_update_firebase_server_key',
-                serverKey: serverKey
+                serverKey: serverKey,
+                nonce: nonce
             },
             success: function (result) {
                 if (result == 'success') {
@@ -55,12 +59,14 @@ jQuery(document).ready(function ($) {
 
     $(document).on('blur', '.mstore-update-new-order-title', function () {
         var title = $(this).val();
+        var nonce = $(this).data('nonce');
         $.ajax({
             type: 'post',
             url: MyAjax.ajaxurl,
             data: {
                 action: 'mstore_update_new_order_title',
-                title: title
+                title: title,
+                nonce: nonce
             },
             success: function (result) {
                 if (result == 'success') {
@@ -72,12 +78,14 @@ jQuery(document).ready(function ($) {
 
     $(document).on('blur', '.mstore-update-new-order-message', function () {
         var message = $(this).val();
+        var nonce = $(this).data('nonce');
         $.ajax({
             type: 'post',
             url: MyAjax.ajaxurl,
             data: {
                 action: 'mstore_update_new_order_message',
-                message: message
+                message: message,
+                nonce: nonce
             },
             success: function (result) {
                 if (result == 'success') {
@@ -89,12 +97,14 @@ jQuery(document).ready(function ($) {
 
     $(document).on('blur', '.mstore-update-status-order-title', function () {
         var title = $(this).val();
+        var nonce = $(this).data('nonce');
         $.ajax({
             type: 'post',
             url: MyAjax.ajaxurl,
             data: {
                 action: 'mstore_update_status_order_title',
-                title: title
+                title: title,
+                nonce: nonce
             },
             success: function (result) {
                 if (result == 'success') {
@@ -106,12 +116,14 @@ jQuery(document).ready(function ($) {
 
     $(document).on('blur', '.mstore-update-status-order-message', function () {
         var message = $(this).val();
+        var nonce = $(this).data('nonce');
         $.ajax({
             type: 'post',
             url: MyAjax.ajaxurl,
             data: {
                 action: 'mstore_update_status_order_message',
-                message: message
+                message: message,
+                nonce: nonce
             },
             success: function (result) {
                 if (result == 'success') {

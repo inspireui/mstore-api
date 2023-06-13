@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 3.9.6
+ * Version: 3.9.7
  * Author: InspireUI
  * Author URI: https://inspireui.com
  *
@@ -40,7 +40,7 @@ include_once plugin_dir_path(__FILE__) . "controllers/flutter-notification.php";
 
 class MstoreCheckOut
 {
-    public $version = '3.9.6';
+    public $version = '3.9.7';
 
     public function __construct()
     {
@@ -212,60 +212,80 @@ class MstoreCheckOut
     }
 
     function mstore_delete_json_file(){
-        if(current_user_can( 'edit_posts' )){
+        if(checkIsAdmin(get_current_user_id())){
             $id = sanitize_text_field($_REQUEST['id']);
             $nonce = sanitize_text_field($_REQUEST['nonce']);
             FlutterUtils::delete_config_file($id, $nonce);
+        }else{
+            wp_send_json_error('No Permission',401);
         }
     }
 
     function mstore_update_limit_product()
     {
-        if(current_user_can( 'edit_posts' )){
+        $nonce = sanitize_text_field($_REQUEST['nonce']);
+        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_limit_product')){
             $limit = sanitize_text_field($_REQUEST['limit']);
             if (is_numeric($limit)) {
                 update_option("mstore_limit_product", intval($limit));
             }
+        }else{
+            wp_send_json_error('No Permission',401);
         }
     }
 
     function mstore_update_firebase_server_key()
     {
-        if(current_user_can( 'edit_posts' )){
+        $nonce = sanitize_text_field($_REQUEST['nonce']);
+        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_firebase_server_key')){
             $serverKey = sanitize_text_field($_REQUEST['serverKey']);
             update_option("mstore_firebase_server_key", $serverKey);
+        }else{
+            wp_send_json_error('No Permission',401);
         }
     }
 
     function mstore_update_new_order_title()
     {
-        if(current_user_can( 'edit_posts' )){
+        $nonce = sanitize_text_field($_REQUEST['nonce']);
+        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_new_order_title')){
             $title = sanitize_text_field($_REQUEST['title']);
             update_option("mstore_new_order_title", $title);
+        }else{
+            wp_send_json_error('No Permission',401);
         }
     }
 
     function mstore_update_new_order_message()
     {
-        if(current_user_can( 'edit_posts' )){
+        $nonce = sanitize_text_field($_REQUEST['nonce']);
+        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_new_order_message')){
             $message = sanitize_text_field($_REQUEST['message']);
             update_option("mstore_new_order_message", $message);
+        }else{
+            wp_send_json_error('No Permission',401);
         }
     }
 
     function mstore_update_status_order_title()
     {
-        if(current_user_can( 'edit_posts' )){
+        $nonce = sanitize_text_field($_REQUEST['nonce']);
+        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_status_order_title')){
             $title = sanitize_text_field($_REQUEST['title']);
             update_option("mstore_status_order_title", $title);
+        }else{
+            wp_send_json_error('No Permission',401);
         }
     }
 
     function mstore_update_status_order_message()
     {
-        if(current_user_can( 'edit_posts' )){
+        $nonce = sanitize_text_field($_REQUEST['nonce']);
+        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_status_order_message')){
             $message = sanitize_text_field($_REQUEST['message']);
             update_option("mstore_status_order_message", $message);
+        }else{
+            wp_send_json_error('No Permission',401);
         }
     }
 
