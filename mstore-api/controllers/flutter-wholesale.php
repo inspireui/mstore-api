@@ -72,6 +72,8 @@ class FlutterWholesale extends FlutterBaseController
         $params = json_decode($json, TRUE);
         $usernameReq = $params["username"];
         $emailReq = $params["email"];
+
+        $params["role"] = 'subscriber';
         $role = $params["role"];
         
         // if (!class_exists('WooCommerceWholeSalePrices')) {
