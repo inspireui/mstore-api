@@ -1168,7 +1168,7 @@ class FlutterTemplate extends WP_REST_Posts_Controller
             {
                 $name = '_cover';
                 $image_id =  get_term_meta($object['id'], $name, true);
-                return wp_get_attachment_image_src($image_id)[0];
+                return wp_get_original_image_url($image_id);
             }
             else
             {

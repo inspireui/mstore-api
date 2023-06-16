@@ -187,7 +187,7 @@ class FlutterBooking extends FlutterBaseController
         $results = [];
         global $wpdb;
         $table_name = $wpdb->prefix . "wc_appointment_relationships";
-        $sql = $wpdb->prepare("SELECT * FROM $table_name WHERE product_id = '$product_id'");
+        $sql = $wpdb->prepare("SELECT * FROM $table_name WHERE product_id = %s",$product_id);
         $items = $wpdb->get_results($sql);
         foreach ($items as $item) {
             $user = get_user_by("ID", $item->staff_id);

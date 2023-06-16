@@ -43,6 +43,9 @@ Faster- Smoother- Closer.
 1. Click Install.
 
 == Changelog ==
+= 3.9.8 =
+  * Fix security issues and support Thawani api
+
 = 3.9.7 =
   * Fix security issues
 

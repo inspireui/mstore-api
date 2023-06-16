@@ -8,6 +8,9 @@
     <link rel="profile" href="http://gmpg.org/xfn/11">
     <?php wp_head(); ?>
     <style>
+        body{
+			overflow: unset;
+		}
         .mstore_input {
             margin-bottom: 10px;
             width: 400px !important;

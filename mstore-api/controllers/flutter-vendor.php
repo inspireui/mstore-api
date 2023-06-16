@@ -809,8 +809,7 @@ class FlutterVendor extends FlutterBaseController
             global $wpdb, $WCFM;
             $table_name = $wpdb->prefix . "wcfm_marketplace_reviews";
             $offset = ($page - 1) * $per_page;
-            $sql = "SELECT * FROM $table_name WHERE vendor_id = $store_id AND approved = $status ORDER BY created DESC LIMIT $per_page OFFSET $offset";
-
+            $sql = $wpdb->prepare("SELECT * FROM $table_name WHERE vendor_id = %s AND approved = $status ORDER BY created DESC LIMIT $per_page OFFSET $offset",$store_id);
             $reviews = $wpdb->get_results($sql);
             foreach ($reviews as $each_review) {
                 $wp_user_avatar_id = get_user_meta($each_review->author_id, 'wp_user_avatar', true);
