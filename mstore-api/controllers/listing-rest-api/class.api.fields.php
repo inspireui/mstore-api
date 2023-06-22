@@ -392,8 +392,57 @@ class FlutterTemplate extends WP_REST_Posts_Controller
             }
         ));
 
+        register_rest_route('wp/v2/dokan', '/orders', array(
+            'methods' => 'GET',
+            'callback' => array(
+                $this,
+                'get_dokan_orders'
+            ),
+            'permission_callback' => function () {
+                return true;
+            }
+        ));
     }
 
+
+    function get_dokan_orders($request)
+    {
+        $cookie = $request->get_header("User-Cookie");
+        if (isset($cookie) && $cookie != null) {
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
+                return $user_id;
+            }
+            $page = isset($request["page"]) ? $request["page"] : 1;
+            $page = $page - 1;
+            $limit = isset($request["limit"]) ? $request["limit"] : 10;
+            $page = $page * $limit;
+
+            global $wpdb;
+            $postmeta_tb = $wpdb->prefix . "postmeta";
+            $posts_tb = $wpdb->prefix . "posts";
+            $dokan_orders_tb = $wpdb->prefix . "dokan_orders";
+            $sql = $wpdb->prepare("SELECT $posts_tb.ID FROM $postmeta_tb INNER JOIN $posts_tb ON $postmeta_tb.post_id=$posts_tb.ID INNER JOIN $dokan_orders_tb ON $posts_tb.ID = $dokan_orders_tb.order_id WHERE $postmeta_tb.meta_key = '_customer_user' AND $postmeta_tb.meta_value=%s LIMIT $limit OFFSET $page",$user_id,$limit,$page);
+            $items = $wpdb->get_results($sql);
+            if(empty($items)){
+                return [];
+            }
+            $ids = [];
+            foreach ($items as $item) {
+                $ids[] = $item->ID;
+            }
+            add_filter( 'woocommerce_rest_check_permissions', '__return_true' );
+            $controller = new CUSTOM_WC_REST_Orders_Controller();
+            $req = new WP_REST_Request('GET');
+            $params = ['include'=>$ids,'page' => 1, 'per_page' => $limit, 'status'=>['any']];
+            $req->set_query_params($params);
+            $response = $controller->get_items($req);
+            remove_filter( 'woocommerce_rest_check_permissions', '__return_true' );
+            return $response->get_data();
+        }else{
+            return new WP_Error("no_permission",  "You need to add User-Cookie in header request", array('status' => 400));
+        }
+    }
 
     public function get_nearby_listings($request){
         $current_lat = $request['lat'];

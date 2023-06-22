@@ -376,7 +376,9 @@ class FlutterUserController extends FlutterBaseController
         $params = json_decode($json, TRUE);
         $usernameReq = $params["username"];
         $emailReq = $params["email"];
-        $role = $params["role"];
+        if(array_key_exists('role', $params)){
+            $role = $params["role"];
+        }
         if (isset($role)) {
             if (!in_array($role, ['subscriber', 'wcfm_vendor', 'seller', 'wcfm_delivery_boy', 'driver','owner'], true)) {
                 return parent::sendError("invalid_role", "Role is invalid.", 400);
