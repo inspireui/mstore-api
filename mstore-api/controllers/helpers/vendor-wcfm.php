@@ -976,7 +976,8 @@ class FlutterWCFMHelper
             $table_name = $wpdb->prefix . "posts";
             $sql = "SELECT * FROM `$table_name` ";
             $sql .= "WHERE `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` = 'publish' ";
-            $sql .= "AND `$table_name`.`post_author` = $store_id";
+            $sql .= "AND `$table_name`.`post_author` = %s";
+            $sql = $wpdb->prepare($sql,$store_id);
             $products = $wpdb->get_results($sql);
 
             $theme = wp_get_theme();

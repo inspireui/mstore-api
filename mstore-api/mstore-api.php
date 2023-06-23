@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 4.0.1
+ * Version: 4.0.2
  * Author: InspireUI
  * Author URI: https://inspireui.com
  *
@@ -41,7 +41,7 @@ include_once plugin_dir_path(__FILE__) . "controllers/flutter-thawani.php";
 
 class MstoreCheckOut
 {
-    public $version = '4.0.1';
+    public $version = '4.0.2';
 
     public function __construct()
     {
