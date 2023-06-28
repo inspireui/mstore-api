@@ -378,7 +378,7 @@ function customProductResponse($response, $object, $request)
     if (!empty($woocommerce_wpml->multi_currency) && !empty($woocommerce_wpml->settings['currencies_order'])) {
 
         $type = $response->data['type'];
-        $price = $response->data['price'];
+        $price = floatval($response->data['price']);
 
         foreach ($woocommerce_wpml->settings['currency_options'] as $key => $currency) {
             $rate = (float)$currency["rate"];
@@ -453,10 +453,10 @@ function customProductResponse($response, $object, $request)
                 $label = $attr->get_name();
             }
             $attrOptions = wc_get_product_terms($response->data['id'], $attr["name"]);
-            $attr["options"] = empty($attrOptions) ? array_map(function ($v){
+            $attrOptions = empty($attrOptions) ? array_map(function ($v){
                 return ['name'=>$v, 'slug' => $v];
             },$attr["options"]) : $attrOptions;
-            $attributesData[] = array_merge($attr->get_data(), ["label" => $label, "name" => urldecode($key)]);
+            $attributesData[] = array_merge($attr->get_data(), ["label" => $label, "name" => urldecode($key)], ['options' =>$attrOptions]);
         }
     }
     $response->data['attributesData'] = $attributesData;

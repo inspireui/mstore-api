@@ -75,7 +75,12 @@ class FlutterWCFMHelper
         $wcfm_vendors_json_arr['vendor_display_name'] = $wcfm_vendors_name;
         $wcfm_vendors_json_arr['vendor_shop_name'] = $WCFM->wcfm_vendor_support->wcfm_get_vendor_store_name_by_vendor($wcfm_vendors_id);
 
-        $store_user = wcfmmp_get_store(absint($wcfm_vendors_id));
+        if( class_exists('WCFMmp_Store')){
+            require_once(plugin_dir_path(__FILE__  ) . 'extensions/flutter-wcfmmp-store.php');
+            $store_user = new Flutter_WCFMmp_Store( absint($wcfm_vendors_id) );
+        }else{
+            $store_user = wcfmmp_get_store(absint($wcfm_vendors_id));
+        }
         $email = $store_user->get_email();
         $phone = $store_user->get_phone();
         $address = $store_user->get_address_string();

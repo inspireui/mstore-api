@@ -3034,7 +3034,7 @@ class VendorAdminWCFMHelper
         $sql .= " FROM {$table_name} INNER JOIN {$table_name2}";
         $sql .= " ON {$table_name}.ID = {$table_name2}.user_id";
         $sql .= " WHERE {$table_name2}.meta_key = '{$wpdb->prefix}capabilities' ";
-        $sql .= " AND {$table_name2}.meta_value LIKE '%wcfm_delivery_boy%' AND {$table_name}.display_name LIKE '%$search%'";
+        $sql .= " AND {$table_name2}.meta_value LIKE '%wcfm_delivery_boy%' AND ({$table_name}.display_name LIKE '%$search%' OR {$table_name}.user_login LIKE '%$search%' OR {$table_name}.user_email LIKE '%$search%')";
         $sql .= " ORDER BY {$table_name}.display_name";
 
 
