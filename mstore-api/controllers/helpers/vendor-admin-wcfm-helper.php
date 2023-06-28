@@ -3030,7 +3030,7 @@ class VendorAdminWCFMHelper
         $table_name = $wpdb->prefix . "users";
         $table_name2 = $wpdb->prefix . "usermeta";
         $search = sanitize_text_field($name);
-        $sql = "SELECT {$table_name}.ID, {$table_name}.display_name";
+        $sql = "SELECT {$table_name}.ID, {$table_name}.display_name, {$table_name}.user_login, {$table_name}.user_email";
         $sql .= " FROM {$table_name} INNER JOIN {$table_name2}";
         $sql .= " ON {$table_name}.ID = {$table_name2}.user_id";
         $sql .= " WHERE {$table_name2}.meta_key = '{$wpdb->prefix}capabilities' ";
@@ -3058,6 +3058,8 @@ class VendorAdminWCFMHelper
             $user_ids[] = [
                 "id" => $user->ID,
                 "name" => $user->display_name,
+                "user_email" => $user->user_email,
+                "user_login" => $user->user_login,
                 "profile_picture" => $profile_pic,
             ];
         }
