@@ -695,26 +695,28 @@ class FlutterVendor extends FlutterBaseController
                 foreach ($response->data['line_items'] as $item) {
                     $product_id = $item['product_id'];
                     $product = get_post($product_id);
-                    $product_author = $product->post_author;
-                    if (absint($product_author) != absint($user_id)) {
-                        continue;
-                    }
-                    $req->set_query_params(["id" => $product_id]);
-                    $res = $papi->get_item($req);
-                    if (is_wp_error($res)) {
-                        $item["product_data"] = null;
-                    } else {
-                        $item["product_data"] = $res->get_data();
-                    }
-                    if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
-                        $vendor_id = wcfm_get_vendor_id_by_post($product_id);
-                        if ($vendor_id != $user_id) {
+                    if($product){
+                        $product_author = $product->post_author;
+                        if (absint($product_author) != absint($user_id)) {
                             continue;
                         }
+                        $req->set_query_params(["id" => $product_id]);
+                        $res = $papi->get_item($req);
+                        if (is_wp_error($res)) {
+                            $item["product_data"] = null;
+                        } else {
+                            $item["product_data"] = $res->get_data();
+                        }
+                        if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
+                            $vendor_id = wcfm_get_vendor_id_by_post($product_id);
+                            if ($vendor_id != $user_id) {
+                                continue;
+                            }
+                        }
+                        $line_items[] = $item;
                     }
-                    $line_items[] = $item;
-                    $response->data['line_items'] = $line_items;
                 }
+                $response->data['line_items'] = $line_items;
                 $results[] = $response->get_data();
             }
         }

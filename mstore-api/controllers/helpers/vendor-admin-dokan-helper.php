@@ -370,7 +370,7 @@ class VendorAdminDokanHelper
                 for ($i = 0; $i < $count; $i++) {
                     $product_id = absint($order['line_items'][$i]['product_id']);
                     $image = wp_get_attachment_image_src(get_post_thumbnail_id($product_id));
-                    if (!is_null($image[0])) {
+                    if ($image && !is_null($image[0])) {
                         $order['line_items'][$i]['featured_image'] = $image[0];
                     }
                 }

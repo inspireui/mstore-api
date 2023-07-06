@@ -71,7 +71,7 @@ class FlutterPayStack extends FlutterBaseController
 		$callback_url = WC()->api_request_url( 'WC_Gateway_Paystack' );
 
 		$paystack_params = array(
-			'amount'       => $amount,
+			'amount'       => (int)$amount,
 			'email'        => $email,
 			'currency'     => $currency,
 			'reference'    => $txnref,
@@ -126,6 +126,7 @@ class FlutterPayStack extends FlutterBaseController
         $json = file_get_contents('php://input');
         $body = json_decode($json, TRUE);
         $_REQUEST['reference'] = sanitize_text_field($body['reference']);
+        $_REQUEST['paystack_txnref'] = sanitize_text_field($body['reference']);
 
         if (defined('WC_ABSPATH')) {
             // WC 3.6+ - Cart and other frontend functions are not included for REST requests.

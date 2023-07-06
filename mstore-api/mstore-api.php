@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 4.0.4
+ * Version: 4.0.5
  * Author: InspireUI
  * Author URI: https://inspireui.com
  *
@@ -42,7 +42,7 @@ include_once plugin_dir_path(__FILE__) . "controllers/flutter-expresspay.php";
 
 class MstoreCheckOut
 {
-    public $version = '4.0.4';
+    public $version = '4.0.5';
 
     public function __construct()
     {
@@ -55,7 +55,7 @@ class MstoreCheckOut
         add_action('template_redirect', 'flutter_prepare_checkout');
 
         include_once(ABSPATH . 'wp-admin/includes/plugin.php');
-        include_once(ABSPATH . 'wp-includes/pluggable.php');
+        //include_once(ABSPATH . 'wp-includes/pluggable.php');
 
         //migrate old versions to re-verify purchase code automatically
         verifyPurchaseCodeAuto();
