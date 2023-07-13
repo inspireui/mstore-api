@@ -43,7 +43,7 @@ class FlutterUserController extends FlutterBaseController
         register_rest_route($this->namespace, '/sign_up_2', array(
             array(
                 'methods' => 'POST',
-                'callback' => array($this, 'register_2'),
+                'callback' => array($this, 'register'),
                 'permission_callback' => function () {
                     return parent::checkApiPermission();
                 }
@@ -376,6 +376,10 @@ class FlutterUserController extends FlutterBaseController
         $params = json_decode($json, TRUE);
         $usernameReq = $params["username"];
         $emailReq = $params["email"];
+        $userPassReq = $params["user_pass"];
+        $userLoginReq = $params["user_login"];
+        $userEmailReq = $params["user_email"];
+
         if(array_key_exists('role', $params)){
             $role = $params["role"];
         }
@@ -384,13 +388,30 @@ class FlutterUserController extends FlutterBaseController
                 return parent::sendError("invalid_role", "Role is invalid.", 400);
             }
         }
-        $userPassReq = $params["user_pass"];
-        $userLoginReq = $params["user_login"];
-        $userEmailReq = $params["user_email"];
-
+        if( isset($params['dokan_enable_selling'])){
+			$dokan_enable_selling  =  $params['dokan_enable_selling'];
+		}
+        if(isset($params['wcfm_membership_application_status'])){
+			$wcfm_membership_application_status = $params['wcfm_membership_application_status'];
+		}
+    
         $username = sanitize_user($usernameReq);
-
         $email = sanitize_email($emailReq);
+
+        if ($username == $userEmailReq && $username == $userLoginReq) {
+            $is_email = is_email($username);
+            if ($is_email) {
+                $email = $username;
+                $user_name = explode("@", $email)[0];
+                $params["user_email"] = $email;
+                $params["user_login"] = $user_name;
+            } else {
+                $user_name = $username;
+                $params["user_login"] = $user_name;
+                $params["user_email"] = '';
+            }
+        }
+
         if (isset($params["seconds"])) {
             $seconds = (int)$params["seconds"];
         } else {
@@ -437,6 +458,16 @@ class FlutterUserController extends FlutterBaseController
             }
         }
         wp_new_user_notification($user_id, null, 'both');
+        if(isset( $wcfm_membership_application_status) &&  $wcfm_membership_application_status == 'pending'){
+            update_user_meta($user_id,'store_name', $user['display_name']);
+            update_user_meta($user_id,'temp_wcfm_membership', true);
+            global $WCFMvm;
+            $WCFMvm->send_approval_reminder_admin( $user_id );
+        }
+
+        if(isset($dokan_enable_selling) && $dokan_enable_selling == false){
+            update_user_meta($user_id,'dokan_enable_selling',$dokan_enable_selling);
+        }
         $cookie = generateCookieByUserId($user_id,  $seconds);
 
         return array(
@@ -445,111 +476,6 @@ class FlutterUserController extends FlutterBaseController
         );
     }
 
-
-    public function register_2()
-    {
-        $json = file_get_contents('php://input');
-        $params = json_decode($json, TRUE);
-        $usernameReq = $params["username"];
-        $emailReq = $params["email"];
-        $role = $params["role"];
-        if( isset($params['dokan_enable_selling'])){
-			$dokan_enable_selling  =  $params['dokan_enable_selling'];
-		}
-        if(isset($params['wcfm_membership_application_status'])){
-			$wcfm_membership_application_status = $params['wcfm_membership_application_status'];
-		}
-        if (isset($role)) {
-            if (!in_array($role, ['subscriber', 'wcfm_vendor', 'seller', 'wcfm_delivery_boy', 'driver','owner'], true)) {
-                return parent::sendError("invalid_role", "Role is invalid.", 400);
-            }
-        }
-        $userPassReq = $params["user_pass"];
-        $userLoginReq = $params["user_login"];
-        $userEmailReq = $params["user_email"];
-        $username = sanitize_user($usernameReq);
-
-        if ($username == $userEmailReq && $username == $userLoginReq) {
-            $is_email = is_email($username);
-            if ($is_email) {
-                $email = $username;
-                $user_name = explode("@", $email)[0];
-                $params["user_email"] = $email;
-                $params["user_login"] = $user_name;
-            } else {
-                $user_name = $username;
-                $params["user_login"] = $user_name;
-                $params["user_email"] = '';
-            }
-
-            if (!validate_username($user_name)) {
-                return parent::sendError("invalid_username", "Username is invalid.", 400);
-            }
-            if (username_exists($user_name)) {
-                return parent::sendError("existed_username", "Username already exists.", 400);
-            }
-            if (isset($email)) {
-                if (!is_email($email)) {
-                    return parent::sendError("invalid_email", "E-mail address is invalid.", 400);
-                }
-
-                if (email_exists($email)) {
-                    return parent::sendError("existed_email", "E-mail address is already in use.", 400);
-                }
-            }
-            if (!$userPassReq) {
-                $params["user_pass"] = wp_generate_password();
-            }
-        }
-
-        if (isset($params["seconds"])) {
-            $seconds = (int)$params["seconds"];
-        } else {
-            $seconds = 1209600;
-        }
-        $allowed_params = array('user_login', 'user_email', 'user_pass', 'display_name', 'user_nicename', 'user_url', 'nickname', 'first_name',
-            'last_name', 'description', 'rich_editing', 'user_registered', 'role', 'jabber', 'aim', 'yim',
-            'comment_shortcuts', 'admin_color', 'use_ssl', 'show_admin_bar_front',
-        );
-
-
-        $dataRequest = $params;
-        foreach ($dataRequest as $field => $value) {
-            if (in_array($field, $allowed_params)) {
-                $user[$field] = trim(sanitize_text_field($value));
-            }
-        }
-
-        $user['role'] = isset($params["role"]) ? sanitize_text_field($params["role"]) : get_option('default_role');
-        $user_id = wp_insert_user($user);
-
-        if (is_wp_error($user_id)) {
-            return parent::sendError($user_id->get_error_code(), $user_id->get_error_message(), 400);
-        } elseif (isset($params["phone"])) {
-            update_user_meta($user_id, 'billing_phone', $params["phone"]);
-            update_user_meta($user_id, 'registered_phone_number', $params["phone"]);
-        }
-        wp_new_user_notification($user_id, null, 'both');
-
-        if(isset( $wcfm_membership_application_status) &&  $wcfm_membership_application_status == 'pending'){
-            update_user_meta($user_id,'wcfm_membership_application_status',$wcfm_membership_application_status);
-            update_user_meta($user_id,'store_name', $user['display_name']);
-            update_user_meta($user_id,'temp_wcfm_membership', -1);
-            global $WCFMvm;
-            $WCFMvm->send_approval_reminder_admin( $user_id );
-        }
-
-        if(isset($dokan_enable_selling) && $dokan_enable_selling == false){
-            update_user_meta($user_id,'dokan_enable_selling',$dokan_enable_selling);
-        }
-
-        $cookie = generateCookieByUserId($user_id, $seconds);
-
-        return array(
-            "cookie" => $cookie,
-            "user_id" => $user_id,
-        );
-    }
 
     private function get_shipping_address($userId)
     {
