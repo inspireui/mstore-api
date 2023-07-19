@@ -682,6 +682,9 @@ class FlutterWoo extends FlutterBaseController
                 ];
             }
         }
+        if(count( $results) == 0){
+            return new WP_Error(400, 'No Shipping', array('required_shipping' => $required_shipping));
+        }
         return $results;
     }
 
