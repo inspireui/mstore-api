@@ -48,7 +48,7 @@ class MstoreCheckOut
     {
         define('MSTORE_CHECKOUT_VERSION', $this->version);
         define('MSTORE_PLUGIN_FILE', __FILE__);
-
+        
         /**
          * Prepare data before checkout by webview
          */
@@ -189,6 +189,7 @@ class MstoreCheckOut
         add_action('wp_enqueue_scripts', 'mstore_frontend_script');
         // Setup Ajax action hook
         add_action('wp_ajax_mstore_delete_json_file', array($this, 'mstore_delete_json_file'));
+        add_action('wp_ajax_mstore_delete_apple_file', array($this, 'mstore_delete_apple_file'));
         add_action('wp_ajax_mstore_update_limit_product', array($this, 'mstore_update_limit_product'));
         add_action('wp_ajax_mstore_update_firebase_server_key', array($this, 'mstore_update_firebase_server_key'));
         add_action('wp_ajax_mstore_update_new_order_title', array($this, 'mstore_update_new_order_title'));
@@ -218,6 +219,15 @@ class MstoreCheckOut
             $id = sanitize_text_field($_REQUEST['id']);
             $nonce = sanitize_text_field($_REQUEST['nonce']);
             FlutterUtils::delete_config_file($id, $nonce);
+        }else{
+            wp_send_json_error('No Permission',401);
+        }
+    }
+
+    function mstore_delete_apple_file(){
+        if(checkIsAdmin(get_current_user_id())){
+            $nonce = sanitize_text_field($_REQUEST['nonce']);
+            FlutterAppleSignInUtils::delete_config_file($nonce);
         }else{
             wp_send_json_error('No Permission',401);
         }

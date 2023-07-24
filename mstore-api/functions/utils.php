@@ -107,4 +107,72 @@ class FlutterUtils {
         return trailingslashit(FlutterUtils::get_json_folder()). "home_cache_".$lang.".json";
     }
 }
+
+class FlutterAppleSignInUtils {
+    static $folder_path = 'flutter_apple_sign_in';
+
+    public static function create_config_folder(){
+        $uploads_dir = wp_upload_dir();
+        $folder = trailingslashit($uploads_dir["basedir"]) . FlutterAppleSignInUtils::$folder_path;
+        if (!file_exists($folder)) {
+            mkdir($folder, 0755, true);
+        }
+    }
+
+    public static function get_config_file_path($file_name){
+        $path = FlutterAppleSignInUtils::$folder_path;
+        $uploads_dir = wp_upload_dir();
+        $folder = trailingslashit($uploads_dir["basedir"]) . $path;
+        $folder_path = realpath($folder);
+
+        return trailingslashit($folder_path). $file_name;
+    }
+
+    public static function upload_file_by_admin($file_to_upload) {
+        $file_name = $file_to_upload['name'];
+        preg_match_all('/AuthKey_[a-zA-Z0-9]+.p8/',$file_name, $output_array);
+        if (count($output_array) == 0) {
+            return 'You need to upload AuthKey_XXXX.p8 file';
+        }else{
+          $source      = $file_to_upload['tmp_name'];
+          $fileContent = file_get_contents($source);
+          //validate file content
+          preg_match_all('/-----BEGIN PRIVATE KEY-----.+-----END PRIVATE KEY-----/',$fileContent, $output_array);
+          if (count($output_array) == 0) {
+            return 'You need to upload AuthKey_XXXX.p8 file';
+          }else{
+            wp_upload_bits($file_name, null, file_get_contents($source)); 
+            $destination = FlutterAppleSignInUtils::get_config_file_path($file_name);
+            FlutterAppleSignInUtils::create_config_folder();
+            move_uploaded_file($source, $destination);
+            $key_id = str_replace(['AuthKey_','.p8'], '', $file_name);
+            update_option("mstore_apple_sign_in_file_name", $file_name);
+            update_option("mstore_apple_sign_in_key_id", $key_id);
+            return null;
+          }
+        }
+    }
+
+    public static function get_file_name(){
+        $file_name = get_option("mstore_apple_sign_in_file_name");
+        return $file_name;
+    }
+
+    public static function is_file_existed(){
+        $file_name = get_option("mstore_apple_sign_in_file_name");
+        return isset($file_name) && strlen($file_name) > 0;
+    }
+
+    public static function delete_config_file($nonce){
+        if (wp_verify_nonce($nonce, 'delete_config_apple_file')) {
+            $file_name = get_option("mstore_apple_sign_in_file_name");
+            $filePath =  FlutterAppleSignInUtils::get_config_file_path($file_name);
+            unlink($filePath);
+            update_option("mstore_apple_sign_in_file_name", "");
+            update_option("mstore_apple_sign_in_key_id", "");
+            echo "success";
+            die();
+        }
+    }
+}
 ?>

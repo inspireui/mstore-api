@@ -132,4 +132,26 @@ jQuery(document).ready(function ($) {
         })
         return false;
     })
+
+    $(document).on('change', "input[name='appleFileToUpload']", function () {
+        $("button[name='but_apple_sign_in_submit']").click();
+    })
+
+    $(document).on('click', '.mstore-delete-apple-file', function () {
+        var nonce = $(this).data('nonce');
+        $.ajax({
+            type: 'post',
+            url: MyAjax.ajaxurl,
+            data: {
+                action: 'mstore_delete_apple_file',
+                nonce: nonce
+            },
+            success: function (result) {
+                if (result == 'success') {
+                    location.reload();
+                }
+            }
+        })
+        return false;
+    })
 })
