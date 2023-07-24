@@ -1244,13 +1244,21 @@ class FlutterUserController extends FlutterBaseController
             return parent::sendError("plugin_not_found", "Please install  the  DIGITS: Wordpress Mobile Number Signup and Login  plugin", 400);
         }
 
+        define( 'REST_REQUEST', true );
         $this->mstore_digrest_set_variables();
-        
+        $userId = null;
+        add_filter('digits_user_created_response', function($data, $user_id){
+            $data['user_id'] = $user_id;
+            return $data;
+        },10, 2);
         $data = digits_create_user();
+        define( 'REST_REQUEST', false );
+        remove_filter('digits_user_created_response','__return_false', 10);
+
         if ($data['success'] === false) {
             return parent::sendError("invalid_data", explode("<br />",  $data['data']['msg'])[0], 400);
         } else {
-            $user_id = $data['data']['user_id'];
+            $user_id = $data['user_id'];
             $cookie = generateCookieByUserId($user_id);
             $user = get_userdata($user_id);
 
