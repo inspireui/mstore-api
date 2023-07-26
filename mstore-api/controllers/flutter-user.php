@@ -1,5 +1,6 @@
 <?php
 require_once(__DIR__ . '/flutter-base.php');
+require_once(__DIR__ . '/helpers/apple-sign-in-helper.php');
 
 class FlutterUserController extends FlutterBaseController
 {
@@ -787,6 +788,15 @@ class FlutterUserController extends FlutterBaseController
         $authorization_code = $params["authorization_code"];
         $firstName = $params["first_name"];
         $lastName = $params["last_name"];
+        $teamId = $params["team_id"];
+        $bundleId = $params["bundle_id"];
+        if(!FlutterAppleSignInUtils::is_file_existed()){
+            return parent::sendError("invalid_login", "You need to upload AuthKey_XXXX.p8 file to MStore Api plugin", 400);
+        }
+        $token = AppleSignInHelper::generate_token($bundleId,$teamId,$authorization_code);
+        if($token == false || is_wp_error($token)){
+            return is_wp_error($token) ? $token : parent::sendError("invalid_login",  "Invalid authorization_code", 400);
+        }
         $decoded = $this->jwtDecode($token);
         $user_email = $decoded["email"];
         if (!isset($user_email)) {

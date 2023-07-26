@@ -1,0 +1,14 @@
+{
+    "name": "inspireui/mstore-api",
+    "type": "wordpress-plugin",
+    "authors": [
+        {
+            "name": "InspireUI",
+            "email": "hi@inspireui.com"
+        }
+    ],
+    "require": {
+        "firebase/php-jwt": "^6.8",
+        "paragonie/sodium_compat": "^1.20"
+    }
+}

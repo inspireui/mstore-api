@@ -39,6 +39,9 @@ include_once plugin_dir_path(__FILE__) . "controllers/flutter-stripe.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-notification.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-thawani.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-expresspay.php";
+if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
+    require __DIR__ . '/vendor/autoload.php';
+}
 
 class MstoreCheckOut
 {
