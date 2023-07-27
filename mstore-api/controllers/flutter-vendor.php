@@ -656,72 +656,19 @@ class FlutterVendor extends FlutterBaseController
 
         $is_admin = checkIsAdmin($user_id);
 
-        $api = new WC_REST_Orders_V1_Controller();
-        $papi = new WC_REST_Products_Controller();
-        $req = new WP_REST_Request('GET');
-
-        $page = isset($request["page"]) ? $request["page"] : 1;
-        $page = $page - 1;
-        $limit = isset($request["per_page"]) ? $request["per_page"] : 10;
-        $page = $page * $limit;
-
-        $orders = [];
-        $results = [];
         if($is_admin){
-            global $wpdb;
-            $table_name = $wpdb->prefix . "posts";
-            $sql = "SELECT * FROM " . $table_name . " WHERE post_type LIKE 'shop_order'";
-            $sql .= " GROUP BY $table_name.`ID` ORDER BY $table_name.`ID` DESC LIMIT $limit OFFSET $page";
-            $orders = $wpdb->get_results($sql);
-        }else{
-            if (is_plugin_active('dokan-lite/dokan.php')) {
-                $order_count = dokan_get_seller_orders_number( ['seller_id'=>$user_id] );      
-                $args = ['offset'=>0, 'limit'=>$order_count];
-                $orders = dokan_get_seller_orders($user_id, $args);
+            $helper = new VendorAdminWooHelper();
+        }else if (is_plugin_active('dokan-lite/dokan.php')) {
+                $helper = new VendorAdminDokanHelper();
+            }else if(is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')){
+                $helper = new VendorAdminWCFMHelper();
+            }else{
+                $helper = new VendorAdminWooHelper();
             }
-    
-            if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
-                global $wpdb;
-                $table_name = $wpdb->prefix . "wcfm_marketplace_orders";
-                $orders = $wpdb->get_results("SELECT * FROM $table_name WHERE vendor_id = '$user_id' AND is_trashed != 1 ORDER BY order_id DESC LIMIT $page,$limit");
-            }
-        }
+        
+        $res =  $helper->flutter_get_orders($request, $user_id);
 
-        foreach ($orders as $item) {
-            $order = wc_get_order(isset($item->ID) ? $item->ID : (isset($item->order_id) ? $item->order_id : $item->id));
-            if ($order != false) {
-                $response = $api->prepare_item_for_response($order, $request);
-                $line_items = [];
-                foreach ($response->data['line_items'] as $item) {
-                    $product_id = $item['product_id'];
-                    $product = get_post($product_id);
-                    if($product){
-                        $product_author = $product->post_author;
-                        if (absint($product_author) != absint($user_id)) {
-                            continue;
-                        }
-                        $req->set_query_params(["id" => $product_id]);
-                        $res = $papi->get_item($req);
-                        if (is_wp_error($res)) {
-                            $item["product_data"] = null;
-                        } else {
-                            $item["product_data"] = $res->get_data();
-                        }
-                        if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
-                            $vendor_id = wcfm_get_vendor_id_by_post($product_id);
-                            if ($vendor_id != $user_id) {
-                                continue;
-                            }
-                        }
-                        $line_items[] = $item;
-                    }
-                }
-                $response->data['line_items'] = $line_items;
-                $results[] = $response->get_data();
-            }
-        }
-
-        return $results;
+        return $res->get_data()['response'];
     }
 
     public function flutter_get_nearby_stores($request)
