@@ -489,10 +489,14 @@ class VendorAdminWCFMHelper
                 if (is_bool($order)) {
                     continue;
                 }
+
                 $response = $api->prepare_item_for_response($order, $request);
                 $order = $response->get_data();
                 $count = count($order["line_items"]);
                 $order["product_count"] = $count;
+
+                $order = getCommissionOrderResponse($order, $user_id);
+
                 $line_items = array();
                 for ($i = 0; $i < $count; $i++) {
                     $product_id = absint(

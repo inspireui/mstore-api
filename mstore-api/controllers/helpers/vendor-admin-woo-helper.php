@@ -248,6 +248,7 @@ class VendorAdminWooHelper
             $order = $response->get_data();
             $count = count($order['line_items']);
             $order['product_count'] = $count;
+            $order = getCommissionOrderResponse($order, $user_id);
 
             for ($i = 0; $i < $count; $i++) {
                 $product_id = absint($order['line_items'][$i]['product_id']);

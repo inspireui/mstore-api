@@ -14,7 +14,8 @@ function verifyPurchaseCodeAuto(){
 function isPurchaseCodeVerified(){
     $random_key = get_option('mstore_active_random_key');
     $hash_code = get_option('mstore_active_hash_code');
-    return md5('inspire@123%$'.$random_key) == $hash_code;
+    $code = get_option('mstore_purchase_code_key');
+    return md5('inspire@123%$'.$random_key) == $hash_code && isset($code) && $code != false && strlen($code) > 0;
 }
 
 function verifyPurchaseCode($code)
@@ -126,7 +127,9 @@ function sendNotificationToUser($userId, $orderId, $previous_status, $next_statu
     $previous_status_label = wc_get_order_status_name( $previous_status );
     $next_status_label = wc_get_order_status_name( $next_status );
     
-    $message = str_replace("{{name}}", $user->display_name, $message);
+    if($user && $user->display_name){
+        $message = str_replace("{{name}}", $user->display_name, $message);
+    }
     $message = str_replace("{{orderId}}", $orderId, $message);
     $message = str_replace("{{prevStatus}}", $previous_status_label, $message);
     $message = str_replace("{{nextStatus}}", $next_status_label, $message);
@@ -325,7 +328,7 @@ function deactiveMStoreApi()
     $statusCode = wp_remote_retrieve_response_code($response);
     $success = $statusCode == 200;
     if ($success) {
-        update_option("mstore_purchase_code_key", "");
+        delete_option("mstore_purchase_code_key");
     } else {
         $body = wp_remote_retrieve_body($response);
         $body = json_decode($body, true);
@@ -651,5 +654,67 @@ function _pushNotificationOneSignal($user_id, $title, $message){
 function isNotificationEnabled($user_id){
     $is_on = get_user_meta($user_id, "mstore_notification_status", true);
     return  $is_on === "" || $is_on === "on";
+}
+
+function getCommissionOrderResponse($responseData, $vendor_id){
+    if(is_plugin_active(
+        "wc-multivendor-marketplace/wc-multivendor-marketplace.php"
+    )){
+        global $WCFM;
+        global $wpdb;
+
+        $order_id = $responseData['id'];
+        $order = wc_get_order($order_id);
+        $vendorEarnings = 0;
+        $adminFee = 0;
+
+        $is_admin = checkIsAdmin($vendor_id);
+        if($is_admin){
+            $commission = $WCFM->wcfm_vendor_support->wcfm_get_commission_by_order( $order->get_id() );
+            if( $commission ) {
+                $vendorEarnings = (float) $commission;
+        
+                $gross_sales  = (float) $order->get_total();
+                $total_refund = (float) $order->get_total_refunded();
+                //if( $admin_fee_mode || ( $marketplece == 'dokan' ) ) {
+                    $adminFee = $gross_sales - $total_refund - $commission;
+                //}
+            }
+            $responseData["vendor_earnings"] = $vendorEarnings;
+            $responseData["admin_fee"] = $adminFee;
+        }else{
+            $sql = "
+                SELECT GROUP_CONCAT(ID) as commission_ids,
+                GROUP_CONCAT(item_id) as order_item_ids,
+                SUM(commission_amount) as line_total,
+                SUM(total_commission) as total_commission,
+                SUM(item_total) as item_total,
+                SUM(item_sub_total) as item_sub_total,
+                    SUM(shipping) as shipping,
+                SUM(tax) as tax,
+                SUM(	shipping_tax_amount) as shipping_tax_amount,
+                SUM(	refunded_amount) as refunded_amount,
+                SUM(	discount_amount) as discount_amount
+                FROM {$wpdb->prefix}wcfm_marketplace_orders
+                WHERE order_id = %d
+                AND `vendor_id` = %d
+                AND `is_refunded` != 1";
+                $order_due = $wpdb->get_results( $wpdb->prepare( $sql, $order_id, $vendor_id ) );
+                if( !$order_due || !isset( $order_due[0] ) ){
+                    $responseData["vendor_earnings"] = 0;
+                    $responseData["admin_fee"] = 0;
+                    return $responseData;
+                }else{
+                    $gross_sale_order = $WCFM->wcfm_vendor_support->wcfm_get_gross_sales_by_vendor( $vendor_id, '', '', $order_id );
+                    $total = $order_due[0]->total_commission;
+                    $responseData["vendor_earnings"] = $total;
+                    $responseData["admin_fee"] = $gross_sale_order - $total;
+                }
+        }
+    }else{
+        $responseData["vendor_earnings"] = 0;
+        $responseData["admin_fee"] = 0;
+    }
+    return $responseData;
 }
 ?>
