@@ -255,10 +255,11 @@ if (isset($verified) && $verified == "1") {
         <?php
         if (isset($_POST['but_deactive'])) {
             $success = deactiveMStoreApi();
-            if ($success !== true) {
-                ?>
-                <p style="font-size: 16px;color: red;"><?php echo esc_attr($success); ?></p>
-                <?php
+            if (is_string($success)) {
+                echo "<script type='text/javascript'>
+                    console.log(".json_encode(esc_attr($success)).");
+                    alert(".json_encode(esc_attr($success)).")
+                </script>";
             } else {
                 echo "<script type='text/javascript'>
       location.reload();

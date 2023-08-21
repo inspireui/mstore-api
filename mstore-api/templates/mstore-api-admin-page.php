@@ -1,12 +1,6 @@
 <?php include_once(plugin_dir_path(dirname(__FILE__)) . 'functions/index.php'); ?>
 
-<!doctype html>
-<html <?php language_attributes(); ?> >
 <head>
-    <meta charset="<?php bloginfo('charset'); ?>">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="profile" href="http://gmpg.org/xfn/11">
-    <?php wp_head(); ?>
     <script src="https://cdn.tailwindcss.com"></script>
     <style type="text/tailwindcss">
         .mstore-input-class { 
@@ -26,7 +20,10 @@
     </style>
 </head>
 <body>
-
+<?php
+	wp_enqueue_script('my_script', plugins_url('assets/js/mstore-inspireui.js', MSTORE_PLUGIN_FILE), array('jquery'), '1.0.0', true);
+            wp_localize_script('my_script', 'MyAjax', array('ajaxurl' => admin_url('admin-ajax.php')));
+	?>
 <div class="container mx-auto p-5 bg-white">
     <h4 class="text-xl text-semibold">MStore API Settings</h4> <br/>
     <?php echo load_template(dirname(__FILE__) . '/admin/mstore-api-admin-dashboard.php'); ?>

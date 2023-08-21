@@ -80,7 +80,7 @@ class Flutter2C2P extends FlutterBaseController
             $eic = $data->eic;
 
             $order = wc_get_order($order_id);
-            if($order){
+            if($order && $data->respCode == '0000'){
                 $order->update_status('processing');                                        
                 $order->payment_complete();
                 $order->add_order_note('2C2P payment transaction successful.<br/>order_id: ' . $order_id . '<br/>transaction_ref: ' . $transaction_ref . '<br/>eci: ' . $eic . '<br/>transaction_datetime: ' . $transaction_datetime . '<br/>approval_code: ' . $approval_code);
@@ -101,27 +101,12 @@ class Flutter2C2P extends FlutterBaseController
         $amount = sanitize_text_field($body['amount']);
         $currency_code = sanitize_text_field($body['currency_code']);
         $return_url = sanitize_text_field($body['return_url']);
+        $backend_return_url = sanitize_text_field($body['backend_return_url']);
        
-        return $this->generate_token($order_id, $amount, $currency_code, $return_url);
+        return $this->generate_token($order_id, $amount, $currency_code, $return_url, $backend_return_url);
     }
 
-    private function generate_jwt_payload($merchant_id, $secret_key, $order_id, $amount, $currency_code, $return_url){
-        $domain = get_site_url();
-        $payload = array(
-            "merchantID" => $merchant_id,
-            "invoiceNo" => $order_id,
-            "description" => "Payment for order ".$order_id,
-            "amount" => $amount,
-            "currencyCode" => $currency_code,
-            "frontendReturnUrl" => $return_url,
-            "backendReturnUrl" => $domain."/wp-json/api/flutter_2c2p/payment_success"
-        );
-
-        $jwt = JWT::encode($payload, $secret_key, 'HS256');
-        return $jwt;
-    }
-
-    private function generate_token($order_id, $amount, $currency_code, $return_url){
+    private function generate_token($order_id, $amount, $currency_code, $return_url, $backend_return_url){
 
         $objWC_Gateway_2c2p = new WC_Gateway_2c2p();
 		$pg_2c2p_setting_values = $objWC_Gateway_2c2p->wc_2c2p_get_setting();
@@ -136,9 +121,22 @@ class Flutter2C2P extends FlutterBaseController
             $url = 'https://pgw.2c2p.com/payment/4.3/paymentToken';
         }
 
+        //generate payment token
+        $payload = array(
+            "merchantID" => $merchant_id,
+            "invoiceNo" => $order_id,
+            "description" => "Payment for order ".$order_id,
+            "amount" => $amount,
+            "currencyCode" => $currency_code,
+            "frontendReturnUrl" => $return_url,
+            "backendReturnUrl" => $backend_return_url ?? $domain."/wp-json/api/flutter_2c2p/payment_success"
+        );
+
+        $jwt = JWT::encode($payload, $secret_key, 'HS256');
+
         // Prepare the request data
         $requestData = array(
-            'payload' => $this->generate_jwt_payload($merchant_id, $secret_key, $order_id, $amount, $currency_code, $return_url),
+            'payload' => $jwt,
         );
 
         $curl = curl_init();

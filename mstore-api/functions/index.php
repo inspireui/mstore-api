@@ -331,8 +331,12 @@ function deactiveMStoreApi()
         delete_option("mstore_purchase_code_key");
     } else {
         $body = wp_remote_retrieve_body($response);
-        $body = json_decode($body, true);
-        return $body["error"];
+        if(is_array(json_decode($body, true))){
+            $body = json_decode($body, true);
+            return $body["error"];
+        }else{
+            return  $body;
+        }
     }
     return $success;
 }

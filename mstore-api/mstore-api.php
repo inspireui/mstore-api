@@ -180,17 +180,6 @@ class MstoreCheckOut
 
         register_activation_hook(__FILE__, array($this, 'create_custom_mstore_table'));
 
-
-        /**
-         * Register js file to theme
-         */
-        function mstore_frontend_script()
-        {
-            wp_enqueue_script('my_script', plugins_url('assets/js/mstore-inspireui.js', MSTORE_PLUGIN_FILE), array('jquery'), '1.0.0', true);
-            wp_localize_script('my_script', 'MyAjax', array('ajaxurl' => admin_url('admin-ajax.php')));
-        }
-
-        add_action('wp_enqueue_scripts', 'mstore_frontend_script');
         // Setup Ajax action hook
         add_action('wp_ajax_mstore_delete_json_file', array($this, 'mstore_delete_json_file'));
         add_action('wp_ajax_mstore_delete_apple_file', array($this, 'mstore_delete_apple_file'));
