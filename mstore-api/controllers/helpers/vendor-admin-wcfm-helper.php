@@ -448,21 +448,19 @@ class VendorAdminWCFMHelper
                 "SELECT * FROM " . $table_name . " WHERE vendor_id = $user_id AND is_trashed != 1";
 
             if (isset($request["status"])) {
-                $status =  sanitize_text_field($request["status"]);
-                $sql .= " AND order_status = '$status'";
+                $sql .= " AND order_status = %s";
             }
             if (isset($request["search"])) {
-                $search =  sanitize_text_field($request["search"]);
-                $sql .= " AND order_id LIKE '$search%'";
+                $sql .= " AND order_id LIKE %s";
             }
             if (isset($request['name'])) {
                 $results = [];
                 $table_name2 = $wpdb->prefix . "users";
-                $name =  sanitize_text_field($request['name']);
                 $sql2 = "SELECT {$table_name2}.ID";
                 $sql2 .= " FROM {$table_name2}";
-                $sql2 .= " WHERE {$table_name2}.display_name LIKE '%$name%'";
+                $sql2 .= " WHERE {$table_name2}.display_name LIKE %s";
                 $sql2 .= " ORDER BY {$table_name2}.display_name";
+                $sql2 = $wpdb->prepare($sql2, '%'.sanitize_text_field($request['name']).'%');
                 $users = $wpdb->get_results($sql2);
                 if (count($users) > 0) {
                     $user_str = array();
@@ -482,6 +480,16 @@ class VendorAdminWCFMHelper
                 }
             }
             $sql .= " GROUP BY $table_name.`order_id` ORDER BY $table_name.`order_id` DESC LIMIT $per_page OFFSET $page";
+            if (isset($request["status"]) && isset($request["search"])) {
+                $sql = $wpdb->prepare($sql, sanitize_text_field($request["status"]), sanitize_text_field($request["search"]).'%');
+            }else if (isset($request["status"]) && !isset($request["search"])) {
+                $sql = $wpdb->prepare($sql, sanitize_text_field($request["status"]));
+            }else if (!isset($request["status"]) && isset($request["search"])) {
+                $sql = $wpdb->prepare($sql,  sanitize_text_field($request["search"]).'%');
+            }else{
+                $sql = $wpdb->prepare($sql);
+            }
+            
             $items = $wpdb->get_results($sql);
 
             foreach ($items as $item) {
@@ -3033,15 +3041,15 @@ class VendorAdminWCFMHelper
         $results = [];
         $table_name = $wpdb->prefix . "users";
         $table_name2 = $wpdb->prefix . "usermeta";
-        $search = sanitize_text_field($name);
+
         $sql = "SELECT {$table_name}.ID, {$table_name}.display_name, {$table_name}.user_login, {$table_name}.user_email";
         $sql .= " FROM {$table_name} INNER JOIN {$table_name2}";
         $sql .= " ON {$table_name}.ID = {$table_name2}.user_id";
         $sql .= " WHERE {$table_name2}.meta_key = '{$wpdb->prefix}capabilities' ";
-        $sql .= " AND {$table_name2}.meta_value LIKE '%wcfm_delivery_boy%' AND ({$table_name}.display_name LIKE '%$search%' OR {$table_name}.user_login LIKE '%$search%' OR {$table_name}.user_email LIKE '%$search%')";
+        $sql .= " AND {$table_name2}.meta_value LIKE '%wcfm_delivery_boy%' AND ({$table_name}.display_name LIKE %s OR {$table_name}.user_login LIKE %s OR {$table_name}.user_email LIKE '%s)";
         $sql .= " ORDER BY {$table_name}.display_name";
 
-
+        $sql  = $wpdb->prepare($sql, '%'.sanitize_text_field($name).'%');
         $users = $wpdb->get_results($sql);
 
         if (count($users) == 0) {

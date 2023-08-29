@@ -347,14 +347,22 @@ class VendorAdminDokanHelper
             $sql = "SELECT * FROM " . $table_name . " WHERE seller_id = $user_id";
 
             if (isset($request['status'])) {
-                $status = sanitize_text_field($request['status']);
-                $sql .= " AND order_status = 'wc-$status'";
+                $sql .= " AND order_status = %s";
             }
             if (isset($request['search'])) {
-                $search = sanitize_text_field($request['search']);
-                $sql .= " AND order_id LIKE '$search%'";
+                $sql .= " AND order_id LIKE %s";
             }
             $sql .= " GROUP BY $table_name.`order_id` ORDER BY $table_name.`order_id` DESC LIMIT $per_page OFFSET $page";
+            if(isset($request['status']) && isset($request['search'])){
+                $sql = $wpdb->prepare($sql, 'wc-'.sanitize_text_field($request['status']), sanitize_text_field($request['search']).'%');
+            }else if(isset($request['status']) && !isset($request['search'])){
+                $sql = $wpdb->prepare($sql, 'wc-'.sanitize_text_field($request['status']));
+            }else  if(!isset($request['status']) && isset($request['search'])){
+                $sql = $wpdb->prepare($sql, sanitize_text_field($request['search']).'%');
+            }else{
+                $sql = $wpdb->prepare($sql);
+            }
+            
             $items = $wpdb->get_results($sql);
 
             foreach ($items as $item) {

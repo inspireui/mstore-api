@@ -127,6 +127,7 @@ class Flutter2C2P extends FlutterBaseController
             "invoiceNo" => $order_id,
             "description" => "Payment for order ".$order_id,
             "amount" => $amount,
+            "locale" => "th",
             "currencyCode" => $currency_code,
             "frontendReturnUrl" => $return_url,
             "backendReturnUrl" => $backend_return_url ?? $domain."/wp-json/api/flutter_2c2p/payment_success"
