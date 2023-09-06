@@ -636,13 +636,30 @@ class ProductManagementHelper
 					
                 }
 			
-                return new WP_REST_Response(
-                    [
-                        "status" => "success",
-                        "response" => $p,
-                    ],
-                    200
-                );
+                $controller = new CUSTOM_WC_REST_Products_Controller();
+                $req = new WP_REST_Request('GET');
+                $params = array('status' => 'published', 'include' => [$p['id']], 'page'=>1, 'per_page'=>10, 'lang'=>'en');
+                $req->set_query_params($params);
+
+                $response = $controller->get_items($req);
+                $pData = $response->get_data();
+                if(count($pData) > 0){
+                    return new WP_REST_Response(
+                        [
+                            "status" => "success",
+                            "response" => $pData[0],
+                        ],
+                        200
+                    );
+                }else{
+                    return new WP_REST_Response(
+                        [
+                            "status" => "success",
+                            "response" => $p,
+                        ],
+                        200
+                    );
+                }
             }
         } else {
             return $this->sendError(
