@@ -1,69 +1,8 @@
 
 <?php include_once(plugin_dir_path(dirname(dirname(__FILE__))) . 'functions/index.php'); ?>
-
-    <div class="wrap">
-        <div class="thanks">
-            <p>Thank you for installing Mstore API plugins.</p>
-            <?php
-            $verified = isPurchaseCodeVerified();
-            if (isset($verified) && $verified == "1") {
-                ?>
-                <p class="text-green-600">Your website have been license and all the API features are
-                    unlocked. </p>
-                <?php
-            }
-            ?>
-        </div>
-    </div>
 <?php
-$verified = isPurchaseCodeVerified();
-if (!isset($verified) || $verified === "" || $verified === false) {
-    ?>
-    <form action="" enctype="multipart/form-data" method="post" style="margin-bottom:50px">
-        <?php
-        if (isset($_POST['but_verify'])) {
-            $verified = verifyPurchaseCode(sanitize_text_field($_POST['code']));
 
-            if ($verified !== true) {
-                ?>
-                <p style="text-red-600"><?php echo esc_attr($verified); ?></p>
-                <?php
-            } else {
-                ?>
-                <p style="text-green-600">Your website have been license and all the API features are
-                    unlocked. </p>
-                <?php
-            }
-        }
-        ?>
-
-        <input type="text" class="mstore-input-class" placeholder="Enter Purchase Code" name="code">
-        <div>
-            <div class="text-xl font-semibold leading-normal text-gray-900">What is purchase code?</div>
-            <ul class="list-disc">
-                <li class="mt-2 text-sm text-gray-500 dark:text-gray-400">A purchase code is a license identifier which is issued with the item once a purchase has been made
-                    and included with your download.
-                </li>
-                <li class="mt-2 text-sm text-gray-500 dark:text-gray-400">One purchase code is used for one website only.</li>
-                <li class="mt-2 text-sm text-gray-500 dark:text-gray-400">It's required to active to unlock the API use to connect with the app.</li>
-            </ul>
-            <div class="text-xl font-semibold leading-normal text-gray-900">How can I get my purchase code? </div>
-            <ul class="list-disc">
-                <li class="mt-2 text-sm text-gray-500 dark:text-gray-400">Log into your Envato Market account.</li>
-                <li class="mt-2 text-sm text-gray-500 dark:text-gray-400">Hover the mouse over your username at the top of the screen.</li>
-                <li class="mt-2 text-sm text-gray-500 dark:text-gray-400">Click ‘Downloads’ from the drop-down menu.`</li>
-                <li class="mt-2 text-sm text-gray-500 dark:text-gray-400">Click ‘License certificate & purchase code’ (available as PDF or text file).</li>
-            </ul>
-
-<a href="https://help.market.envato.com/hc/en-us/articles/202822600-Where-Is-My-Purchase-Code-" class="font-medium text-green-600 hover:underline" target="_blank">https://help.market.envato.com/hc/en-us/articles/202822600-Where-Is-My-Purchase-Code-</a>
-        </div>
-        
-        <button type="submit"  name='but_verify' class="mstore-button-class">Verify</button>
-    </form>
-    <?php
-}
-
-if (isset($verified) && $verified == "1") {
+if (true) {
     ?>
     <div class="thanks">
         <p>This setting limit the number of product per category to use cache data in home
@@ -172,7 +111,7 @@ if (isset($verified) && $verified == "1") {
         ?>
     </form>
 
-    <p class="mt-5">This token is used for uploading the config files on FluxBuilder.</p>
+    <p class="mt-5">This token is used for uploading the config files on App Builder.</p>
     <form action="" method="post">
         <?php
             if (isset($_POST['but_generate'])) {
@@ -252,26 +191,7 @@ if (isset($verified) && $verified == "1") {
             ?>
         </p>
 
-        <?php
-        if (isset($_POST['but_deactive'])) {
-            $success = deactiveMStoreApi();
-            if (is_string($success)) {
-                echo "<script type='text/javascript'>
-                    console.log(".json_encode(esc_attr($success)).");
-                    alert(".json_encode(esc_attr($success)).")
-                </script>";
-            } else {
-                echo "<script type='text/javascript'>
-      location.reload();
-        </script>";
-            }
-        }
-        ?>
-
         <button type="submit" class="mstore-button-class" name='but_submit'>Save</button>
-        <button type="submit" class="mstore-button-class bg-red-700" name='but_deactive'
-                onclick="return confirm('Are you sure to deactivate the license on this domain?');">Deactivate License
-        </button>
     </form>
     <?php
 }

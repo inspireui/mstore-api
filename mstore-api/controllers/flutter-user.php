@@ -791,7 +791,7 @@ class FlutterUserController extends FlutterBaseController
         $teamId = $params["team_id"];
         $bundleId = $params["bundle_id"];
         if(!FlutterAppleSignInUtils::is_file_existed()){
-            return parent::sendError("invalid_login", "You need to upload AuthKey_XXXX.p8 file to MStore Api plugin", 400);
+            return parent::sendError("invalid_login", "You need to upload AuthKey_XXXX.p8 file to Mobile App Builder plugin", 400);
         }
         $token = AppleSignInHelper::generate_token($bundleId,$teamId,$authorization_code);
         if($token == false || is_wp_error($token)){

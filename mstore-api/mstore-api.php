@@ -1,13 +1,25 @@
-<?php
+<?php include_once('admin/functions/common.php');
+
 /**
- * Plugin Name: MStore API
- * Plugin URI: https://github.com/inspireui/mstore-api
- * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 4.0.7
- * Author: InspireUI
- * Author URI: https://inspireui.com
+ * The plugin bootstrap file
  *
- * Text Domain: MStore-Api
+ * This file is read by WordPress to generate the plugin information in the plugin
+ * admin area. This file also includes all of the dependencies used by the plugin,
+ * registers the activation and deactivation functions, and defines a function
+ * that starts the plugin.
+ *
+ * @link              https://inspireui.com
+ * @since             1.0.0
+ * @package           Mobile_App_Builder
+ *
+ * @wordpress-plugin
+ * Plugin Name:       Mobile App Builder
+ * Description:       Build mobile application with flutter
+ * Version:           1.0.0
+ * License:           GPL-2.0+
+ * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
+ * Text Domain:       mobile-app-builder
+ * Domain Path:       /languages
  */
 
 defined('ABSPATH') or wp_die('No script kiddies please!');
@@ -42,7 +54,7 @@ include_once plugin_dir_path(__FILE__) . "controllers/flutter-expresspay.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-2c2p.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-cc-avenue.php";
 
-if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
+if (is_readable(__DIR__ . '/vendor/autoload.php')) {
     require __DIR__ . '/vendor/autoload.php';
 }
 
@@ -54,7 +66,7 @@ class MstoreCheckOut
     {
         define('MSTORE_CHECKOUT_VERSION', $this->version);
         define('MSTORE_PLUGIN_FILE', __FILE__);
-        
+
         /**
          * Prepare data before checkout by webview
          */
@@ -180,7 +192,8 @@ class MstoreCheckOut
             }
         }
 
-        register_activation_hook(__FILE__, array($this, 'create_custom_mstore_table'));
+        register_activation_hook(__FILE__, array($this, 'activate_mobile_app_builder'));
+        register_deactivation_hook( __FILE__, array($this, 'deactivate_mobile_app_builder'));
 
         // Setup Ajax action hook
         add_action('wp_ajax_mstore_delete_json_file', array($this, 'mstore_delete_json_file'));
@@ -209,90 +222,92 @@ class MstoreCheckOut
         }
     }
 
-    function mstore_delete_json_file(){
-        if(checkIsAdmin(get_current_user_id())){
+    function mstore_delete_json_file()
+    {
+        if (checkIsAdmin(get_current_user_id())) {
             $id = sanitize_text_field($_REQUEST['id']);
             $nonce = sanitize_text_field($_REQUEST['nonce']);
             FlutterUtils::delete_config_file($id, $nonce);
-        }else{
-            wp_send_json_error('No Permission',401);
+        } else {
+            wp_send_json_error('No Permission', 401);
         }
     }
 
-    function mstore_delete_apple_file(){
-        if(checkIsAdmin(get_current_user_id())){
+    function mstore_delete_apple_file()
+    {
+        if (checkIsAdmin(get_current_user_id())) {
             $nonce = sanitize_text_field($_REQUEST['nonce']);
             FlutterAppleSignInUtils::delete_config_file($nonce);
-        }else{
-            wp_send_json_error('No Permission',401);
+        } else {
+            wp_send_json_error('No Permission', 401);
         }
     }
 
     function mstore_update_limit_product()
     {
         $nonce = sanitize_text_field($_REQUEST['nonce']);
-        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_limit_product')){
+        if (checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_limit_product')) {
             $limit = sanitize_text_field($_REQUEST['limit']);
             if (is_numeric($limit)) {
                 update_option("mstore_limit_product", intval($limit));
             }
-        }else{
-            wp_send_json_error('No Permission',401);
+        } else {
+            wp_send_json_error('No Permission', 401);
         }
     }
 
     function mstore_update_firebase_server_key()
     {
         $nonce = sanitize_text_field($_REQUEST['nonce']);
-        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_firebase_server_key')){
+        if (checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_firebase_server_key')) {
             $serverKey = sanitize_text_field($_REQUEST['serverKey']);
             update_option("mstore_firebase_server_key", $serverKey);
-        }else{
-            wp_send_json_error('No Permission',401);
+        } else {
+            wp_send_json_error('No Permission', 401);
         }
     }
 
     function mstore_update_new_order_title()
     {
         $nonce = sanitize_text_field($_REQUEST['nonce']);
-        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_new_order_title')){
+        if (checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_new_order_title')) {
             $title = sanitize_text_field($_REQUEST['title']);
             update_option("mstore_new_order_title", $title);
-        }else{
-            wp_send_json_error('No Permission',401);
+        } else {
+            wp_send_json_error('No Permission', 401);
         }
     }
 
     function mstore_update_new_order_message()
     {
         $nonce = sanitize_text_field($_REQUEST['nonce']);
-        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_new_order_message')){
+        if (checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_new_order_message')) {
             $message = sanitize_text_field($_REQUEST['message']);
             update_option("mstore_new_order_message", $message);
-        }else{
-            wp_send_json_error('No Permission',401);
+        } else {
+            wp_send_json_error('No Permission', 401);
         }
     }
 
     function mstore_update_status_order_title()
     {
         $nonce = sanitize_text_field($_REQUEST['nonce']);
-        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_status_order_title')){
+        if (checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_status_order_title')) {
             $title = sanitize_text_field($_REQUEST['title']);
             update_option("mstore_status_order_title", $title);
-        }else{
-            wp_send_json_error('No Permission',401);
+        } else {
+            wp_send_json_error('No Permission', 401);
         }
     }
 
     function mstore_update_status_order_message()
     {
         $nonce = sanitize_text_field($_REQUEST['nonce']);
-        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_status_order_message')){
+        if (checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_status_order_message')) {
             $message = sanitize_text_field($_REQUEST['message']);
             update_option("mstore_status_order_message", $message);
-        }else{
-            wp_send_json_error('No Permission',401);
+        } else {
+            wp_send_json_error('No Permission', 401);
         }
     }
 
@@ -309,13 +324,13 @@ class MstoreCheckOut
     }
 
     //new order or update order via API
-    function track_api_new_order($object,$request, $creating)
+    function track_api_new_order($object, $request, $creating)
     {
-        if($creating){
+        if ($creating) {
             trackNewOrder($object->id);
-        }else{
+        } else {
             $body = $request->get_body_params();
-            if(isset($body['status'])){
+            if (isset($body['status'])) {
                 sendNotificationForOrderStatusUpdated($object->id, $body['status']);
             }
         }
@@ -331,7 +346,6 @@ class MstoreCheckOut
                 wp_enqueue_style('mstore-order-custom-style');
             }
         }
-
     }
 
     function create_custom_mstore_table()
@@ -350,6 +364,22 @@ class MstoreCheckOut
             PRIMARY KEY  (id)
         ) $charset_collate;";
         $success = maybe_create_table($table_name, $sql);
+    }
+
+    function activate_mobile_app_builder()
+    {
+        $random_key = wp_generate_password($length = 12, $include_standard_special_chars = false);
+        update_option("mstore_active_random_key", $random_key);
+        update_option("mstore_active_hash_code", $random_key);
+        update_option("mstore_purchase_code_key", $random_key);
+        $this->create_custom_mstore_table();
+    }
+
+    function deactivate_mobile_app_builder() {
+        delete_option('mstore_purchase_code_key');
+        delete_option("mstore_active_random_key");
+        delete_option("mstore_active_hash_code");
+        delete_option("mstore_apple_sign_in_file_name");
     }
 }
 
@@ -393,7 +423,10 @@ add_action('rest_api_init', 'flutter_users_routes');
 add_action('rest_api_init', 'mstore_check_payment_routes');
 function mstore_check_payment_routes()
 {
-    register_rest_route('order', '/verify', array(
+    register_rest_route(
+        'order',
+        '/verify',
+        array(
             'methods' => 'GET',
             'callback' => 'mstore_check_payment',
             'permission_callback' => function () {
@@ -410,16 +443,24 @@ function mstore_check_payment()
 
 
 // Add menu Setting
-add_action('admin_menu', 'mstore_plugin_setup_menu');
+define('DIR_PATH', plugin_dir_path( __FILE__ ));
+add_action('admin_menu', 'admin_plugin_setup_menu');
 
-function mstore_plugin_setup_menu()
+function admin_plugin_setup_menu()
 {
-    add_menu_page('MStore Api', 'MStore Api', 'manage_options', 'mstore-plugin', 'mstore_init');
+    add_menu_page(APP_NAME, APP_NAME, 'manage_options', 'mobile-app-builder-plugin', 'admin_init', 'dashicons-art');
+	add_submenu_page('mobile-app-builder-plugin', 'Settings', 'Settings', 'manage_options', 'mobile-app-builder-plugin');
+	add_submenu_page('mobile-app-builder-plugin', 'Extension', 'Extension', 'manage_options', 'mobile-app-builder-plugin-ext', 'admin_ext');
 }
 
-function mstore_init()
+function admin_init()
 {
-    load_template(dirname(__FILE__) . '/templates/mstore-api-admin-page.php');
+    load_template(dirname(__FILE__) . '/admin/mobile-setting.php');
+}
+
+function admin_ext()
+{
+    load_template(dirname(__FILE__) . '/admin/index.php');
 }
 
 add_filter('woocommerce_rest_prepare_product_variation_object', 'custom_woocommerce_rest_prepare_product_variation_object', 20, 3);
@@ -429,33 +470,33 @@ add_filter('woocommerce_rest_prepare_product_cat', 'custom_product_category', 20
 
 function custom_product_category($response, $object, $request)
 {
-	 $id = $response->data['id'];
-	 $children = get_term_children($id, 'product_cat');
+    $id = $response->data['id'];
+    $children = get_term_children($id, 'product_cat');
 
-    if(empty( $children ) ) {
-    	$response->data['has_children'] = false;
-    }else{
-		$response->data['has_children'] = true;
-	}
+    if (empty($children)) {
+        $response->data['has_children'] = false;
+    } else {
+        $response->data['has_children'] = true;
+    }
     return $response;
 }
 
 function custom_product_review($response, $object, $request)
 {
-    if(is_plugin_active('woo-photo-reviews/woo-photo-reviews.php') || is_plugin_active('woocommerce-photo-reviews/woocommerce-photo-reviews.php')){
+    if (is_plugin_active('woo-photo-reviews/woo-photo-reviews.php') || is_plugin_active('woocommerce-photo-reviews/woocommerce-photo-reviews.php')) {
         $id = $response->data['id'];
-        $image_post_ids = get_comment_meta( $id, 'reviews-images', true );
+        $image_post_ids = get_comment_meta($id, 'reviews-images', true);
         $image_arr = array();
-        if(!is_string($image_post_ids)){
-            foreach( $image_post_ids as $image_post_id ) {
-                $image_arr[] = wp_get_attachment_thumb_url( $image_post_id );
+        if (!is_string($image_post_ids)) {
+            foreach ($image_post_ids as $image_post_id) {
+                $image_arr[] = wp_get_attachment_thumb_url($image_post_id);
             }
         }
         $response->data['images'] = $image_arr;
     }
     return $response;
 }
- 
+
 
 function flutter_custom_change_product_response($response, $object, $request)
 {
@@ -492,16 +533,16 @@ function custom_woocommerce_rest_prepare_product_variation_object($response, $ob
 function flutter_prepare_checkout()
 {
 
-    if(empty($_GET) && isset($_SERVER['HTTP_REFERER'])){
-		$url_components = parse_url($_SERVER['HTTP_REFERER']);
+    if (empty($_GET) && isset($_SERVER['HTTP_REFERER'])) {
+        $url_components = parse_url($_SERVER['HTTP_REFERER']);
         if (isset($url_components['query'])) {
             parse_str($url_components['query'], $params);
-            if(!empty($params)){
+            if (!empty($params)) {
                 $_GET = $params;
             }
         }
-	}
-    
+    }
+
     if (isset($_GET['mobile']) && isset($_GET['code'])) {
 
         $code = sanitize_text_field($_GET['code']);
@@ -520,56 +561,56 @@ function flutter_prepare_checkout()
         if (isset($data['token'])) {
             // Validate the cookie token
             $userId = validateCookieLogin($data['token']);
-            if(!is_wp_error($userId)){
+            if (!is_wp_error($userId)) {
                 if (isset($billing)) {
-                    if(isset($billing["first_name"]) && !empty($billing["first_name"])){
+                    if (isset($billing["first_name"]) && !empty($billing["first_name"])) {
                         update_user_meta($userId, 'billing_first_name', $billing["first_name"]);
                         update_user_meta($userId, 'shipping_first_name', $billing["first_name"]);
                     }
-                    if(isset($billing["last_name"]) && !empty($billing["last_name"])){
+                    if (isset($billing["last_name"]) && !empty($billing["last_name"])) {
                         update_user_meta($userId, 'billing_last_name', $billing["last_name"]);
                         update_user_meta($userId, 'shipping_last_name', $billing["last_name"]);
                     }
-                    if(isset($billing["company"]) && !empty($billing["company"])){
+                    if (isset($billing["company"]) && !empty($billing["company"])) {
                         update_user_meta($userId, 'billing_company', $billing["company"]);
                         update_user_meta($userId, 'shipping_company', $billing["company"]);
                     }
-                    if(isset($billing["address_1"]) && !empty($billing["address_1"])){
+                    if (isset($billing["address_1"]) && !empty($billing["address_1"])) {
                         update_user_meta($userId, 'billing_address_1', $billing["address_1"]);
                         update_user_meta($userId, 'shipping_address_1', $billing["address_1"]);
                     }
-                    if(isset($billing["address_2"]) && !empty($billing["address_2"])){
+                    if (isset($billing["address_2"]) && !empty($billing["address_2"])) {
                         update_user_meta($userId, 'billing_address_2', $billing["address_2"]);
                         update_user_meta($userId, 'shipping_address_2', $billing["address_2"]);
                     }
-                    if(isset($billing["city"]) && !empty($billing["city"])){
+                    if (isset($billing["city"]) && !empty($billing["city"])) {
                         update_user_meta($userId, 'billing_city', $billing["city"]);
                         update_user_meta($userId, 'shipping_city', $billing["city"]);
                     }
-                    if(isset($billing["state"]) && !empty($billing["state"])){
+                    if (isset($billing["state"]) && !empty($billing["state"])) {
                         update_user_meta($userId, 'billing_state', $billing["state"]);
                         update_user_meta($userId, 'shipping_state', $billing["state"]);
                     }
-                    if(isset($billing["postcode"]) && !empty($billing["postcode"])){
+                    if (isset($billing["postcode"]) && !empty($billing["postcode"])) {
                         update_user_meta($userId, 'billing_postcode', $billing["postcode"]);
                         update_user_meta($userId, 'shipping_postcode', $billing["postcode"]);
                     }
-                    if(isset($billing["country"]) && !empty($billing["country"])){
+                    if (isset($billing["country"]) && !empty($billing["country"])) {
                         update_user_meta($userId, 'billing_country', $billing["country"]);
                         update_user_meta($userId, 'shipping_country', $billing["country"]);
                     }
-                    if(isset($billing["email"]) && !empty($billing["email"])){
+                    if (isset($billing["email"]) && !empty($billing["email"])) {
                         update_user_meta($userId, 'billing_email', $billing["email"]);
                         update_user_meta($userId, 'shipping_email', $billing["email"]);
                     }
-                    if(isset($billing["phone"]) && !empty($billing["phone"])){
+                    if (isset($billing["phone"]) && !empty($billing["phone"])) {
                         update_user_meta($userId, 'billing_phone', $billing["phone"]);
                         update_user_meta($userId, 'shipping_phone', $billing["phone"]);
                     }
                 } else {
                     $billing = [];
                     $shipping = [];
-    
+
                     $billing["first_name"] = get_user_meta($userId, 'billing_first_name', true);
                     $billing["last_name"] = get_user_meta($userId, 'billing_last_name', true);
                     $billing["company"] = get_user_meta($userId, 'billing_company', true);
@@ -581,7 +622,7 @@ function flutter_prepare_checkout()
                     $billing["country"] = get_user_meta($userId, 'billing_country', true);
                     $billing["email"] = get_user_meta($userId, 'billing_email', true);
                     $billing["phone"] = get_user_meta($userId, 'billing_phone', true);
-    
+
                     $shipping["first_name"] = get_user_meta($userId, 'shipping_first_name', true);
                     $shipping["last_name"] = get_user_meta($userId, 'shipping_last_name', true);
                     $shipping["company"] = get_user_meta($userId, 'shipping_company', true);
@@ -593,7 +634,7 @@ function flutter_prepare_checkout()
                     $shipping["country"] = get_user_meta($userId, 'shipping_country', true);
                     $shipping["email"] = get_user_meta($userId, 'shipping_email', true);
                     $shipping["phone"] = get_user_meta($userId, 'shipping_phone', true);
-    
+
                     if (isset($billing["first_name"]) && !isset($shipping["first_name"])) {
                         $shipping = $billing;
                     }
@@ -601,13 +642,13 @@ function flutter_prepare_checkout()
                         $billing = $shipping;
                     }
                 }
-    
+
                 // Check user and authentication
                 $user = get_userdata($userId);
                 if ($user && (!is_user_logged_in() || get_current_user_id() != $userId)) {
                     wp_set_current_user($userId, $user->user_login);
                     wp_set_auth_cookie($userId);
-    
+
                     header("Refresh:0");
                 }
             }
@@ -636,7 +677,7 @@ function flutter_prepare_checkout()
                 $attributes = [];
                 if (isset($product["meta_data"])) {
                     foreach ($product["meta_data"] as $item) {
-                        if($item["value"] != null){
+                        if ($item["value"] != null) {
                             $attributes[strtolower($item["key"])] = $item["value"];
                         }
                     }
@@ -645,7 +686,7 @@ function flutter_prepare_checkout()
                 if (isset($product['addons'])) {
                     $_POST = $product['addons'];
                 }
-                
+
                 // Check the product variation
                 if (!empty($variationId)) {
                     $productVariable = new WC_Product_Variable($productId);
@@ -667,7 +708,6 @@ function flutter_prepare_checkout()
                     }
 
                     $woocommerce->cart->add_to_cart($productId, $quantity, 0, $attributes, $cart_item_data);
-
                 }
             }
 
@@ -761,14 +801,13 @@ function custom_woocommerce_rest_prepare_shop_order_object($response)
             $item["product_data"] = $res->get_data();
         }
         $line_items[] = $item;
-
     }
     $response->data['line_items'] = $line_items;
 
     // Get the value
-    $bacs_info = get_option( 'woocommerce_bacs_accounts');
+    $bacs_info = get_option('woocommerce_bacs_accounts');
     $response->data['bacs_info'] = $bacs_info;
-    
+
     return $response;
 }
 

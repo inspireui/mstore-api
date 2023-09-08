@@ -12,10 +12,8 @@ function verifyPurchaseCodeAuto(){
 }
 
 function isPurchaseCodeVerified(){
-    $random_key = get_option('mstore_active_random_key');
-    $hash_code = get_option('mstore_active_hash_code');
     $code = get_option('mstore_purchase_code_key');
-    return md5('inspire@123%$'.$random_key) == $hash_code && isset($code) && $code != false && strlen($code) > 0;
+    return $code != null;
 }
 
 function verifyPurchaseCode($code)
