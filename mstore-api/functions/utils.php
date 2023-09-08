@@ -119,6 +119,15 @@ class FlutterAppleSignInUtils {
         }
     }
 
+    public static function get_config_file_url(){
+        $file_name = FlutterAppleSignInUtils::get_file_name();
+        $filePath =  FlutterAppleSignInUtils::get_config_file_path($file_name);
+        $uploads_dir = wp_upload_dir();
+        $p_path = FlutterAppleSignInUtils::$folder_path;
+        $folder = trailingslashit($uploads_dir["baseurl"]) . $p_path;
+        return trailingslashit($folder) . $file_name;
+    }
+
     public static function get_config_file_path($file_name){
         $path = FlutterAppleSignInUtils::$folder_path;
         $uploads_dir = wp_upload_dir();
@@ -160,7 +169,8 @@ class FlutterAppleSignInUtils {
 
     public static function is_file_existed(){
         $file_name = get_option("mstore_apple_sign_in_file_name");
-        return isset($file_name) && strlen($file_name) > 0;
+        $filePath =  FlutterAppleSignInUtils::get_config_file_path($file_name);
+        return isset($file_name) && strlen($file_name) > 0 && file_exists($filePath);
     }
 
     public static function delete_config_file($nonce){

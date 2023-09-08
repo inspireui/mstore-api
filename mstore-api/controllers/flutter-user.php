@@ -471,6 +471,13 @@ class FlutterUserController extends FlutterBaseController
         wp_new_user_notification($user_id, null, 'both');
         if(isset( $wcfm_membership_application_status) &&  $wcfm_membership_application_status == 'pending'){
             update_user_meta($user_id,'store_name', $user['display_name']);
+
+            //fix crash when approve membership in WCFM
+            $wcfmvm_static_infos = (array) get_user_meta( $member_id, 'wcfmvm_static_infos', true );
+            $wcfmvm_static_infos['phone'] = $params["phone"] ?? '';
+            update_user_meta($user_id, 'wcfmvm_static_infos', $wcfmvm_static_infos);
+            update_user_meta($user_id, 'billing_phone', $params["phone"] ?? '');
+
             update_user_meta($user_id,'temp_wcfm_membership', true);
             global $WCFMvm;
             $WCFMvm->send_approval_reminder_admin( $user_id );

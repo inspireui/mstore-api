@@ -3,7 +3,7 @@ Contributors:      App Builder Ltd
 Tags:              appbuilder
 Requires at least: 4.4
 Tested up to:      6.3.0
-Stable tag:        4.0.7
+Stable tag:        4.0.9
 License:           GPL-2.0
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
