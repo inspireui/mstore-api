@@ -74,9 +74,11 @@ class MstoreCheckOut
 
         include_once(ABSPATH . 'wp-admin/includes/plugin.php');
         //include_once(ABSPATH . 'wp-includes/pluggable.php');
+        add_action('wp_ajax_mstore_delete_json_file', array($this, 'mstore_delete_json_file'));
+        add_action('wp_ajax_mstore_delete_apple_file', array($this, 'mstore_delete_apple_file'));
+        register_activation_hook(__FILE__, array($this, 'activate_mobile_app_builder'));
+        register_deactivation_hook( __FILE__, array($this, 'deactivate_mobile_app_builder'));
 
-        //migrate old versions to re-verify purchase code automatically
-        verifyPurchaseCodeAuto();
 
         if (is_plugin_active('woocommerce/woocommerce.php') == false) {
             return 0;
@@ -192,12 +194,7 @@ class MstoreCheckOut
             }
         }
 
-        register_activation_hook(__FILE__, array($this, 'activate_mobile_app_builder'));
-        register_deactivation_hook( __FILE__, array($this, 'deactivate_mobile_app_builder'));
-
         // Setup Ajax action hook
-        add_action('wp_ajax_mstore_delete_json_file', array($this, 'mstore_delete_json_file'));
-        add_action('wp_ajax_mstore_delete_apple_file', array($this, 'mstore_delete_apple_file'));
         add_action('wp_ajax_mstore_update_limit_product', array($this, 'mstore_update_limit_product'));
         add_action('wp_ajax_mstore_update_firebase_server_key', array($this, 'mstore_update_firebase_server_key'));
         add_action('wp_ajax_mstore_update_new_order_title', array($this, 'mstore_update_new_order_title'));
