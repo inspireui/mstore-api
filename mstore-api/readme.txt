@@ -43,6 +43,9 @@ Faster- Smoother- Closer.
 1. Click Install.
 
 == Changelog ==
+= 4.10.0 =
+  * Remove  verify purchase code
+
 = 4.0.9 =
   * Fix to register vendor account on Manager app
 

@@ -12,10 +12,11 @@ function verifyPurchaseCodeAuto(){
 }
 
 function isPurchaseCodeVerified(){
-    $random_key = get_option('mstore_active_random_key');
-    $hash_code = get_option('mstore_active_hash_code');
-    $code = get_option('mstore_purchase_code_key');
-    return md5('inspire@123%$'.$random_key) == $hash_code && isset($code) && $code != false && strlen($code) > 0;
+    return  true;
+    // $random_key = get_option('mstore_active_random_key');
+    // $hash_code = get_option('mstore_active_hash_code');
+    // $code = get_option('mstore_purchase_code_key');
+    // return md5('inspire@123%$'.$random_key) == $hash_code && isset($code) && $code != false && strlen($code) > 0;
 }
 
 function verifyPurchaseCode($code)
@@ -469,18 +470,37 @@ function customProductResponse($response, $object, $request)
     $response->data['attributesData'] = $attributesData;
 
     /* Product Add On */
-    $addOns = getAddOns($response->data["categories"]);
+    //$addOns = getAddOns($response->data["categories"]);
+    $add_ons_list =  [];
+    if(class_exists('WC_Product_Addons_Helper')){
+        $product_addons = WC_Product_Addons_Helper::get_product_addons( $response->data['id'], false );
+        //$add_ons_list  = count($addOns) == 0 ? $product_addons : array_merge($product_addons, $addOns);
+        $add_ons_list  = array_map(function($item){
+            if($item['type']  == 'file_upload' && !array_key_exists('options',$item)){
+                $item['options'] = [['label'=>'','price'=>'','image'=>'','price_type'=>'']];
+            }
+            return $item;
+        },$product_addons);
+    }
+    $add_ons_exists = false;
+
     $meta_data = $response->data['meta_data'];
     $new_meta_data = [];
     foreach ($meta_data as $meta_data_item) {
         if ($meta_data_item->get_data()["key"] == "_product_addons") {
-            if(class_exists('WC_Product_Addons_Helper')){
-                $product_addons = WC_Product_Addons_Helper::get_product_addons( $response->data['id'], false );
-                $meta_data_item->__set("value", count($addOns) == 0 ? $product_addons : array_merge($product_addons, $addOns));
-                $meta_data_item->apply_changes();
-            }
+            $add_ons_exists = true;
+            $meta_data_item->__set("value", $add_ons_list);
+            $meta_data_item->apply_changes();
         }
         $new_meta_data[] = $meta_data_item;
+    }
+    if(!$add_ons_exists && count($add_ons_list) > 0){
+        $new_meta_data[] = new WC_Meta_Data(
+            array(
+                'key'   =>'_product_addons',
+                'value' => $add_ons_list,
+            )
+        );
     }
     $response->data['meta_data'] = $new_meta_data;
 
