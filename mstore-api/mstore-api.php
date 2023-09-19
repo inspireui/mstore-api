@@ -42,7 +42,7 @@ include_once plugin_dir_path(__FILE__) . "controllers/flutter-expresspay.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-2c2p.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-cc-avenue.php";
 
-if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
+if (is_readable(__DIR__ . '/vendor/autoload.php')) {
     require __DIR__ . '/vendor/autoload.php';
 }
 
@@ -54,7 +54,7 @@ class MstoreCheckOut
     {
         define('MSTORE_CHECKOUT_VERSION', $this->version);
         define('MSTORE_PLUGIN_FILE', __FILE__);
-        
+
         /**
          * Prepare data before checkout by webview
          */
@@ -90,57 +90,57 @@ class MstoreCheckOut
         }
 
         /*
-		add_filter( 'woocommerce_get_item_data', 'display_custom_product_field_data_mstore_api', 10, 2 );
+        add_filter( 'woocommerce_get_item_data', 'display_custom_product_field_data_mstore_api', 10, 2 );
 
-		function display_custom_product_field_data_mstore_api( $cart_data, $cart_item ) {
+        function display_custom_product_field_data_mstore_api( $cart_data, $cart_item ) {
 
-			if( !empty( $cart_data ) ){
+            if( !empty( $cart_data ) ){
                 $custom_items = $cart_data;
 
-				$code = sanitize_text_field($_GET['code']) ?: get_transient( 'mstore_code' );
-				set_transient( 'mstore_code', $code, 600 );
+                $code = sanitize_text_field($_GET['code']) ?: get_transient( 'mstore_code' );
+                set_transient( 'mstore_code', $code, 600 );
 
-				global $wpdb;
-				$table_name = $wpdb->prefix . "mstore_checkout";
-				$item = $wpdb->get_row("SELECT * FROM $table_name WHERE code = '$code'");
-				if ($item) {
-					$data = json_decode(urldecode(base64_decode($item->order)), true);
-					$line_items = $data['line_items'];
-					$product_ids = [];
-					foreach($line_items as $line => $item) {
-						$product_ids[$item['product_id']] = $item;
-					}
+                global $wpdb;
+                $table_name = $wpdb->prefix . "mstore_checkout";
+                $item = $wpdb->get_row("SELECT * FROM $table_name WHERE code = '$code'");
+                if ($item) {
+                    $data = json_decode(urldecode(base64_decode($item->order)), true);
+                    $line_items = $data['line_items'];
+                    $product_ids = [];
+                    foreach($line_items as $line => $item) {
+                        $product_ids[$item['product_id']] = $item;
+                    }
 
-					if (array_key_exists($cart_item['product_id'], $product_ids)) {
-						if ($varian = $product_ids[$cart_item['product_id']]) {
-							$variations = $varian['meta_data'];
-							foreach($variations as $v => $f) {
-								preg_match('#\((.*?)\)#', $f['key'], $match);
-								$val = $match[1];
-								$custom_items[] = array(
-									'key'       => $f['value'],
-									'value'     => $val,
-									'display'   => $val,
-								);
-							}
-						}
-					}
-				}
+                    if (array_key_exists($cart_item['product_id'], $product_ids)) {
+                        if ($varian = $product_ids[$cart_item['product_id']]) {
+                            $variations = $varian['meta_data'];
+                            foreach($variations as $v => $f) {
+                                preg_match('#\((.*?)\)#', $f['key'], $match);
+                                $val = $match[1];
+                                $custom_items[] = array(
+                                    'key'       => $f['value'],
+                                    'value'     => $val,
+                                    'display'   => $val,
+                                );
+                            }
+                        }
+                    }
+                }
 
-			    return $custom_items;
+                return $custom_items;
             }
             return $cart_data;
-		}
+        }
 
 
-		add_action( 'woocommerce_before_calculate_totals', 'add_custom_price_mstore_api' );
+        add_action( 'woocommerce_before_calculate_totals', 'add_custom_price_mstore_api' );
 
-		function add_custom_price_mstore_api( $cart_object ) {
-			foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
-				$add_price = 0;
-				if ($variations = $cart_item['variation']) {
-					foreach($variations as $v => $f) {
-						preg_match('#\((.*?)\)#', $v, $match);
+        function add_custom_price_mstore_api( $cart_object ) {
+            foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
+                $add_price = 0;
+                if ($variations = $cart_item['variation']) {
+                    foreach($variations as $v => $f) {
+                        preg_match('#\((.*?)\)#', $v, $match);
                         if(is_array($match) && array_key_exists(1,$match)){
                             $val = $match[1];
                             $cents = filter_var($val, FILTER_SANITIZE_NUMBER_INT);
@@ -148,12 +148,12 @@ class MstoreCheckOut
                                 $add_price += floatval($cents / 100);
                             }
                         }
-					}
-				}
-				$new_price = $cart_item['data']->get_price() + $add_price;
-				$cart_item['data']->set_price($new_price);   
-			}
-		}
+                    }
+                }
+                $new_price = $cart_item['data']->get_price() + $add_price;
+                $cart_item['data']->set_price($new_price);   
+            }
+        }
         */
 
         add_action('wp_print_scripts', array($this, 'handle_received_order_page'));
@@ -209,90 +209,92 @@ class MstoreCheckOut
         }
     }
 
-    function mstore_delete_json_file(){
-        if(checkIsAdmin(get_current_user_id())){
+    function mstore_delete_json_file()
+    {
+        if (checkIsAdmin(get_current_user_id())) {
             $id = sanitize_text_field($_REQUEST['id']);
             $nonce = sanitize_text_field($_REQUEST['nonce']);
             FlutterUtils::delete_config_file($id, $nonce);
-        }else{
-            wp_send_json_error('No Permission',401);
+        } else {
+            wp_send_json_error('No Permission', 401);
         }
     }
 
-    function mstore_delete_apple_file(){
-        if(checkIsAdmin(get_current_user_id())){
+    function mstore_delete_apple_file()
+    {
+        if (checkIsAdmin(get_current_user_id())) {
             $nonce = sanitize_text_field($_REQUEST['nonce']);
             FlutterAppleSignInUtils::delete_config_file($nonce);
-        }else{
-            wp_send_json_error('No Permission',401);
+        } else {
+            wp_send_json_error('No Permission', 401);
         }
     }
 
     function mstore_update_limit_product()
     {
         $nonce = sanitize_text_field($_REQUEST['nonce']);
-        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_limit_product')){
+        if (checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_limit_product')) {
             $limit = sanitize_text_field($_REQUEST['limit']);
             if (is_numeric($limit)) {
                 update_option("mstore_limit_product", intval($limit));
             }
-        }else{
-            wp_send_json_error('No Permission',401);
+        } else {
+            wp_send_json_error('No Permission', 401);
         }
     }
 
     function mstore_update_firebase_server_key()
     {
         $nonce = sanitize_text_field($_REQUEST['nonce']);
-        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_firebase_server_key')){
+        if (checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_firebase_server_key')) {
             $serverKey = sanitize_text_field($_REQUEST['serverKey']);
             update_option("mstore_firebase_server_key", $serverKey);
-        }else{
-            wp_send_json_error('No Permission',401);
+        } else {
+            wp_send_json_error('No Permission', 401);
         }
     }
 
     function mstore_update_new_order_title()
     {
         $nonce = sanitize_text_field($_REQUEST['nonce']);
-        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_new_order_title')){
+        if (checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_new_order_title')) {
             $title = sanitize_text_field($_REQUEST['title']);
             update_option("mstore_new_order_title", $title);
-        }else{
-            wp_send_json_error('No Permission',401);
+        } else {
+            wp_send_json_error('No Permission', 401);
         }
     }
 
     function mstore_update_new_order_message()
     {
         $nonce = sanitize_text_field($_REQUEST['nonce']);
-        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_new_order_message')){
+        if (checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_new_order_message')) {
             $message = sanitize_text_field($_REQUEST['message']);
             update_option("mstore_new_order_message", $message);
-        }else{
-            wp_send_json_error('No Permission',401);
+        } else {
+            wp_send_json_error('No Permission', 401);
         }
     }
 
     function mstore_update_status_order_title()
     {
         $nonce = sanitize_text_field($_REQUEST['nonce']);
-        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_status_order_title')){
+        if (checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_status_order_title')) {
             $title = sanitize_text_field($_REQUEST['title']);
             update_option("mstore_status_order_title", $title);
-        }else{
-            wp_send_json_error('No Permission',401);
+        } else {
+            wp_send_json_error('No Permission', 401);
         }
     }
 
     function mstore_update_status_order_message()
     {
         $nonce = sanitize_text_field($_REQUEST['nonce']);
-        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_status_order_message')){
+        if (checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_status_order_message')) {
             $message = sanitize_text_field($_REQUEST['message']);
             update_option("mstore_status_order_message", $message);
-        }else{
-            wp_send_json_error('No Permission',401);
+        } else {
+            wp_send_json_error('No Permission', 401);
         }
     }
 
@@ -309,13 +311,13 @@ class MstoreCheckOut
     }
 
     //new order or update order via API
-    function track_api_new_order($object,$request, $creating)
+    function track_api_new_order($object, $request, $creating)
     {
-        if($creating){
+        if ($creating) {
             trackNewOrder($object->id);
-        }else{
+        } else {
             $body = $request->get_body_params();
-            if(isset($body['status'])){
+            if (isset($body['status'])) {
                 sendNotificationForOrderStatusUpdated($object->id, $body['status']);
             }
         }
@@ -393,7 +395,10 @@ add_action('rest_api_init', 'flutter_users_routes');
 add_action('rest_api_init', 'mstore_check_payment_routes');
 function mstore_check_payment_routes()
 {
-    register_rest_route('order', '/verify', array(
+    register_rest_route(
+        'order',
+        '/verify',
+        array(
             'methods' => 'GET',
             'callback' => 'mstore_check_payment',
             'permission_callback' => function () {
@@ -429,33 +434,33 @@ add_filter('woocommerce_rest_prepare_product_cat', 'custom_product_category', 20
 
 function custom_product_category($response, $object, $request)
 {
-	 $id = $response->data['id'];
-	 $children = get_term_children($id, 'product_cat');
+    $id = $response->data['id'];
+    $children = get_term_children($id, 'product_cat');
 
-    if(empty( $children ) ) {
-    	$response->data['has_children'] = false;
-    }else{
-		$response->data['has_children'] = true;
-	}
+    if (empty($children)) {
+        $response->data['has_children'] = false;
+    } else {
+        $response->data['has_children'] = true;
+    }
     return $response;
 }
 
 function custom_product_review($response, $object, $request)
 {
-    if(is_plugin_active('woo-photo-reviews/woo-photo-reviews.php') || is_plugin_active('woocommerce-photo-reviews/woocommerce-photo-reviews.php')){
+    if (is_plugin_active('woo-photo-reviews/woo-photo-reviews.php') || is_plugin_active('woocommerce-photo-reviews/woocommerce-photo-reviews.php')) {
         $id = $response->data['id'];
-        $image_post_ids = get_comment_meta( $id, 'reviews-images', true );
+        $image_post_ids = get_comment_meta($id, 'reviews-images', true);
         $image_arr = array();
-        if(!is_string($image_post_ids)){
-            foreach( $image_post_ids as $image_post_id ) {
-                $image_arr[] = wp_get_attachment_thumb_url( $image_post_id );
+        if (!is_string($image_post_ids)) {
+            foreach ($image_post_ids as $image_post_id) {
+                $image_arr[] = wp_get_attachment_thumb_url($image_post_id);
             }
         }
         $response->data['images'] = $image_arr;
     }
     return $response;
 }
- 
+
 
 function flutter_custom_change_product_response($response, $object, $request)
 {
@@ -480,7 +485,7 @@ function custom_woocommerce_rest_prepare_product_variation_object($response, $ob
         $price = $response->data['price'];
 
         foreach ($woocommerce_wpml->settings['currency_options'] as $key => $currency) {
-            $rate = (float)$currency["rate"];
+            $rate = (float) $currency["rate"];
             $response->data['multi-currency-prices'][$key]['price'] = $rate == 0 ? $price : sprintf("%.2f", $price * $rate);
         }
     }
@@ -492,16 +497,16 @@ function custom_woocommerce_rest_prepare_product_variation_object($response, $ob
 function flutter_prepare_checkout()
 {
 
-    if(empty($_GET) && isset($_SERVER['HTTP_REFERER'])){
-		$url_components = parse_url($_SERVER['HTTP_REFERER']);
+    if (empty($_GET) && isset($_SERVER['HTTP_REFERER'])) {
+        $url_components = parse_url($_SERVER['HTTP_REFERER']);
         if (isset($url_components['query'])) {
             parse_str($url_components['query'], $params);
-            if(!empty($params)){
+            if (!empty($params)) {
                 $_GET = $params;
             }
         }
-	}
-    
+    }
+
     if (isset($_GET['mobile']) && isset($_GET['code'])) {
 
         $code = sanitize_text_field($_GET['code']);
@@ -520,56 +525,56 @@ function flutter_prepare_checkout()
         if (isset($data['token'])) {
             // Validate the cookie token
             $userId = validateCookieLogin($data['token']);
-            if(!is_wp_error($userId)){
+            if (!is_wp_error($userId)) {
                 if (isset($billing)) {
-                    if(isset($billing["first_name"]) && !empty($billing["first_name"])){
+                    if (isset($billing["first_name"]) && !empty($billing["first_name"])) {
                         update_user_meta($userId, 'billing_first_name', $billing["first_name"]);
                         update_user_meta($userId, 'shipping_first_name', $billing["first_name"]);
                     }
-                    if(isset($billing["last_name"]) && !empty($billing["last_name"])){
+                    if (isset($billing["last_name"]) && !empty($billing["last_name"])) {
                         update_user_meta($userId, 'billing_last_name', $billing["last_name"]);
                         update_user_meta($userId, 'shipping_last_name', $billing["last_name"]);
                     }
-                    if(isset($billing["company"]) && !empty($billing["company"])){
+                    if (isset($billing["company"]) && !empty($billing["company"])) {
                         update_user_meta($userId, 'billing_company', $billing["company"]);
                         update_user_meta($userId, 'shipping_company', $billing["company"]);
                     }
-                    if(isset($billing["address_1"]) && !empty($billing["address_1"])){
+                    if (isset($billing["address_1"]) && !empty($billing["address_1"])) {
                         update_user_meta($userId, 'billing_address_1', $billing["address_1"]);
                         update_user_meta($userId, 'shipping_address_1', $billing["address_1"]);
                     }
-                    if(isset($billing["address_2"]) && !empty($billing["address_2"])){
+                    if (isset($billing["address_2"]) && !empty($billing["address_2"])) {
                         update_user_meta($userId, 'billing_address_2', $billing["address_2"]);
                         update_user_meta($userId, 'shipping_address_2', $billing["address_2"]);
                     }
-                    if(isset($billing["city"]) && !empty($billing["city"])){
+                    if (isset($billing["city"]) && !empty($billing["city"])) {
                         update_user_meta($userId, 'billing_city', $billing["city"]);
                         update_user_meta($userId, 'shipping_city', $billing["city"]);
                     }
-                    if(isset($billing["state"]) && !empty($billing["state"])){
+                    if (isset($billing["state"]) && !empty($billing["state"])) {
                         update_user_meta($userId, 'billing_state', $billing["state"]);
                         update_user_meta($userId, 'shipping_state', $billing["state"]);
                     }
-                    if(isset($billing["postcode"]) && !empty($billing["postcode"])){
+                    if (isset($billing["postcode"]) && !empty($billing["postcode"])) {
                         update_user_meta($userId, 'billing_postcode', $billing["postcode"]);
                         update_user_meta($userId, 'shipping_postcode', $billing["postcode"]);
                     }
-                    if(isset($billing["country"]) && !empty($billing["country"])){
+                    if (isset($billing["country"]) && !empty($billing["country"])) {
                         update_user_meta($userId, 'billing_country', $billing["country"]);
                         update_user_meta($userId, 'shipping_country', $billing["country"]);
                     }
-                    if(isset($billing["email"]) && !empty($billing["email"])){
+                    if (isset($billing["email"]) && !empty($billing["email"])) {
                         update_user_meta($userId, 'billing_email', $billing["email"]);
                         update_user_meta($userId, 'shipping_email', $billing["email"]);
                     }
-                    if(isset($billing["phone"]) && !empty($billing["phone"])){
+                    if (isset($billing["phone"]) && !empty($billing["phone"])) {
                         update_user_meta($userId, 'billing_phone', $billing["phone"]);
                         update_user_meta($userId, 'shipping_phone', $billing["phone"]);
                     }
                 } else {
                     $billing = [];
                     $shipping = [];
-    
+
                     $billing["first_name"] = get_user_meta($userId, 'billing_first_name', true);
                     $billing["last_name"] = get_user_meta($userId, 'billing_last_name', true);
                     $billing["company"] = get_user_meta($userId, 'billing_company', true);
@@ -581,7 +586,7 @@ function flutter_prepare_checkout()
                     $billing["country"] = get_user_meta($userId, 'billing_country', true);
                     $billing["email"] = get_user_meta($userId, 'billing_email', true);
                     $billing["phone"] = get_user_meta($userId, 'billing_phone', true);
-    
+
                     $shipping["first_name"] = get_user_meta($userId, 'shipping_first_name', true);
                     $shipping["last_name"] = get_user_meta($userId, 'shipping_last_name', true);
                     $shipping["company"] = get_user_meta($userId, 'shipping_company', true);
@@ -593,7 +598,7 @@ function flutter_prepare_checkout()
                     $shipping["country"] = get_user_meta($userId, 'shipping_country', true);
                     $shipping["email"] = get_user_meta($userId, 'shipping_email', true);
                     $shipping["phone"] = get_user_meta($userId, 'shipping_phone', true);
-    
+
                     if (isset($billing["first_name"]) && !isset($shipping["first_name"])) {
                         $shipping = $billing;
                     }
@@ -601,13 +606,13 @@ function flutter_prepare_checkout()
                         $billing = $shipping;
                     }
                 }
-    
+
                 // Check user and authentication
                 $user = get_userdata($userId);
                 if ($user && (!is_user_logged_in() || get_current_user_id() != $userId)) {
                     wp_set_current_user($userId, $user->user_login);
                     wp_set_auth_cookie($userId);
-    
+
                     header("Refresh:0");
                 }
             }
@@ -636,7 +641,7 @@ function flutter_prepare_checkout()
                 $attributes = [];
                 if (isset($product["meta_data"])) {
                     foreach ($product["meta_data"] as $item) {
-                        if($item["value"] != null){
+                        if ($item["value"] != null) {
                             $attributes[strtolower($item["key"])] = $item["value"];
                         }
                     }
@@ -645,7 +650,7 @@ function flutter_prepare_checkout()
                 if (isset($product['addons'])) {
                     $_POST = $product['addons'];
                 }
-                
+
                 // Check the product variation
                 if (!empty($variationId)) {
                     $productVariable = new WC_Product_Variable($productId);
@@ -766,9 +771,9 @@ function custom_woocommerce_rest_prepare_shop_order_object($response)
     $response->data['line_items'] = $line_items;
 
     // Get the value
-    $bacs_info = get_option( 'woocommerce_bacs_accounts');
+    $bacs_info = get_option('woocommerce_bacs_accounts');
     $response->data['bacs_info'] = $bacs_info;
-    
+
     return $response;
 }
 
@@ -782,7 +787,8 @@ function mstore_register_order_refund_requested_order_status()
         'show_in_admin_all_list' => true,
         'exclude_from_search' => false,
         'label_count' => _n_noop('Refund requested <span class="count">(%s)</span>', 'Refund requested <span class="count">(%s)</span>')
-    ));
+    )
+    );
 }
 
 add_action('init', 'mstore_register_order_refund_requested_order_status');
@@ -817,3 +823,36 @@ function custom_status_bulk_edit($actions)
 }
 
 add_filter('bulk_actions-edit-shop_order', 'custom_status_bulk_edit', 20, 1);
+
+add_action('rest_api_init', 'get_promptpay_qrcode_routes');
+function get_promptpay_qrcode_routes()
+{
+    register_rest_route(
+        'promptpay',
+        '/detail' . '/(?P<id>[\d]+)',
+        array(
+            'methods' => 'GET',
+            'callback' => function ($request) {
+                $available_payment_methods = WC()->payment_gateways()->payment_gateways();
+                $paymentMethod = $available_payment_methods['thai-promptpay-easy'];
+                $order = wc_get_order($request['id']);
+                $thank_msg = $paymentMethod->thank_msg;
+                $promptpay_id = $paymentMethod->promptpay_id;
+                $promptpay_type = $paymentMethod->promptpay_type;
+                $promptpay_name = $paymentMethod->promptpay_name;
+                $include_price = $paymentMethod->include_price;
+                $image_url = get_site_url() . "/wp-content/plugins/thai-promptpay-payment-easy-gateway-plugin/images/promptpay_qrcode/promptpay-qr-l.php?type=$promptpay_type&promptpay_id=$promptpay_id";
+
+                if ($include_price == 'yes') {
+                    $price = $order->get_total();
+                    $image_url .= "&price=$price&p=1";
+                }
+
+                return ['thank_msg' => $thank_msg, 'qrcode_url' => $image_url, 'promptpay_id' => $promptpay_id, 'promptpay_name' => $promptpay_name, 'promptpay_type' => $paymentMethod->promptpay_type_name[$promptpay_type]];
+            },
+            'permission_callback' => function () {
+                return true;
+            },
+        )
+    );
+}
