@@ -1242,6 +1242,7 @@ class FlutterWoo extends FlutterBaseController
         $errMsg = null;
         if(isset($meta_arr['ihc_mb_type']) && $meta_arr['ihc_mb_type'] == 'block'){
             $errMsg = 'This item is blocked';
+            return parent::sendError('blocked', $errMsg, 401);
         }else {
             if(isset($meta_arr['ihc_mb_who'])){
                 //getting current user type and target user types
@@ -1268,7 +1269,7 @@ class FlutterWoo extends FlutterBaseController
                 }
 
                 if($meta_arr['ihc_mb_block_type']=='redirect'){
-                    return parent::sendError('redirect', $errMsg, 401);
+                    return parent::sendError($result == 2 ? 'expired' : 'blocked', $errMsg, 401);
                 }else{
                     return parent::sendError('replace_content', $meta_arr['ihc_replace_content'], 401);
                 }
