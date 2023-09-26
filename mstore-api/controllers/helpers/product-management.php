@@ -568,6 +568,16 @@ class ProductManagementHelper
                                 : "private"
                         );
                         $variationProduct->save();
+
+                        if(isset($variation['wholesale_prices']) && count($variation['wholesale_prices']) > 0){
+                            foreach($variation['wholesale_prices'] as $item){
+                                update_post_meta($variation_id, $item['type'].'_wholesale_discount_type', $item['wholesale_discount_type']);
+                                if(!empty($item['wholesale_percentage_discount'])){
+                                    update_post_meta($variation_id, $item['type'].'_wholesale_percentage_discount', $item['wholesale_percentage_discount']);
+                                }
+                                update_post_meta($variation_id, $item['type'].'_wholesale_price', $item['wholesale_price']);
+                            }
+                        }
                     }
                 }
 
@@ -582,6 +592,15 @@ class ProductManagementHelper
                     "post_status" => $requestStatus,
                 ]);
 
+                if(isset($request['wholesale_prices']) && count($request['wholesale_prices']) > 0){
+                    foreach($request['wholesale_prices'] as $item){
+                        update_post_meta($product->get_id(), $item['type'].'_wholesale_discount_type', $item['wholesale_discount_type']);
+                        if(!empty($item['wholesale_percentage_discount'])){
+                            update_post_meta($product->get_id(), $item['type'].'_wholesale_percentage_discount', $item['wholesale_percentage_discount']);
+                        }
+                        update_post_meta($product->get_id(), $item['type'].'_wholesale_price', $item['wholesale_price']);
+                    }
+                }
                 wp_update_post([
                     "ID" => $product->get_id(),
                     "post_author" => $user_id,

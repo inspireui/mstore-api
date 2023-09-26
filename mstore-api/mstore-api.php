@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 4.10.0
+ * Version: 4.10.1
  * Author: InspireUI
  * Author URI: https://inspireui.com
  *
@@ -48,7 +48,7 @@ if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
 
 class MstoreCheckOut
 {
-    public $version = '4.10.0';
+    public $version = '4.10.1';
 
     public function __construct()
     {
@@ -483,6 +483,19 @@ function custom_woocommerce_rest_prepare_product_variation_object($response, $ob
             $rate = (float)$currency["rate"];
             $response->data['multi-currency-prices'][$key]['price'] = $rate == 0 ? $price : sprintf("%.2f", $price * $rate);
         }
+    }
+
+    /*Update product price for subscription product*/
+    $meta_data = $response->data['meta_data'];
+    $sign_up_fee = null;
+    foreach ($meta_data as $meta_data_item) {
+        if ($meta_data_item->get_data()["key"] == "_subscription_sign_up_fee") {
+            $sign_up_fee = $meta_data_item->get_data()["value"];
+        }
+    }
+    if($sign_up_fee != null){
+        $response->data['regular_price']= $sign_up_fee;
+        $response->data['price']= $sign_up_fee;
     }
 
     return $response;

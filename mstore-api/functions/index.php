@@ -512,6 +512,19 @@ function customProductResponse($response, $object, $request)
         }
     }
 
+    /*Update product price for subscription product*/
+    $meta_data = $response->data['meta_data'];
+    $sign_up_fee = null;
+    foreach ($meta_data as $meta_data_item) {
+        if ($meta_data_item->get_data()["key"] == "_subscription_sign_up_fee") {
+            $sign_up_fee = $meta_data_item->get_data()["value"];
+        }
+    }
+    if($sign_up_fee != null){
+        $response->data['regular_price']= $sign_up_fee;
+        $response->data['price']= $sign_up_fee;
+    }
+
     $blackListKeys = ['yoast_head','yoast_head_json','_links'];
     $response->data = array_diff_key($response->data,array_flip($blackListKeys));
     return $response;
