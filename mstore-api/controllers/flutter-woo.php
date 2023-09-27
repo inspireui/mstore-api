@@ -1308,7 +1308,7 @@ class FlutterWoo extends FlutterBaseController
 
     function get_products_video($request){
         global $wpdb;
-        $table_name = $wpdb->prefix . "postmeta";
+
         $page = 1;
         $per_page = 10;
 
@@ -1325,14 +1325,26 @@ class FlutterWoo extends FlutterBaseController
             }
         }
         $page = ($page - 1) * $per_page;
-        $items = $wpdb->get_results("SELECT * FROM $table_name WHERE meta_key='_mstore_video_url' AND meta_value IS NOT NULL AND meta_value <> '' LIMIT $per_page OFFSET $page");
+
+        $postmeta_table = $wpdb->prefix . "postmeta";
+        $post_table = $wpdb->prefix . "posts";
+
+        $sql = "SELECT $postmeta_table.post_id AS post_id";
+        $sql .= " FROM $postmeta_table";
+        $sql .= " INNER JOIN $post_table ON $post_table.ID = $postmeta_table.post_id";
+        $sql .= " WHERE $postmeta_table.meta_key='_mstore_video_url' AND $postmeta_table.meta_value IS NOT NULL AND $postmeta_table.meta_value <> ''";
+        $sql .= " AND $post_table.post_type = 'product' AND $post_table.post_status = 'publish'";
+        $sql .= " ORDER BY $post_table.post_modified DESC";
+        $sql .= " LIMIT $per_page OFFSET $page";
+
+        $items = $wpdb->get_results($sql);
 
         if(count($items) > 0){
             $controller = new CUSTOM_WC_REST_Products_Controller();
             $req = new WP_REST_Request('GET');
             $params = array('include' => array_map(function($item){
                 return $item->post_id;
-            }, $items), 'page'=>$page, 'per_page'=>$per_page, 'orderby' => 'date','order' => 'DESC');
+            }, $items), 'page' => 1, 'per_page' => count($items), 'orderby' => 'modified', 'order' => 'DESC');
             $req->set_query_params($params);
             $response = $controller->get_items($req);
             return $response->get_data();
