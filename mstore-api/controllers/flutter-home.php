@@ -150,7 +150,7 @@ class FlutterHome extends WP_REST_Controller
             $results = [];
             $horizontalLayout = $array["HorizonLayout"];
             foreach ($horizontalLayout as $layout) {
-                if ((isset($layout['category']) || isset($layout['tag'])) && in_array($layout['layout'], $this->supportedLayouts)) {
+                if ((isset($layout['category']) || isset($layout['tag']) || isset($layout['featured']) || (isset($layout["layout"]) && $layout["layout"] == "saleOff")) && in_array($layout['layout'], $this->supportedLayouts)) {
                     if($countDataLayout <  4){
                         $layout["data"] = $this->getProductsByLayout($layout, $api, $request);
                         $countDataLayout += 1;
@@ -197,7 +197,7 @@ class FlutterHome extends WP_REST_Controller
 
     function getProductsByLayout($layout, $api, $request)
     {
-        if ((!isset($layout['category']) && !isset($layout['tag'])) || (isset($layout['category']) && ($layout['category'] == null || $layout['category'] == "-1")) || (isset($layout['tag']) && ($layout['tag'] == null || $layout['tag'] == "-1"))) {
+        if ((!isset($layout['category']) && !isset($layout['tag']) && !isset($layout['featured']) && (!isset($layout['layout']) || $layout["layout"] != "saleOff")) || (isset($layout['category']) && ($layout['category'] == null || $layout['category'] == "-1")) || (isset($layout['tag']) && ($layout['tag'] == null || $layout['tag'] == "-1"))) {
             return [];
         }
         $params = array('order' => 'desc', 'orderby' => 'date', 'status' => 'publish');
@@ -207,8 +207,8 @@ class FlutterHome extends WP_REST_Controller
         if (isset($layout['tag'])) {
             $params['tag'] = $layout['tag'];
         }
-        if (isset($layout['feature'])) {
-            $params['feature'] = $layout['feature'];
+        if (isset($layout['featured'])) {
+            $params['featured'] = $layout['featured'];
         }
         if (isset($layout["layout"]) && $layout["layout"] == "saleOff") {
             $params['on_sale'] = "true";

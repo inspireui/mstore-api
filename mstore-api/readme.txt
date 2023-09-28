@@ -44,6 +44,7 @@ Faster- Smoother- Closer.
 
 == Changelog ==
 = 4.10.2 =
+  * Fix security issues when upload file
   * Fix Product Gift Cards
 
 = 4.10.1 =
