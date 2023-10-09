@@ -41,6 +41,7 @@ include_once plugin_dir_path(__FILE__) . "controllers/flutter-thawani.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-expresspay.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-2c2p.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-cc-avenue.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-flow-flow.php";
 
 if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
     require __DIR__ . '/vendor/autoload.php';
