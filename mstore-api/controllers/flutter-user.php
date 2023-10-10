@@ -704,7 +704,7 @@ class FlutterUserController extends FlutterBaseController
         if (!isset($phone)) {
             return parent::sendError("invalid_login", "You must include a 'phone' variable.", 400);
         }
-        $domain = $_SERVER['SERVER_NAME'];
+        $domain = $_SERVER['SERVER_NAME'] == 'default_server' ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'];
         if (count(explode(".", $domain)) == 1) {
             $domain = "flutter.io";
         }
@@ -724,7 +724,7 @@ class FlutterUserController extends FlutterBaseController
             $args = array('meta_key' => 'registered_phone_number', 'meta_value' => $phone);
             $search_users = get_users($args);
             if (empty($search_users)) {
-                $domain = $_SERVER['SERVER_NAME'];
+                $domain = $_SERVER['SERVER_NAME'] == 'default_server' ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'];
                 if (count(explode(".", $domain)) == 1) {
                     $domain = "flutter.io";
                 }
