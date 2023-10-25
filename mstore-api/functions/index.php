@@ -368,6 +368,32 @@ function isPHP8()
     return version_compare(phpversion(), '8.0.0') >= 0;
 }
 
+function addQRCodeUrlToMetaResponse($response){
+    if (is_plugin_active('yith-woocommerce-barcodes-premium/init.php')) {
+        $barcode = YITH_Barcode::get($response->data['id']);
+        if($barcode && $barcode->get_filename()){
+            $barcode_value    = $barcode->get_display_value();
+            $barcode_protocol = $barcode->get_protocol();
+            $barcode_src = apply_filters(
+                'yith_ywbc_barcode_src',
+                $barcode->get_filename() ? esc_url(  YITH_YWBC()->get_public_file_path( $barcode ) ) : 'data:image/png;base64,' . $barcode->image,
+                $barcode_value,
+                $barcode_protocol,
+                'default'
+            );
+            $meta_data = $response->data['meta_data'];
+            $meta_data[] = new WC_Meta_Data(
+                array(
+                    'key'   =>'_ywbc_barcode_image_url',
+                    'value' => $barcode_src,
+                )
+            );
+            $response->data['meta_data'] = $meta_data;
+        }
+    }
+    return $response;
+}
+
 function customProductResponse($response, $object, $request)
 {
     global $woocommerce_wpml;
@@ -383,6 +409,11 @@ function customProductResponse($response, $object, $request)
     }
     $response->data['is_purchased'] = $is_purchased;
 
+    //update correct product price with tax setting
+    $response->data['price'] = wc_get_price_to_display(  $object );
+    $response->data['regular_price'] = wc_get_price_to_display(  $object, array( 'price' => $object->get_regular_price() ) );
+    $response->data['sale_price'] = wc_get_price_to_display(  $object, array( 'price' => $object->get_sale_price() ) );
+    
     if (!empty($woocommerce_wpml->multi_currency) && !empty($woocommerce_wpml->settings['currencies_order'])) {
 
         $type = $response->data['type'];
@@ -403,8 +434,8 @@ function customProductResponse($response, $object, $request)
             $response->data['price'] = current($prices['price']);
             $response->data['regular_price'] = current($prices['regular_price']);
             $response->data['sale_price'] = current($prices['sale_price']);
-            $response->data['min_price'] = $product->get_variation_price();
-            $response->data['max_price'] = $product->get_variation_price('max');
+            $response->data['min_price'] = wc_get_price_to_display(  $product, array( 'price' => $product->get_variation_price() ) );
+            $response->data['max_price'] = wc_get_price_to_display(  $product, array( 'price' => $product->get_variation_price('max') ) );
             
             if(!$response->data['min_price']){
                 $response->data['min_price'] = '0';
@@ -419,9 +450,9 @@ function customProductResponse($response, $object, $request)
                 $variation_p = new WC_Product_Variation($variation_id);
                 $variation_data['id'] = $variation_id;
                 $variation_data['product_id'] = $product->get_id();
-                $variation_data['price'] = $variation_p->get_price();
-                $variation_data['regular_price'] = $variation_p->get_regular_price() ;
-                $variation_data['sale_price'] =$variation_p->get_sale_price() ;
+                $variation_data['price'] = wc_get_price_to_display(  $variation_p );
+                $variation_data['regular_price'] = wc_get_price_to_display(  $variation_p, array( 'price' => $variation_p->get_regular_price() ) );
+                $variation_data['sale_price'] = wc_get_price_to_display(  $variation_p, array( 'price' => $variation_p->get_sale_price() ) );
                 $variation_data['date_on_sale_from'] = $variation_p->get_date_on_sale_from();
                 $variation_data['date_on_sale_to'] = $variation_p->get_date_on_sale_to();
                 $variation_data['on_sale'] = $variation_p->is_on_sale();
@@ -524,6 +555,9 @@ function customProductResponse($response, $object, $request)
         $response->data['regular_price']= $sign_up_fee;
         $response->data['price']= $sign_up_fee;
     }
+
+    /* YITH WooCommerce Barcodes and QR Codes Premium */
+    $response = addQRCodeUrlToMetaResponse($response);
 
     $blackListKeys = ['yoast_head','yoast_head_json','_links'];
     $response->data = array_diff_key($response->data,array_flip($blackListKeys));
@@ -753,5 +787,13 @@ function getCommissionOrderResponse($responseData, $vendor_id){
         $responseData["admin_fee"] = 0;
     }
     return $responseData;
+}
+
+function customOrderResponse($response, $object, $request)
+{
+    /* YITH WooCommerce Barcodes and QR Codes Premium */
+    $response = addQRCodeUrlToMetaResponse($response);
+
+    return $response;
 }
 ?>

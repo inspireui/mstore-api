@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 4.10.4
+ * Version: 4.10.5
  * Author: InspireUI
  * Author URI: https://inspireui.com
  *
@@ -49,7 +49,7 @@ if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
 
 class MstoreCheckOut
 {
-    public $version = '4.10.4';
+    public $version = '4.10.5';
 
     public function __construct()
     {
@@ -427,6 +427,7 @@ add_filter('woocommerce_rest_prepare_product_variation_object', 'custom_woocomme
 add_filter('woocommerce_rest_prepare_product_object', 'flutter_custom_change_product_response', 20, 3);
 add_filter('woocommerce_rest_prepare_product_review', 'custom_product_review', 20, 3);
 add_filter('woocommerce_rest_prepare_product_cat', 'custom_product_category', 20, 3);
+add_filter('woocommerce_rest_prepare_shop_order_object', 'flutter_custom_change_order_response', 20, 3);
 
 function custom_product_category($response, $object, $request)
 {
@@ -457,6 +458,10 @@ function custom_product_review($response, $object, $request)
     return $response;
 }
  
+function flutter_custom_change_order_response($response, $object, $request)
+{
+    return customOrderResponse($response, $object, $request);
+}
 
 function flutter_custom_change_product_response($response, $object, $request)
 {
@@ -468,6 +473,11 @@ function custom_woocommerce_rest_prepare_product_variation_object($response, $ob
 
     global $woocommerce_wpml;
 
+    //update correct product price with tax setting
+    $response->data['price'] = wc_get_price_to_display(  $object );
+    $response->data['regular_price'] = wc_get_price_to_display(  $object, array( 'price' => $object->get_regular_price() ) );
+    $response->data['sale_price'] = wc_get_price_to_display(  $object, array( 'price' => $object->get_sale_price() ) );
+    
     $is_purchased = false;
     if (isset($request['user_id'])) {
         $user_id = $request['user_id'];
