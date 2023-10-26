@@ -443,6 +443,10 @@ function customProductResponse($response, $object, $request)
             if(!$response->data['max_price']){
                 $response->data['max_price'] = '0';
             }
+            //convert to string
+            $response->data['min_price'] = strval($response->data['min_price']);
+            $response->data['max_price'] = strval($response->data['max_price']);
+
             $variations = $response->data['variations'];
             $variation_arr = array();
             foreach($variations as $variation_id){

@@ -388,14 +388,18 @@ class FlutterWoo extends FlutterBaseController
 				$url = str_replace("/". $lang,"",$url);
 			 }
             $product_id = url_to_postid($url);
-            $controller = new CUSTOM_WC_REST_Products_Controller();
-            $req = new WP_REST_Request('GET');
-            //$params = array('status' => 'published', 'include[0]' => $product_id, 'page'=>1, 'per_page'=>10, 'lang'=>'en');
-            $params = array('status' => 'published', 'include' => [$product_id], 'page'=>1, 'per_page'=>10, 'lang'=>'en');
-            $req->set_query_params($params);
+            if (isset($product_id)) {
+                $controller = new CUSTOM_WC_REST_Products_Controller();
+                $req = new WP_REST_Request('GET');
+                $params = array('id' => $product_id);
+                $req->set_query_params($params);
 
-            $response = $controller->get_items($req);
-            return $response->get_data();
+                $response = $controller->get_item($req);
+                $data = $response->get_data();
+                return [$data];
+            }else{
+                return [];
+            }
         }
         return parent::sendError("invalid_url", "Not Found", 404);
     }
