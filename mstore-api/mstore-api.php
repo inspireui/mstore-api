@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 4.10.6
+ * Version: 4.10.7
  * Author: InspireUI
  * Author URI: https://inspireui.com
  *
@@ -49,7 +49,7 @@ if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
 
 class MstoreCheckOut
 {
-    public $version = '4.10.6';
+    public $version = '4.10.7';
 
     public function __construct()
     {
@@ -844,3 +844,34 @@ function custom_status_bulk_edit($actions)
 }
 
 add_filter('bulk_actions-edit-shop_order', 'custom_status_bulk_edit', 20, 1);
+
+add_action('rest_api_init', 'get_promptpay_qrcode_routes');
+function get_promptpay_qrcode_routes()
+{
+    register_rest_route('promptpay', '/detail' . '/(?P<id>[\d]+)', array(
+            'methods' => 'GET',
+            'callback' => function($request){
+                $available_payment_methods = WC()->payment_gateways()->payment_gateways();
+                $paymentMethod = $available_payment_methods['thai-promptpay-easy'];
+                $order = wc_get_order($request['id'] );
+                $thank_msg = $paymentMethod->thank_msg;
+ $promptpay_id = $paymentMethod->promptpay_id;
+ $promptpay_type = $paymentMethod->promptpay_type;
+ $promptpay_name = $paymentMethod->promptpay_name;
+ $include_price = $paymentMethod->include_price;
+                $image_url = get_site_url() . "/wp-content/plugins/thai-promptpay-payment-easy-gateway-plugin/images/promptpay_qrcode/promptpay-qr-l.php?type=$promptpay_type&promptpay_id=$promptpay_id";
+ 
+ if($include_price=='yes'){
+ $price = $order->get_total();
+ $image_url .= "&price=$price&p=1";
+ }
+
+
+                return  ['thank_msg' => $thank_msg, 'qrcode_url' => $image_url, 'promptpay_id' => $promptpay_id, 'promptpay_name' => $promptpay_name, 'promptpay_type' => $paymentMethod->promptpay_type_name[$promptpay_type]];
+            },
+            'permission_callback' => function () {
+                return true;
+            },
+        )
+    );
+}
