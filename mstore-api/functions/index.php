@@ -160,9 +160,10 @@ function sendNewOrderNotificationToDelivery($order_id, $status)
         if ($status == 'cancelled' || $status == 'refunded') {
             $sql = "SELECT `{$wpdb->prefix}wcfm_delivery_orders`.delivery_boy FROM `{$wpdb->prefix}wcfm_delivery_orders`";
             $sql .= " WHERE 1=1";
-            $sql .= " AND order_id = {$order_id}";
+            $sql .= " AND order_id = %s";
             $sql .= " AND is_trashed = 0";
             $sql .= " AND delivery_status = 'pending'";
+            $sql = $wpdb->prepare($sql, $order_id);
             $result = $wpdb->get_results($sql);
 
             foreach ($result as $item) {

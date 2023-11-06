@@ -279,15 +279,21 @@ class VendorAdminWCFMHelper
         }
 
         $table_name = $wpdb->prefix . "posts";
-        $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_author` = $vendor_id AND `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
+        $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_author` = %s AND `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
 
         if (isset($request["search"])) {
             $search =  sanitize_text_field($request["search"]);
             $search = "%$search%";
-            $sql .= " AND (`$table_name`.`post_content` LIKE '$search' OR `$table_name`.`post_title` LIKE '$search' OR `$table_name`.`post_excerpt` LIKE '$search')";
+            $sql .= " AND (`$table_name`.`post_content` LIKE %s OR `$table_name`.`post_title` LIKE %s OR `$table_name`.`post_excerpt` LIKE %s)";
         }
-        $sql .= " ORDER BY `ID` DESC LIMIT $limit OFFSET $page";
+        $sql .= " ORDER BY `ID` DESC LIMIT %d OFFSET %d";
 
+        if (isset($search)) {
+            $sql = $wpdb->prepare($sql, $vendor_id, $search, $search, $search, $limit, $page);
+        } else {
+            $sql = $wpdb->prepare($sql, $vendor_id, $limit, $page);
+        }
+        
         $item = $wpdb->get_results($sql);
 
         $products_arr = [];
@@ -445,7 +451,7 @@ class VendorAdminWCFMHelper
             $page = ($page - 1) * $per_page;
             $table_name = $wpdb->prefix . "wcfm_marketplace_orders";
             $sql =
-                "SELECT * FROM " . $table_name . " WHERE vendor_id = $user_id AND is_trashed != 1";
+                "SELECT * FROM " . $table_name . " WHERE vendor_id = %s AND is_trashed != 1";
 
             if (isset($request["status"])) {
                 $sql .= " AND order_status = %s";
@@ -468,7 +474,7 @@ class VendorAdminWCFMHelper
                         $user_str[] = $user->ID;
                     }
                     $user_strr = implode(',', $user_str);
-                    $sql .= " AND `{$table_name}`.customer_id IN ({$user_strr})";
+                    $sql .= " AND `{$table_name}`.customer_id IN (%s)";
                 } else {
                     return new WP_REST_Response(
                         [
@@ -479,17 +485,21 @@ class VendorAdminWCFMHelper
                     );
                 }
             }
-            $sql .= " GROUP BY $table_name.`order_id` ORDER BY $table_name.`order_id` DESC LIMIT $per_page OFFSET $page";
-            if (isset($request["status"]) && isset($request["search"])) {
-                $sql = $wpdb->prepare($sql, sanitize_text_field($request["status"]), sanitize_text_field($request["search"]).'%');
-            }else if (isset($request["status"]) && !isset($request["search"])) {
-                $sql = $wpdb->prepare($sql, sanitize_text_field($request["status"]));
-            }else if (!isset($request["status"]) && isset($request["search"])) {
-                $sql = $wpdb->prepare($sql,  sanitize_text_field($request["search"]).'%');
-            }else{
-                $sql = $wpdb->prepare($sql);
-            }
+            $sql .= " GROUP BY $table_name.`order_id` ORDER BY $table_name.`order_id` DESC LIMIT %d OFFSET %d";
             
+            $args = [$user_id];
+            if (isset($request["status"])) {
+                $args[] = 'wc-'.sanitize_text_field($request["status"]);
+            }
+            if (isset($request["search"])) {
+                $args[] = '%'.sanitize_text_field($request["search"]).'%';
+            }
+            if(isset($user_strr)){
+                $args[] = $user_strr;
+            }
+            $args[] = $per_page;
+            $args[] = $page;
+            $sql = $wpdb->prepare($sql, $args);
             $items = $wpdb->get_results($sql);
 
             foreach ($items as $item) {
@@ -532,8 +542,9 @@ class VendorAdminWCFMHelper
                         $table_name = $wpdb->prefix . "wcfm_delivery_orders";
                         $sql = "SELECT delivery_boy FROM `{$table_name}`";
                         $sql .= " WHERE 1=1";
-                        $sql .= " AND product_id = '{$product_id}'";
-                        $sql .= " AND order_id = '{$item->order_id}'";
+                        $sql .= " AND product_id = %s";
+                        $sql .= " AND order_id = %s";
+                        $sql = $wpdb->prepare($sql, $product_id, $item->order_id);
                         $users = $wpdb->get_results($sql);
 
                         if (count($users) > 0) {
@@ -832,12 +843,13 @@ class VendorAdminWCFMHelper
             }
         }
 
-        $reviews_vendor_filter = " AND `vendor_id` = " . $vendor_id;
+        $reviews_vendor_filter = " AND `vendor_id` = %s";
         $sql = "SELECT COUNT(ID) from {$wpdb->prefix}wcfm_marketplace_reviews";
         $sql .= " WHERE 1=1";
         $sql .= $reviews_vendor_filter;
         $sql .= $status_filter;
 
+        $sql = $wpdb->prepare($sql, $vendor_id);
         $wcfm_review_items = $wpdb->get_var($sql);
         if (!$wcfm_review_items) {
             $wcfm_review_items = 0;
@@ -847,10 +859,11 @@ class VendorAdminWCFMHelper
         $sql .= " WHERE 1=1";
         $sql .= $reviews_vendor_filter;
         $sql .= $status_filter;
-        $sql .= " ORDER BY `{$the_orderby}` {$the_order}";
-        $sql .= " LIMIT {$length}";
-        $sql .= " OFFSET {$offset}";
+        $sql .= " ORDER BY %s %s";
+        $sql .= " LIMIT %d";
+        $sql .= " OFFSET %d";
 
+        $sql = $wpdb->prepare($sql, $vendor_id, $the_orderby, $the_order, $length, $offset);
         $wcfm_reviews_array = $wpdb->get_results($sql);
         return new WP_REST_Response(
             [
@@ -875,15 +888,13 @@ class VendorAdminWCFMHelper
         $wcfm_review_categories = get_wcfm_marketplace_active_review_categories();
 
         if ($reviewid) {
-            $review_data = $wpdb->get_row(
-                "SELECT * FROM {$wpdb->prefix}wcfm_marketplace_reviews WHERE `ID`= " .
-                $reviewid
-            );
-            $review_meta = $wpdb->get_results(
-                "SELECT * FROM {$wpdb->prefix}wcfm_marketplace_review_rating_meta WHERE `type` = 'rating_category' AND `review_id`= " .
-                $reviewid .
-                " ORDER BY ID ASC"
-            );
+            $sql = "SELECT * FROM {$wpdb->prefix}wcfm_marketplace_reviews WHERE `ID`= %s";
+            $sql = $wpdb->prepare($sql, $reviewid);
+            $review_data = $wpdb->get_row($sql);
+
+            $sql = "SELECT * FROM {$wpdb->prefix}wcfm_marketplace_review_rating_meta WHERE `type` = 'rating_category' AND `review_id`= %s ORDER BY ID ASC";
+            $sql = $wpdb->prepare($sql, $reviewid);
+            $review_meta = $wpdb->get_results($sql);
             if (
                 $review_data &&
                 !empty($review_data) &&
@@ -1210,10 +1221,10 @@ class VendorAdminWCFMHelper
             $sql = "SELECT order_id, GROUP_CONCAT(product_id) product_ids, SUM( commission.total_shipping ) AS total_shipping FROM {$wpdb->prefix}pv_commission AS commission";
             $sql .= " WHERE 1=1";
             if ($vendor_id) {
-                $sql .= " AND `vendor_id` = {$vendor_id}";
+                $sql .= " AND `vendor_id` = %s";
             }
             if ($order_id) {
-                $sql .= " AND `order_id` = {$order_id}";
+                $sql .= " AND `order_id` = %s";
             } else {
                 if ($is_paid) {
                     $sql .= " AND commission.status = 'paid'";
@@ -1228,6 +1239,14 @@ class VendorAdminWCFMHelper
             }
             $sql .= " GROUP BY commission.order_id";
 
+            $args = array();
+            if ($vendor_id) {
+                $args[] = $vendor_id;
+            }
+            if ($order_id) {
+                $args[] = $order_id;
+            }
+            $sql = $wpdb->prepare($sql, $args);
             $gross_sales_whole_week = $wpdb->get_results($sql);
             if (!empty($gross_sales_whole_week)) {
                 foreach ($gross_sales_whole_week as $net_sale_whole_week) {
@@ -1360,10 +1379,10 @@ class VendorAdminWCFMHelper
             $sql = "SELECT order_item_id, shipping, shipping_tax_amount FROM {$wpdb->prefix}wcmp_vendor_orders AS commission";
             $sql .= " WHERE 1=1";
             if ($vendor_id) {
-                $sql .= " AND `vendor_id` = {$vendor_id}";
+                $sql .= " AND `vendor_id` = %s";
             }
             if ($order_id) {
-                $sql .= " AND `order_id` = {$order_id}";
+                $sql .= " AND `order_id` = %s";
             } else {
                 $sql .=
                     " AND `line_item_type` = 'product' AND `commission_id` != 0 AND `commission_id` != '' AND `is_trashed` != 1";
@@ -1387,6 +1406,14 @@ class VendorAdminWCFMHelper
                 }
             }
 
+            $args = array();
+            if ($vendor_id) {
+                $args[] = $vendor_id;
+            }
+            if ($order_id) {
+                $args[] = $order_id;
+            }
+            $sql = $wpdb->prepare($sql, $args);
             $gross_sales_whole_week = $wpdb->get_results($sql);
             if (!empty($gross_sales_whole_week)) {
                 foreach ($gross_sales_whole_week as $net_sale_whole_week) {
@@ -1430,10 +1457,10 @@ class VendorAdminWCFMHelper
                 " AS commission";
             $sql .= " WHERE 1=1";
             if ($vendor_id) {
-                $sql .= " AND commission.vendor_id = {$vendor_id}";
+                $sql .= " AND commission.vendor_id = %s";
             }
             if ($order_id) {
-                $sql .= " AND `order_id` = {$order_id}";
+                $sql .= " AND `order_id` = %s";
             } else {
                 if ($is_paid) {
                     $sql .= " AND commission.commission_status = 'paid'";
@@ -1455,6 +1482,14 @@ class VendorAdminWCFMHelper
                 }
             }
 
+            $args = array();
+            if ($vendor_id) {
+                $args[] = $vendor_id;
+            }
+            if ($order_id) {
+                $args[] = $order_id;
+            }
+            $sql = $wpdb->prepare($sql, $args);
             $total_sales = $wpdb->get_results($sql);
             if (!empty($total_sales)) {
                 foreach ($total_sales as $total_sale) {
@@ -1469,10 +1504,10 @@ class VendorAdminWCFMHelper
             $sql = "SELECT SUM( commission.order_total ) AS total_order_amount FROM {$wpdb->prefix}dokan_orders AS commission LEFT JOIN {$wpdb->posts} p ON commission.order_id = p.ID";
             $sql .= " WHERE 1=1";
             if ($vendor_id) {
-                $sql .= " AND commission.seller_id = {$vendor_id}";
+                $sql .= " AND commission.seller_id = %s";
             }
             if ($order_id) {
-                $sql .= " AND `commission.order_id` = {$order_id}";
+                $sql .= " AND `commission.order_id` = %s";
             } else {
                 $status = dokan_withdraw_get_active_order_status_in_comma();
                 $sql .= " AND commission.order_status IN ({$status})";
@@ -1486,6 +1521,14 @@ class VendorAdminWCFMHelper
                 );
             }
 
+            $args = array();
+            if ($vendor_id) {
+                $args[] = $vendor_id;
+            }
+            if ($order_id) {
+                $args[] = $order_id;
+            }
+            $sql = $wpdb->prepare($sql, $args);
             $total_sales = $wpdb->get_results($sql);
             if (!empty($total_sales)) {
                 foreach ($total_sales as $total_sale) {
@@ -1496,10 +1539,10 @@ class VendorAdminWCFMHelper
             $sql = "SELECT ID, order_id, item_id, item_total, item_sub_total, refunded_amount, shipping, tax, shipping_tax_amount FROM {$wpdb->prefix}wcfm_marketplace_orders AS commission";
             $sql .= " WHERE 1=1";
             if ($vendor_id) {
-                $sql .= " AND `vendor_id` = {$vendor_id}";
+                $sql .= " AND `vendor_id` = %s";
             }
             if ($order_id) {
-                $sql .= " AND `order_id` = {$order_id}";
+                $sql .= " AND `order_id` = %s";
                 //$sql .= " AND `is_refunded` != 1";
             } else {
                 $sql .= apply_filters(
@@ -1528,6 +1571,14 @@ class VendorAdminWCFMHelper
                 }
             }
 
+            $args = array();
+            if ($vendor_id) {
+                $args[] = $vendor_id;
+            }
+            if ($order_id) {
+                $args[] = $order_id;
+            }
+            $sql = $wpdb->prepare($sql, $args);
             $gross_sales_whole_week = $wpdb->get_results($sql);
             $gross_commission_ids = [];
             $gross_total_refund_amount = 0;
@@ -1648,7 +1699,7 @@ class VendorAdminWCFMHelper
                 $sql = "SELECT SUM( withdraw.amount ) AS amount FROM {$wpdb->prefix}dokan_withdraw AS withdraw";
                 $sql .= " WHERE 1=1";
                 if ($vendor_id) {
-                    $sql .= " AND withdraw.user_id = {$vendor_id}";
+                    $sql .= " AND withdraw.user_id = %s";
                 }
                 $sql .= " AND withdraw.status = 1";
                 $sql = $this->wcfm_query_time_range_filter(
@@ -1659,6 +1710,11 @@ class VendorAdminWCFMHelper
                     $filter_date_to,
                     "withdraw"
                 );
+                if($vendor_id){
+                    $sql = $wpdb->prepare($sql, $vendor_id);
+                }else{
+                    $sql = $wpdb->prepare($sql);
+                }
                 $total_commissions = $wpdb->get_results($sql);
                 $commission = 0;
                 if (!empty($total_commissions)) {
@@ -1700,7 +1756,7 @@ class VendorAdminWCFMHelper
 
         $sql .= " WHERE 1=1";
         if ($vendor_id) {
-            $sql .= " AND commission.{$vendor_handler} = {$vendor_id}";
+            $sql .= " AND commission.{$vendor_handler} = %s";
         }
         if ($is_paid) {
             $sql .= " AND (commission.{$status} = 'paid' OR commission.{$status} = 'completed')";
@@ -1715,7 +1771,7 @@ class VendorAdminWCFMHelper
         }
         if ($marketplece == "wcfmmarketplace") {
             if ($order_id) {
-                $sql .= " AND `order_id` = {$order_id}";
+                $sql .= " AND `order_id` = %s";
             } else {
                 $sql .= apply_filters(
                     "wcfm_order_status_condition",
@@ -1735,7 +1791,14 @@ class VendorAdminWCFMHelper
                 $table_handler
             );
         }
-
+        $args = array();
+        if ($vendor_id) {
+            $args[] = $vendor_id;
+        }
+        if ($order_id) {
+            $args[] = $order_id;
+        }
+        $sql = $wpdb->prepare($sql, $args);
         $total_commissions = $wpdb->get_results($sql);
         $commission = 0;
         if (!empty($total_commissions)) {
@@ -1815,13 +1878,14 @@ class VendorAdminWCFMHelper
                 "SELECT wcfm_messages.* FROM " .
                 $wpdb->prefix .
                 "wcfm_messages AS wcfm_messages";
-            $vendor_filter = " WHERE ( `author_id` = {$message_to} OR `message_to` = -1 OR `message_to` = {$message_to} )";
+            $vendor_filter = " WHERE ( `author_id` = %s OR `message_to` = -1 OR `message_to` = %s )";
             $sql .= $vendor_filter;
-            $message_status_filter = " AND NOT EXISTS (SELECT * FROM {$wpdb->prefix}wcfm_messages_modifier as wcfm_messages_modifier_2 WHERE wcfm_messages.ID = wcfm_messages_modifier_2.message AND wcfm_messages_modifier_2.read_by={$message_to})";
+            $message_status_filter = " AND NOT EXISTS (SELECT * FROM {$wpdb->prefix}wcfm_messages_modifier as wcfm_messages_modifier_2 WHERE wcfm_messages.ID = wcfm_messages_modifier_2.message AND wcfm_messages_modifier_2.read_by=%s)";
             $sql .= $message_status_filter;
             $sql .= " ORDER BY wcfm_messages.`ID` DESC";
-            $sql .= " LIMIT $limit";
-            $sql .= " OFFSET $offset";
+            $sql .= " LIMIT %d";
+            $sql .= " OFFSET %d";
+            $sql = $wpdb->prepare($sql, $message_to, $message_to, $message_to, $limit, $offset);
             $wcfm_messages = $wpdb->get_results($sql);
 
             foreach ($wcfm_messages as $wcfm_message) {
@@ -2719,13 +2783,18 @@ class VendorAdminWCFMHelper
 
         $sql = "SELECT * FROM `{$wpdb->prefix}wcfm_delivery_orders`";
         $sql .= " WHERE 1=1";
-        $sql .= " AND order_id = {$order_id}";
+        $sql .= " AND order_id = %s";
         if (apply_filters('wcfm_is_show_marketplace_itemwise_orders', true)) {
-            if ($order_item_id) $sql .= " AND item_id = {$order_item_id}";
+            if ($order_item_id) $sql .= " AND item_id = %s";
         } else {
             $sql .= " GROUP BY vendor_id";
         }
 
+        if(apply_filters('wcfm_is_show_marketplace_itemwise_orders', true) &&  $order_item_id){
+            $sql = $wpdb->prepare($sql, $order_id, $order_item_id);
+        }else{
+            $sql = $wpdb->prepare($sql, $order_id);
+        }
         $delivery_boys = $wpdb->get_results($sql);
         if (!empty($delivery_boys)) {
             foreach ($delivery_boys as $delivery_boy) {
