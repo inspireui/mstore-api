@@ -723,7 +723,7 @@ function _pushNotificationFirebase($user_id, $title, $message, $deviceToken){
 function _pushNotificationOneSignal($user_id, $title, $message){
     $is_on = isNotificationEnabled($user_id);
     if($is_on){
-        one_signal_push_notification($title,$message,array($userId));
+        one_signal_push_notification($title,$message,array($user_id));
     }
 }
 
