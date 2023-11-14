@@ -137,8 +137,9 @@ function sendNotificationToUser($userId, $orderId, $previous_status, $next_statu
 
     if (isset($deviceToken) && $deviceToken != false) {
         _pushNotificationFirebase($userId,$title, $message, $deviceToken);
+    } else {
+        _pushNotificationOneSignal($userId, $title, $message);
     }
-    _pushNotificationOneSignal($userId, $title,$message);
 }
 
 function trackOrderStatusChanged($id, $previous_status, $next_status)
