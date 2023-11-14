@@ -1316,6 +1316,7 @@ class FlutterWoo extends FlutterBaseController
 
         $page = 1;
         $per_page = 10;
+        $lang ='en';
 
         if (isset($request['page'])) {
             $page = sanitize_text_field($request['page']);
@@ -1334,15 +1335,20 @@ class FlutterWoo extends FlutterBaseController
         $postmeta_table = $wpdb->prefix . "postmeta";
         $post_table = $wpdb->prefix . "posts";
 
+        // https://stackoverflow.com/questions/73401997/wpml-sql-query-to-get-post-by-current-language
+
         $sql = "SELECT $postmeta_table.post_id AS post_id";
         $sql .= " FROM $postmeta_table";
         $sql .= " INNER JOIN $post_table ON $post_table.ID = $postmeta_table.post_id";
+        $sql .= " INNER JOIN wp_icl_translations post_trans ON $post_table.ID = post_trans.element_id";
         $sql .= " WHERE $postmeta_table.meta_key='_mstore_video_url' AND $postmeta_table.meta_value IS NOT NULL AND $postmeta_table.meta_value <> ''";
         $sql .= " AND $post_table.post_type = 'product' AND $post_table.post_status = 'publish'";
+        $sql .= " AND post_trans.language_code = '$lang'";
         $sql .= " ORDER BY $post_table.post_modified DESC";
         $sql .= " LIMIT %d OFFSET %d";
         $sql = $wpdb->prepare($sql, $per_page, $page);
         $items = $wpdb->get_results($sql);
+
 
         if(count($items) > 0){
             $controller = new CUSTOM_WC_REST_Products_Controller();
