@@ -1211,7 +1211,23 @@ class FlutterUserController extends FlutterBaseController
         $_POST['dig_nounce'] = wp_create_nonce('dig_form');
         $_POST['crsf-otp'] = wp_create_nonce('crsf-otp');
 
-        $_POST['digits_reg_password'] = wp_generate_password();
+        if (isset($params['password'])) {
+            $_POST['digits_reg_password'] = $params['password'];
+        }else{
+            $_POST['digits_reg_password'] = wp_generate_password();
+        }
+
+        $reg_custom_fields = stripslashes(base64_decode(get_option("dig_reg_custom_field_data", "e30=")));
+        $reg_custom_fields = json_decode($reg_custom_fields, true);
+        foreach ($reg_custom_fields as $key => $values) {
+            $required = $values['required'];
+            if($required == 1){
+                $meta_key = cust_dig_filter_string($values['meta_key']);
+                $post_index = 'digits_reg_' . $meta_key;
+                $_POST[$post_index] = '1';
+            }
+            
+        }
         $_REQUEST['json'] = 1;
     }
 

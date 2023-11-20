@@ -190,8 +190,7 @@ if (isset($verified) && $verified == "1") {
         <button type="submit" class="mstore-button-class" name='but_generate'>Generate Token</button>
     </form>
     
-    <p class="mt-5">This setting help to speed up the mobile app performance, upload the config_xx.json
-            from the common folder:</p>
+    <p class="mt-5">This setting help to speed up the mobile app performance, upload the config_xx.json</p>
     <?php
     FlutterUtils::create_json_folder();
     $configs = FlutterUtils::get_all_json_files();
