@@ -222,10 +222,16 @@ class VendorAdminDokanHelper
         if (isset($request['search'])) {
             $search = sanitize_text_field($request['search']);
             $search = "%$search%";
-            $sql .= " AND (`$table_name`.`post_content` LIKE '$search' OR `$table_name`.`post_title` LIKE '$search' OR `$table_name`.`post_excerpt` LIKE '$search')";
+            $sql .= " AND (`$table_name`.`post_content` LIKE %s OR `$table_name`.`post_title` LIKE %s OR `$table_name`.`post_excerpt` LIKE %s)";
         }
-        $sql .= " ORDER BY `ID` DESC LIMIT $limit OFFSET $page";
+        $sql .= " ORDER BY `ID` DESC LIMIT %d OFFSET %d";
 
+        if (isset($search)) {
+            $sql = $wpdb->prepare($sql, $search, $search, $search, $limit, $page);
+        } else {
+            $sql = $wpdb->prepare($sql, $limit, $page);
+        }
+        
         $item = $wpdb->get_results($sql);
 
         $products_arr = array();
@@ -344,7 +350,7 @@ class VendorAdminDokanHelper
         if (is_plugin_active('dokan-lite/dokan.php')) {
             global $wpdb;
             $table_name = $wpdb->prefix . "dokan_orders";
-            $sql = "SELECT * FROM " . $table_name . " WHERE seller_id = $user_id";
+            $sql = "SELECT * FROM " . $table_name . " WHERE seller_id = %s";
 
             if (isset($request['status'])) {
                 $sql .= " AND order_status = %s";
@@ -352,17 +358,18 @@ class VendorAdminDokanHelper
             if (isset($request['search'])) {
                 $sql .= " AND order_id LIKE %s";
             }
-            $sql .= " GROUP BY $table_name.`order_id` ORDER BY $table_name.`order_id` DESC LIMIT $per_page OFFSET $page";
-            if(isset($request['status']) && isset($request['search'])){
-                $sql = $wpdb->prepare($sql, 'wc-'.sanitize_text_field($request['status']), sanitize_text_field($request['search']).'%');
-            }else if(isset($request['status']) && !isset($request['search'])){
-                $sql = $wpdb->prepare($sql, 'wc-'.sanitize_text_field($request['status']));
-            }else  if(!isset($request['status']) && isset($request['search'])){
-                $sql = $wpdb->prepare($sql, sanitize_text_field($request['search']).'%');
-            }else{
-                $sql = $wpdb->prepare($sql);
-            }
+            $sql .= " GROUP BY $table_name.`order_id` ORDER BY $table_name.`order_id` DESC LIMIT %d OFFSET %d";
             
+            $args = [$user_id];
+            if (isset($request['status'])) {
+                $args[] = 'wc-'.sanitize_text_field($request['status']);
+            }
+            if (isset($request['search'])) {
+                $args[] = '%'.sanitize_text_field($request['search']).'%';
+            }
+            $args[] = $per_page;
+            $args[] = $page;
+            $sql = $wpdb->prepare($sql, $args);
             $items = $wpdb->get_results($sql);
 
             foreach ($items as $item) {
@@ -658,8 +665,9 @@ class VendorAdminDokanHelper
         $table_2 = "{$wpdb->prefix}dokan_orders";
 
         $sql = "SELECT {$table_2}.order_total FROM {$table_2} INNER JOIN {$table_1} ON {$table_1}.ID = {$table_2}.order_id WHERE {$table_1}.post_type = 'shop_order'";
-        $sql .= " AND {$table_1}.post_status = 'wc-completed' AND {$table_2}.seller_id = {$vendor_id}";
+        $sql .= " AND {$table_1}.post_status = 'wc-completed' AND {$table_2}.seller_id = %s";
         $sql = $this->wcfm_query_time_range_filter($sql, 'post_date', $interval, '', '', "{$wpdb->prefix}posts");
+        $sql = $wpdb->prepare($sql, $vendor_id);
         $result = $wpdb->get_results($sql);
 
         foreach ($result as $order_id) {
@@ -686,8 +694,9 @@ class VendorAdminDokanHelper
         $table_2 = "{$wpdb->prefix}dokan_orders";
 
         $sql = "SELECT {$table_2}.net_amount FROM {$table_2} INNER JOIN {$table_1} ON {$table_1}.ID = {$table_2}.order_id WHERE {$table_1}.post_type = 'shop_order'";
-        $sql .= " AND {$table_1}.post_status = 'wc-completed' AND {$table_2}.seller_id = {$vendor_id}";
+        $sql .= " AND {$table_1}.post_status = 'wc-completed' AND {$table_2}.seller_id = %s";
         $sql = $this->wcfm_query_time_range_filter($sql, 'post_date', $interval, '', '', "{$wpdb->prefix}posts");
+        $sql = $wpdb->prepare($sql, $vendor_id);
         $result = $wpdb->get_results($sql);
 
         foreach ($result as $order_id) {
@@ -719,13 +728,14 @@ class VendorAdminDokanHelper
             $message_to = apply_filters('wcfm_message_author', $user_id);
 
             $sql = 'SELECT wcfm_messages.* FROM ' . $wpdb->prefix . 'wcfm_messages AS wcfm_messages';
-            $vendor_filter = " WHERE ( `author_id` = {$message_to} OR `message_to` = -1 OR `message_to` = {$message_to} )";
+            $vendor_filter = " WHERE ( `author_id` = %s OR `message_to` = -1 OR `message_to` = %s )";
             $sql .= $vendor_filter;
-            $message_status_filter = " AND NOT EXISTS (SELECT * FROM {$wpdb->prefix}wcfm_messages_modifier as wcfm_messages_modifier_2 WHERE wcfm_messages.ID = wcfm_messages_modifier_2.message AND wcfm_messages_modifier_2.read_by={$message_to})";
+            $message_status_filter = " AND NOT EXISTS (SELECT * FROM {$wpdb->prefix}wcfm_messages_modifier as wcfm_messages_modifier_2 WHERE wcfm_messages.ID = wcfm_messages_modifier_2.message AND wcfm_messages_modifier_2.read_by=%s)";
             $sql .= $message_status_filter;
             $sql .= " ORDER BY wcfm_messages.`ID` DESC";
-            $sql .= " LIMIT $limit";
-            $sql .= " OFFSET $offset";
+            $sql .= " LIMIT %d";
+            $sql .= " OFFSET %d";
+            $sql = $wpdb->prepare($sql, $message_to, $message_to, $message_to, $limit, $offset);
             $wcfm_messages = $wpdb->get_results($sql);
 
             foreach ($wcfm_messages as $wcfm_message) {

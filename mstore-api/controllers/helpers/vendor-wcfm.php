@@ -339,12 +339,13 @@ class FlutterWCFMHelper
             }
         }
 
-        $reviews_vendor_filter = " AND `vendor_id` = " . $vendor_id;
+        $reviews_vendor_filter = " AND `vendor_id` = %s";
         $sql = "SELECT COUNT(ID) from {$wpdb->prefix}wcfm_marketplace_reviews";
         $sql .= " WHERE 1=1";
         $sql .= $reviews_vendor_filter;
         $sql .= $status_filter;
 
+        $sql = $wpdb->prepare($sql, $vendor_id);
         $wcfm_review_items = $wpdb->get_var($sql);
         if (!$wcfm_review_items) $wcfm_review_items = 0;
 
@@ -352,10 +353,11 @@ class FlutterWCFMHelper
         $sql .= " WHERE 1=1";
         $sql .= $reviews_vendor_filter;
         $sql .= $status_filter;
-        $sql .= " ORDER BY `{$the_orderby}` {$the_order}";
-        $sql .= " LIMIT {$length}";
-        $sql .= " OFFSET {$offset}";
+        $sql .= " ORDER BY %s %s";
+        $sql .= " LIMIT %d";
+        $sql .= " OFFSET %d";
 
+        $sql = $wpdb->prepare($sql, $vendor_id, $the_orderby, $the_order, $length, $offset);
         $wcfm_reviews_array = $wpdb->get_results($sql);
         return new WP_REST_Response(array(
             'status' => 'success',
@@ -375,8 +377,13 @@ class FlutterWCFMHelper
         $wcfm_review_categories = get_wcfm_marketplace_active_review_categories();
 
         if ($reviewid) {
-            $review_data = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}wcfm_marketplace_reviews WHERE `ID`= " . $reviewid);
-            $review_meta = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}wcfm_marketplace_review_rating_meta WHERE `type` = 'rating_category' AND `review_id`= " . $reviewid . " ORDER BY ID ASC");
+            $sql = "SELECT * FROM {$wpdb->prefix}wcfm_marketplace_reviews WHERE `ID`= %s";
+            $sql = $wpdb->prepare($sql, $reviewid);
+            $review_data = $wpdb->get_row($sql);
+
+            $sql = "SELECT * FROM {$wpdb->prefix}wcfm_marketplace_review_rating_meta WHERE `type` = 'rating_category' AND `review_id`= %s ORDER BY ID ASC";
+            $sql = $wpdb->prepare($sql, $reviewid);
+            $review_meta = $wpdb->get_results($sql);
             if ($review_data && !empty($review_data) && is_object($review_data)) {
                 if ($status) { // On Approve
                     $total_review_count = get_user_meta($review_data->vendor_id, '_wcfmmp_total_review_count', true);
@@ -525,9 +532,9 @@ class FlutterWCFMHelper
         if ($marketplece == 'wcvendors') {
             $sql = "SELECT order_id, GROUP_CONCAT(product_id) product_ids, SUM( commission.total_shipping ) AS total_shipping FROM {$wpdb->prefix}pv_commission AS commission";
             $sql .= " WHERE 1=1";
-            if ($vendor_id) $sql .= " AND `vendor_id` = {$vendor_id}";
+            if ($vendor_id) $sql .= " AND `vendor_id` = %s";
             if ($order_id) {
-                $sql .= " AND `order_id` = {$order_id}";
+                $sql .= " AND `order_id` = %s";
             } else {
                 if ($is_paid) {
                     $sql .= " AND commission.status = 'paid'";
@@ -536,6 +543,14 @@ class FlutterWCFMHelper
             }
             $sql .= " GROUP BY commission.order_id";
 
+            $args = array();
+            if ($vendor_id) {
+                $args[] = $vendor_id;
+            }
+            if ($order_id) {
+                $args[] = $order_id;
+            }
+            $sql = $wpdb->prepare($sql, $args);
             $gross_sales_whole_week = $wpdb->get_results($sql);
             if (!empty($gross_sales_whole_week)) {
                 foreach ($gross_sales_whole_week as $net_sale_whole_week) {
@@ -594,9 +609,9 @@ class FlutterWCFMHelper
         } elseif ($marketplece == 'wcmarketplace') {
             $sql = "SELECT order_item_id, shipping, shipping_tax_amount FROM {$wpdb->prefix}wcmp_vendor_orders AS commission";
             $sql .= " WHERE 1=1";
-            if ($vendor_id) $sql .= " AND `vendor_id` = {$vendor_id}";
+            if ($vendor_id) $sql .= " AND `vendor_id` = %s";
             if ($order_id) {
-                $sql .= " AND `order_id` = {$order_id}";
+                $sql .= " AND `order_id` = %s";
             } else {
                 $sql .= " AND `line_item_type` = 'product' AND `commission_id` != 0 AND `commission_id` != '' AND `is_trashed` != 1";
                 if ($is_paid) {
@@ -606,7 +621,14 @@ class FlutterWCFMHelper
                     $sql = $this->wcfm_query_time_range_filter($sql, 'created', $interval, $filter_date_form, $filter_date_to);
                 }
             }
-
+            $args = array();
+            if ($vendor_id) {
+                $args[] = $vendor_id;
+            }
+            if ($order_id) {
+                $args[] = $order_id;
+            }
+            $sql = $wpdb->prepare($sql, $args);
             $gross_sales_whole_week = $wpdb->get_results($sql);
             if (!empty($gross_sales_whole_week)) {
                 foreach ($gross_sales_whole_week as $net_sale_whole_week) {
@@ -630,9 +652,9 @@ class FlutterWCFMHelper
         } elseif ($marketplece == 'wcpvendors') {
             $sql = "SELECT SUM( commission.product_amount ) AS total_product_amount, SUM( commission.product_shipping_amount ) AS product_shipping_amount, SUM( commission.product_shipping_tax_amount ) AS product_shipping_tax_amount, SUM( commission.product_tax_amount ) AS product_tax_amount FROM " . WC_PRODUCT_VENDORS_COMMISSION_TABLE . " AS commission";
             $sql .= " WHERE 1=1";
-            if ($vendor_id) $sql .= " AND commission.vendor_id = {$vendor_id}";
+            if ($vendor_id) $sql .= " AND commission.vendor_id = %s";
             if ($order_id) {
-                $sql .= " AND `order_id` = {$order_id}";
+                $sql .= " AND `order_id` = %s";
             } else {
                 if ($is_paid) {
                     $sql .= " AND commission.commission_status = 'paid'";
@@ -642,6 +664,14 @@ class FlutterWCFMHelper
                 }
             }
 
+            $args = array();
+            if ($vendor_id) {
+                $args[] = $vendor_id;
+            }
+            if ($order_id) {
+                $args[] = $order_id;
+            }
+            $sql = $wpdb->prepare($sql, $args);
             $total_sales = $wpdb->get_results($sql);
             if (!empty($total_sales)) {
                 foreach ($total_sales as $total_sale) {
@@ -651,15 +681,23 @@ class FlutterWCFMHelper
         } elseif ($marketplece == 'dokan') {
             $sql = "SELECT SUM( commission.order_total ) AS total_order_amount FROM {$wpdb->prefix}dokan_orders AS commission LEFT JOIN {$wpdb->posts} p ON commission.order_id = p.ID";
             $sql .= " WHERE 1=1";
-            if ($vendor_id) $sql .= " AND commission.seller_id = {$vendor_id}";
+            if ($vendor_id) $sql .= " AND commission.seller_id = %s";
             if ($order_id) {
-                $sql .= " AND `commission.order_id` = {$order_id}";
+                $sql .= " AND `commission.order_id` = %s";
             } else {
                 $status = dokan_withdraw_get_active_order_status_in_comma();
                 $sql .= " AND commission.order_status IN ({$status})";
                 $sql = $this->wcfm_query_time_range_filter($sql, 'post_date', $interval, '', '', 'p');
             }
 
+            $args = array();
+            if ($vendor_id) {
+                $args[] = $vendor_id;
+            }
+            if ($order_id) {
+                $args[] = $order_id;
+            }
+            $sql = $wpdb->prepare($sql, $args);
             $total_sales = $wpdb->get_results($sql);
             if (!empty($total_sales)) {
                 foreach ($total_sales as $total_sale) {
@@ -669,9 +707,9 @@ class FlutterWCFMHelper
         } elseif ($marketplece == 'wcfmmarketplace') {
             $sql = "SELECT ID, order_id, item_id, item_total, item_sub_total, refunded_amount, shipping, tax, shipping_tax_amount FROM {$wpdb->prefix}wcfm_marketplace_orders AS commission";
             $sql .= " WHERE 1=1";
-            if ($vendor_id) $sql .= " AND `vendor_id` = {$vendor_id}";
+            if ($vendor_id) $sql .= " AND `vendor_id` = %s";
             if ($order_id) {
-                $sql .= " AND `order_id` = {$order_id}";
+                $sql .= " AND `order_id` = %s";
                 //$sql .= " AND `is_refunded` != 1";
             } else {
                 $sql .= apply_filters('wcfm_order_status_condition', '', 'commission');
@@ -684,6 +722,14 @@ class FlutterWCFMHelper
                 }
             }
 
+            $args = array();
+            if ($vendor_id) {
+                $args[] = $vendor_id;
+            }
+            if ($order_id) {
+                $args[] = $order_id;
+            }
+            $sql = $wpdb->prepare($sql, $args);
             $gross_sales_whole_week = $wpdb->get_results($sql);
             $gross_commission_ids = array();
             $gross_total_refund_amount = 0;
@@ -773,9 +819,15 @@ class FlutterWCFMHelper
             if ($is_paid) {
                 $sql = "SELECT SUM( withdraw.amount ) AS amount FROM {$wpdb->prefix}dokan_withdraw AS withdraw";
                 $sql .= " WHERE 1=1";
-                if ($vendor_id) $sql .= " AND withdraw.user_id = {$vendor_id}";
+                if ($vendor_id) $sql .= " AND withdraw.user_id = %s";
                 $sql .= " AND withdraw.status = 1";
                 $sql = $this->wcfm_query_time_range_filter($sql, 'date', $interval, $filter_date_form, $filter_date_to, 'withdraw');
+                
+                if ($vendor_id) {
+                    $sql = $wpdb->prepare($sql, $vendor_id);
+                } else {
+                    $sql = $wpdb->prepare($sql);
+                }
                 $total_commissions = $wpdb->get_results($sql);
                 $commission = 0;
                 if (!empty($total_commissions)) {
@@ -809,7 +861,7 @@ class FlutterWCFMHelper
         }
 
         $sql .= " WHERE 1=1";
-        if ($vendor_id) $sql .= " AND commission.{$vendor_handler} = {$vendor_id}";
+        if ($vendor_id) $sql .= " AND commission.{$vendor_handler} = %s";
         if ($is_paid) $sql .= " AND (commission.{$status} = 'paid' OR commission.{$status} = 'completed')";
         if ($marketplece == 'wcmarketplace') {
             $sql .= " AND commission.commission_id != 0 AND commission.commission_id != '' AND `is_trashed` != 1";
@@ -820,7 +872,7 @@ class FlutterWCFMHelper
         }
         if ($marketplece == 'wcfmmarketplace') {
             if ($order_id) {
-                $sql .= " AND `order_id` = {$order_id}";
+                $sql .= " AND `order_id` = %s";
             } else {
                 $sql .= apply_filters('wcfm_order_status_condition', '', 'commission');
                 $sql .= " AND `is_refunded` = 0 AND `is_trashed` = 0";
@@ -829,6 +881,14 @@ class FlutterWCFMHelper
         if (!$order_id)
             $sql = $this->wcfm_query_time_range_filter($sql, $time, $interval, $filter_date_form, $filter_date_to, $table_handler);
 
+        $args = array();
+        if ($vendor_id) {
+            $args[] = $vendor_id;
+        }
+        if ($order_id) {
+            $args[] = $order_id;
+        }
+        $sql = $wpdb->prepare($sql, $args);
         $total_commissions = $wpdb->get_results($sql);
         $commission = 0;
         if (!empty($total_commissions)) {
@@ -880,13 +940,14 @@ class FlutterWCFMHelper
             $message_to = apply_filters('wcfm_message_author', $user_id);
 
             $sql = 'SELECT wcfm_messages.* FROM ' . $wpdb->prefix . 'wcfm_messages AS wcfm_messages';
-            $vendor_filter = " WHERE ( `author_id` = {$message_to} OR `message_to` = -1 OR `message_to` = {$message_to} )";
+            $vendor_filter = " WHERE ( `author_id` = %s OR `message_to` = -1 OR `message_to` = %s )";
             $sql .= $vendor_filter;
-            $message_status_filter = " AND NOT EXISTS (SELECT * FROM {$wpdb->prefix}wcfm_messages_modifier as wcfm_messages_modifier_2 WHERE wcfm_messages.ID = wcfm_messages_modifier_2.message AND wcfm_messages_modifier_2.read_by={$message_to})";
+            $message_status_filter = " AND NOT EXISTS (SELECT * FROM {$wpdb->prefix}wcfm_messages_modifier as wcfm_messages_modifier_2 WHERE wcfm_messages.ID = wcfm_messages_modifier_2.message AND wcfm_messages_modifier_2.read_by=%s)";
             $sql .= $message_status_filter;
             $sql .= " ORDER BY wcfm_messages.`ID` DESC";
-            $sql .= " LIMIT $limit";
-            $sql .= " OFFSET $offset";
+            $sql .= " LIMIT %d";
+            $sql .= " OFFSET %d";
+            $sql = $wpdb->prepare($sql, $message_to, $message_to, $message_to, $limit, $offset);
             $wcfm_messages = $wpdb->get_results($sql);
 
             foreach ($wcfm_messages as $wcfm_message) {

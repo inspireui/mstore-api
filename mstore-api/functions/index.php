@@ -137,8 +137,9 @@ function sendNotificationToUser($userId, $orderId, $previous_status, $next_statu
 
     if (isset($deviceToken) && $deviceToken != false) {
         _pushNotificationFirebase($userId,$title, $message, $deviceToken);
+    } else {
+        _pushNotificationOneSignal($userId, $title, $message);
     }
-    _pushNotificationOneSignal($userId, $title,$message);
 }
 
 function trackOrderStatusChanged($id, $previous_status, $next_status)
@@ -160,9 +161,10 @@ function sendNewOrderNotificationToDelivery($order_id, $status)
         if ($status == 'cancelled' || $status == 'refunded') {
             $sql = "SELECT `{$wpdb->prefix}wcfm_delivery_orders`.delivery_boy FROM `{$wpdb->prefix}wcfm_delivery_orders`";
             $sql .= " WHERE 1=1";
-            $sql .= " AND order_id = {$order_id}";
+            $sql .= " AND order_id = %s";
             $sql .= " AND is_trashed = 0";
             $sql .= " AND delivery_status = 'pending'";
+            $sql = $wpdb->prepare($sql, $order_id);
             $result = $wpdb->get_results($sql);
 
             foreach ($result as $item) {
@@ -722,7 +724,7 @@ function _pushNotificationFirebase($user_id, $title, $message, $deviceToken){
 function _pushNotificationOneSignal($user_id, $title, $message){
     $is_on = isNotificationEnabled($user_id);
     if($is_on){
-        one_signal_push_notification($title,$message,array($userId));
+        one_signal_push_notification($title,$message,array($user_id));
     }
 }
 

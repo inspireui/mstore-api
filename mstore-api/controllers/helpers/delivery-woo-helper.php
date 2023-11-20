@@ -59,15 +59,15 @@ class DeliveryWooHelper
             $table_1 = "{$wpdb->prefix}posts";
             $table_2 = "{$wpdb->prefix}postmeta";
             $sql = "SELECT ID FROM {$table_1} INNER JOIN {$table_2} ON {$table_1}.ID = {$table_2}.post_id";
-            $sql .= " WHERE `{$table_2}`.`meta_key` = 'ddwc_driver_id' AND `{$table_2}`.`meta_value` = {$user_id}";
+            $sql .= " WHERE `{$table_2}`.`meta_key` = 'ddwc_driver_id' AND `{$table_2}`.`meta_value` = %s";
             $sql .= " AND `{$table_1}`.`post_type` = 'shop_order'";
 
-            $total = count($wpdb->get_results($sql));
+            $total = count($wpdb->get_results($wpdb->prepare($sql, $user_id)));
             $pending_sql = $sql . " AND (`{$table_1}`.`post_status` = 'wc-driver-assigned' OR `{$table_1}`.`post_status` = 'wc-out-for-delivery' OR `{$table_1}`.`post_status` = 'wc-processing')";
             $delivered_sql = $sql . " AND `{$table_1}`.`post_status` = 'wc-completed'";
 
-            $pending_count = count($wpdb->get_results($pending_sql));
-            $delivered_count = count($wpdb->get_results($delivered_sql));
+            $pending_count = count($wpdb->get_results($wpdb->prepare($pending_sql, $user_id)));
+            $delivered_count = count($wpdb->get_results($wpdb->prepare($delivered_sql, $user_id)));
         }
 
         return new WP_REST_Response(array(
@@ -107,10 +107,11 @@ class DeliveryWooHelper
         $table_name = $wpdb->prefix . "wcfm_delivery_orders";
         $sql = "SELECT $table_name.`vendor_id` FROM `{$table_name}`";
         $sql .= " WHERE 1=1";
-        $sql .= " AND delivery_boy = {$user_id}";
+        $sql .= " AND delivery_boy = %s";
         $sql .= " AND is_trashed = 0";
         $sql .= " AND delivery_status = 'pending'";
         $sql .= " GROUP BY $table_name.`vendor_id`";
+        $sql = $wpdb->prepare($sql, $user_id);
         $items = $wpdb->get_results($sql);
 
         $vendor = new FlutterWCFMHelper();
@@ -165,11 +166,17 @@ class DeliveryWooHelper
             }
             if (isset($request['search'])) {
                 $order_search = sanitize_text_field($request['search']);
-                $sql .= " AND $table_1.`ID` LIKE '%{$order_search}%'";
+                $sql .= " AND $table_1.`ID` LIKE %s";
             }
             $sql .= " AND `{$table_1}`.`post_type` = 'shop_order'";
-            $sql .= " GROUP BY $table_1.`ID` ORDER BY $table_1.`ID` DESC LIMIT $per_page OFFSET $page";
+            $sql .= " GROUP BY $table_1.`ID` ORDER BY $table_1.`ID` DESC LIMIT %d OFFSET %d";
 
+            if(isset($order_search)){
+                $sql = $wpdb->prepare($sql, '%'.$order_search.'%', $per_page, $page);
+            }else{
+                $sql = $wpdb->prepare($sql, $per_page, $page);
+            }
+            
             $items = $wpdb->get_results($sql);
             foreach ($items as $item) {
                 $order = wc_get_order($item);
@@ -235,10 +242,11 @@ class DeliveryWooHelper
                 }
             }
             $offset = ($offset - 1) * $limit;
-            $sql = "SELECT * FROM $table_name WHERE `{$table_name}`.`delivery_boy` = $user_id";
+            $sql = "SELECT * FROM $table_name WHERE `{$table_name}`.`delivery_boy` = %s";
             $sql .= " ORDER BY `{$table_name}`.`id` DESC";
-            $sql .= " LIMIT $limit";
-            $sql .= " OFFSET $offset";
+            $sql .= " LIMIT %d";
+            $sql .= " OFFSET %d";
+            $sql = $wpdb->prepare($sql, $user_id, $limit, $offset);
             $messages = $wpdb->get_results($sql);
         }
         return new WP_REST_Response(array(

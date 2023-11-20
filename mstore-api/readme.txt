@@ -3,7 +3,7 @@ Contributors:      InspireUI Ltd
 Tags:              mstore, fluxstore, react-native, flutter, inspireui, ios, android
 Requires at least: 4.4
 Tested up to:      6.4.1
-Stable tag:        4.10.9
+Stable tag:        4.10.10
 License:           GPL-2.0
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -43,8 +43,11 @@ Faster- Smoother- Closer.
 1. Click Install.
 
 == Changelog ==
-= 4.10.9 =
+= 4.10.10 =
   * Fix digits login with password
+
+= 4.10.9 =
+  * Fix sql injection
 
 = 4.10.8 =
   * Fix security apple login

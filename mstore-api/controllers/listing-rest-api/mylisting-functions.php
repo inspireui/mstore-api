@@ -97,7 +97,8 @@ function myListingExploreListings($request)
     $values = implode(',',$listings->posts);
     $table_name = $wpdb->prefix . "posts";
     $sql = "SELECT * FROM {$table_name}";
-    $sql .= " WHERE {$table_name}.ID in ($values) ";
+    $sql .= " WHERE {$table_name}.ID in (%s) ";
+    $sql = $wpdb->prepare($sql, $values);
     $results = $wpdb->get_results($sql);
 
     return $results;

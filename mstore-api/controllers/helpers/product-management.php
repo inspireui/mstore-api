@@ -112,26 +112,40 @@ class ProductManagementHelper
 
         $table_name = $wpdb->prefix . "posts";
         $postmeta_table = $wpdb->prefix . "postmeta";
-        if(isset($is_admin) && $is_admin == true){
+        $is_admin = isset($is_admin) && $is_admin == true;
+        if($is_admin){
             $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
         }else{
-            $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_author` = $vendor_id AND `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
+            $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_author` = %s AND `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
         }
 
         if (isset($request["search"])) {
             $search =  sanitize_text_field($request["search"]);
             $search = "%$search%";
 
-            if (isset($is_admin) && $is_admin == true) {
+            if ($is_admin) {
                 $sql = "SELECT DISTINCT `$table_name`.ID, `$table_name`.* FROM `$table_name` LEFT JOIN `$postmeta_table` ON {$table_name}.ID = {$postmeta_table}.post_id WHERE `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
             } else {
-                $sql = "SELECT DISTINCT `$table_name`.ID, `$table_name`.* FROM `$table_name` LEFT JOIN `$postmeta_table` ON {$table_name}.ID = {$postmeta_table}.post_id WHERE `$table_name`.`post_author` = $vendor_id AND `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
+                $sql = "SELECT DISTINCT `$table_name`.ID, `$table_name`.* FROM `$table_name` LEFT JOIN `$postmeta_table` ON {$table_name}.ID = {$postmeta_table}.post_id WHERE `$table_name`.`post_author` = %s AND `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
             }
 
-            $sql .= " AND (`$table_name`.`post_content` LIKE '$search' OR `$table_name`.`post_title` LIKE '$search' OR `$table_name`.`post_excerpt` LIKE '$search' OR (`$postmeta_table`.`meta_key` = '_sku' AND `$postmeta_table`.`meta_value` LIKE '$search'))";
+            $sql .= " AND (`$table_name`.`post_content` LIKE %s OR `$table_name`.`post_title` LIKE %s OR `$table_name`.`post_excerpt` LIKE %s OR (`$postmeta_table`.`meta_key` = '_sku' AND `$postmeta_table`.`meta_value` LIKE %s))";
         }
-        $sql .= " ORDER BY `ID` DESC LIMIT $limit OFFSET $page";
+        $sql .= " ORDER BY `ID` DESC LIMIT %d OFFSET %d";
 
+        $args = array();
+        if(!$is_admin){
+            $args[] = $vendor_id;
+        }
+        if (isset($search)) {
+            $args[] = $search;
+            $args[] = $search;
+            $args[] = $search;
+            $args[] = $search;
+        }
+        $args[] = $limit;
+        $args[] = $page;
+        $sql = $wpdb->prepare($sql, $args);
         $item = $wpdb->get_results($sql);
 
         $products_arr = [];

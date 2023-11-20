@@ -307,8 +307,9 @@ class FlutterWoo extends FlutterBaseController
                             $table_name = $wpdb->prefix . "wcfm_delivery_orders";
                             $sql = "SELECT delivery_boy FROM `{$table_name}`";
                             $sql .= " WHERE 1=1";
-                            $sql .= " AND product_id = '{$product_id}'";
-                            $sql .= " AND order_id = '{$item->order_id}'";
+                            $sql .= " AND product_id = %s";
+                            $sql .= " AND order_id = %s";
+                            $sql = $wpdb->prepare($sql, $product_id, $item->order_id);
                             $users = $wpdb->get_results($sql);
 
                             if (count($users) > 0) {
@@ -1339,8 +1340,8 @@ class FlutterWoo extends FlutterBaseController
         $sql .= " WHERE $postmeta_table.meta_key='_mstore_video_url' AND $postmeta_table.meta_value IS NOT NULL AND $postmeta_table.meta_value <> ''";
         $sql .= " AND $post_table.post_type = 'product' AND $post_table.post_status = 'publish'";
         $sql .= " ORDER BY $post_table.post_modified DESC";
-        $sql .= " LIMIT $per_page OFFSET $page";
-
+        $sql .= " LIMIT %d OFFSET %d";
+        $sql = $wpdb->prepare($sql, $per_page, $page);
         $items = $wpdb->get_results($sql);
 
         if(count($items) > 0){

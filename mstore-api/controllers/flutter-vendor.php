@@ -275,7 +275,8 @@ class FlutterVendor extends FlutterBaseController
                     $table_name = $wpdb->prefix . "users";
                     $sql = "SELECT {$table_name}.ID";
                     $sql .= " FROM {$table_name}";
-                    $sql .= " WHERE {$table_name}.user_nicename = '{$slug}' ";
+                    $sql .= " WHERE {$table_name}.user_nicename = %s ";
+                    $sql = $wpdb->prepare($sql, $slug);
                     $users = $wpdb->get_results($sql);
                     if (count($users) != 1) {
                         return parent::sendError("invalid_url", "Not Found", 404);
@@ -444,7 +445,8 @@ class FlutterVendor extends FlutterBaseController
 
         global $woocommerce, $wpdb;
         $table_name = $wpdb->prefix . "posts";
-        $sql = "SELECT count(*) as count  FROM `$table_name` WHERE `$table_name`.`post_author` = $user_id AND `$table_name`.`post_type` = 'product' AND `$table_name`.`id` = $product_id LIMIT 1";
+        $sql = "SELECT count(*) as count  FROM `$table_name` WHERE `$table_name`.`post_author` = %s AND `$table_name`.`post_type` = 'product' AND `$table_name`.`id` = %s LIMIT 1";
+        $sql = $wpdb->prepare($sql, $user_id, $product_id);
         $results = $wpdb->get_row($sql);
         if ($results->count == 1) {
             $controller = new CUSTOM_WC_REST_Products_Controller();
@@ -553,7 +555,8 @@ class FlutterVendor extends FlutterBaseController
         } else {
             global $woocommerce, $wpdb;
             $table_name = $wpdb->prefix . "posts";
-            $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_author` = $user_id AND `$table_name`.`post_type` = 'product' LIMIT $limit OFFSET $page";
+            $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_author` = %s AND `$table_name`.`post_type` = 'product' LIMIT %d OFFSET %d";
+            $sql = $wpdb->prepare($sql,$user_id, $limit, $page);
             $products = $wpdb->get_results($sql);
         }
 
@@ -690,7 +693,8 @@ class FlutterVendor extends FlutterBaseController
                 global $wpdb;
                 $table_name2 = $wpdb->prefix.'usermeta';
                 if(isset($search)){
-                    $query = "SELECT $table_name2.user_id FROM $table_name2 WHERE $table_name2.meta_key = 'dokan_store_name' AND $table_name2.meta_value LIKE '%$search%'";
+                    $query = "SELECT $table_name2.user_id FROM $table_name2 WHERE $table_name2.meta_key = 'dokan_store_name' AND $table_name2.meta_value LIKE %s";
+                    $query = $wpdb->prepare($query, '%'.$search.'%');
                     $ids = $wpdb->get_results($query);
                     if(count($ids) == 0){
                         return [];
@@ -705,15 +709,22 @@ class FlutterVendor extends FlutterBaseController
 
                 $query =  "SELECT DISTINCT ";
                 $query.= "store_latitude.user_id, ";
-                $query.= "($distance_earth_center_to_surface * acos(cos( radians($lat) ) * cos( radians(store_latitude.meta_value ) ) * cos( radians(store_longitude.meta_value ) - radians($lng) ) + sin( radians($lat) ) * sin( radians( store_latitude.meta_value)))) AS distance";
+                $query.= "($distance_earth_center_to_surface * acos(cos( radians(%f) ) * cos( radians(store_latitude.meta_value ) ) * cos( radians(store_longitude.meta_value ) - radians(%f) ) + sin( radians(%f) ) * sin( radians( store_latitude.meta_value)))) AS distance";
                 $query.= " FROM $table_name2 AS store_latitude ";
                 $query.= "LEFT JOIN $table_name2 as store_longitude ON store_latitude.user_id = store_longitude.user_id ";
                 $query.= "WHERE store_latitude.meta_key = 'dokan_geo_latitude' AND store_longitude.meta_key = 'dokan_geo_longitude' ";
                 if(isset($user_ids)){
-                    $query.= "AND store_latitude.user_id IN ({$user_ids}) ";
+                    $query.= "AND store_latitude.user_id IN (%s) ";
                 }
-                $query .="HAVING distance < $distance ";
+                $query .="HAVING distance < %f ";
                 $query .="Limit 10";
+
+                if(isset($user_ids)){
+                    $query = $wpdb->prepare($query,$lat,$lng, $lat , $user_ids, $distance);
+                }else{
+                    $query = $wpdb->prepare($query,$lat,$lng, $lat, $distance );
+                }
+            
                 $users = $wpdb->get_results($query);
                 $results = [];
                 if(count($users) > 0){
@@ -758,7 +769,7 @@ class FlutterVendor extends FlutterBaseController
             global $wpdb, $WCFM;
             $table_name = $wpdb->prefix . "wcfm_marketplace_reviews";
             $offset = ($page - 1) * $per_page;
-            $sql = $wpdb->prepare("SELECT * FROM $table_name WHERE vendor_id = %s AND approved = $status ORDER BY created DESC LIMIT $per_page OFFSET $offset",$store_id);
+            $sql = $wpdb->prepare("SELECT * FROM $table_name WHERE vendor_id = %s AND approved = %d ORDER BY created DESC LIMIT %d OFFSET %d",$store_id, $status, $per_page, $offset);
             $reviews = $wpdb->get_results($sql);
             foreach ($reviews as $each_review) {
                 $wp_user_avatar_id = get_user_meta($each_review->author_id, 'wp_user_avatar', true);
