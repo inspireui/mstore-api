@@ -77,6 +77,8 @@ function one_signal_push_notification($title = '', $message = '', $user_ids = ar
 			'title' => $title,
 			'message' => $message,
 		),
+        'priority'=> "10",
+        'existing_android_channel_id' => 'high_importance_channel',
         'include_external_user_ids' => $external_ids,
         'contents' => $content,
         'headings' => $headings,
@@ -135,10 +137,12 @@ function sendNotificationToUser($userId, $orderId, $previous_status, $next_statu
     $message = str_replace("{{prevStatus}}", $previous_status_label, $message);
     $message = str_replace("{{nextStatus}}", $next_status_label, $message);
 
-    if (isset($deviceToken) && $deviceToken != false) {
-        _pushNotificationFirebase($userId,$title, $message, $deviceToken);
-    } else {
+    if (is_plugin_active('onesignal-free-web-push-notifications/onesignal.php')) {
         _pushNotificationOneSignal($userId, $title, $message);
+    } else {
+        if (isset($deviceToken) && $deviceToken != false) {
+            _pushNotificationFirebase($userId,$title, $message, $deviceToken);
+        }
     }
 }
 
