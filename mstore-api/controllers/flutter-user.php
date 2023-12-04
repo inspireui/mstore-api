@@ -951,6 +951,10 @@ class FlutterUserController extends FlutterBaseController
             update_user_meta($user_id, 'shipping_last_name', $params->last_name, '');
             update_user_meta($user_id, 'billing_last_name', $params->last_name, '');
         }
+        if (isset($params->phone)) {
+            update_user_meta($user_id, 'shipping_phone', $params->phone, '');
+            update_user_meta($user_id, 'billing_phone', $params->phone, '');
+        }
         if (isset($params->shipping_company)) {
             update_user_meta($user_id, 'shipping_company', $params->shipping_company, '');
             update_user_meta($user_id, 'billing_company', $params->shipping_company, '');
