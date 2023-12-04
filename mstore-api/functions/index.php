@@ -418,7 +418,11 @@ function customProductResponse($response, $object, $request)
     //update correct product price with tax setting
     $response->data['price'] = wc_get_price_to_display(  $object );
     $response->data['regular_price'] = wc_get_price_to_display(  $object, array( 'price' => $object->get_regular_price() ) );
-    $response->data['sale_price'] = wc_get_price_to_display(  $object, array( 'price' => $object->get_sale_price() ) );
+    if($object->get_sale_price() != ""){
+		$response->data['sale_price'] = wc_get_price_to_display(  $object, array( 'price' => $object->get_sale_price() ) );
+	}else{
+		$response->data['sale_price'] = null;
+	}
     
     if (!empty($woocommerce_wpml->multi_currency) && !empty($woocommerce_wpml->settings['currencies_order'])) {
 
@@ -462,7 +466,11 @@ function customProductResponse($response, $object, $request)
                 $variation_data['product_id'] = $product->get_id();
                 $variation_data['price'] = wc_get_price_to_display(  $variation_p );
                 $variation_data['regular_price'] = wc_get_price_to_display(  $variation_p, array( 'price' => $variation_p->get_regular_price() ) );
-                $variation_data['sale_price'] = wc_get_price_to_display(  $variation_p, array( 'price' => $variation_p->get_sale_price() ) );
+                if($variation_p->get_sale_price() != ""){
+                    $variation_data['sale_price'] = wc_get_price_to_display(  $variation_p, array( 'price' => $variation_p->get_sale_price() ) );
+                }else{
+                    $variation_data['sale_price'] = null;
+                }
                 $variation_data['date_on_sale_from'] = $variation_p->get_date_on_sale_from();
                 $variation_data['date_on_sale_to'] = $variation_p->get_date_on_sale_to();
                 $variation_data['on_sale'] = $variation_p->is_on_sale();
