@@ -1316,6 +1316,7 @@ class FlutterWoo extends FlutterBaseController
 
         $page = 1;
         $per_page = 10;
+        $lang = null;
 
         if (isset($request['page'])) {
             $page = sanitize_text_field($request['page']);
@@ -1329,6 +1330,9 @@ class FlutterWoo extends FlutterBaseController
                 $per_page = 10;
             }
         }
+        if (isset($request['lang'])) {
+            $lang = sanitize_text_field($request['lang']);
+        }
         $page = ($page - 1) * $per_page;
 
         $postmeta_table = $wpdb->prefix . "postmeta";
@@ -1340,8 +1344,11 @@ class FlutterWoo extends FlutterBaseController
         $sql .= " WHERE $postmeta_table.meta_key='_mstore_video_url' AND $postmeta_table.meta_value IS NOT NULL AND $postmeta_table.meta_value <> ''";
         $sql .= " AND $post_table.post_type = 'product' AND $post_table.post_status = 'publish'";
         $sql .= " ORDER BY $post_table.post_modified DESC";
-        $sql .= " LIMIT %d OFFSET %d";
-        $sql = $wpdb->prepare($sql, $per_page, $page);
+        if($lang == null){
+            $sql .= " LIMIT %d OFFSET %d";
+            $sql = $wpdb->prepare($sql, $per_page, $page);
+        }
+       
         $items = $wpdb->get_results($sql);
 
         if(count($items) > 0){
@@ -1349,7 +1356,10 @@ class FlutterWoo extends FlutterBaseController
             $req = new WP_REST_Request('GET');
             $params = array('include' => array_map(function($item){
                 return $item->post_id;
-            }, $items), 'page' => 1, 'per_page' => count($items), 'orderby' => 'modified', 'order' => 'DESC');
+            }, $items), 'page' => $page, 'per_page' => $per_page, 'orderby' => 'modified', 'order' => 'DESC');
+            if($lang != null){
+                $params['lang'] = $lang;
+            }
             $req->set_query_params($params);
             $response = $controller->get_items($req);
             return $response->get_data();

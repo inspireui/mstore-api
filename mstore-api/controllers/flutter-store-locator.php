@@ -74,15 +74,23 @@ class FlutterStoreLocator extends FlutterBaseController
         }
 
         $results = [];
+		delete_transient( 'yith_sl_stores' );
         $stores = yith_sl_get_stores($params);
+	
         for ( $i = 0; $i < count($stores); $i++ ){
             $store = YITH_Store_Locator_Store( $stores[ $i ]['id'] );
+			if($store->get_image()){
+				preg_match( '@src="([^"]+)"@' , $store->get_image(), $match );
+				$src = array_pop($match);
+			}else{
+				$src = null;
+			}
             $results[] = [
                 'id' => $store->get_id(),
                 'name' => $store->get_name(),
                 'description' => $store->get_description(),
-                'image' => $store->get_image(),
-                'address' => $store->get_full_address(),
+                'image' => $src,
+                'address' => trim(preg_replace("/^(<br \/>)/", "", trim($store->get_full_address()), 1)),
                 'link' => $store->get_store_name_link(),
                 'direction_link' => $store->get_direction_link(),
                 'marker_icon' => $store->get_marker_icon(),
