@@ -597,7 +597,6 @@ class FlutterVendor extends FlutterBaseController
 
     public function prepeare_product_response($response, $object, $request)
     {
-        $response = customProductResponse($response, $object, $request);
         $data = $response->get_data();
         $author_id = get_post_field('post_author', $data['id']);
         if (is_plugin_active('dokan-lite/dokan.php')) {

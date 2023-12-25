@@ -580,7 +580,9 @@ class FlutterWoo extends FlutterBaseController
                 $attributes = [];
                 if (isset($product["meta_data"])) {
                     foreach ($product["meta_data"] as $item) {
-                        $attributes[strtolower($item["key"])] = $item["value"];
+                        if($item['value'] != null){
+                            $attributes[strtolower($item["key"])] = $item["value"];
+                        }
                     }
                 }
 
@@ -711,7 +713,7 @@ class FlutterWoo extends FlutterBaseController
 
         $this->check_prerequisites();
 
-        $shipping = $body["shipping"];
+        $shipping = array_key_exists('shipping', $body) ? $body["shipping"] : null;
         if (isset($shipping)) {
             WC()->customer->set_shipping_first_name($shipping["first_name"]);
             WC()->customer->set_shipping_last_name($shipping["last_name"]);

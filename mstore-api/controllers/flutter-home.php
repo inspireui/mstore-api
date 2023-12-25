@@ -17,7 +17,7 @@ class FlutterHome extends WP_REST_Controller
      */
     protected $namespace = 'wc/v2/flutter';//prefix must be wc/ or wc- to reuse check permission function in woo commerce
     protected $namespace_v3 = 'wc/v3/flutter';
-    private $whilelist = ['id','name','slug', 'permalink','date_created','date_created_gmt','date_modified','date_modified_gmt','type','status','featured','catalog_visibility','description','short_description','sku','price','regular_price','sale_price','date_on_sale_from','date_on_sale_from_gmt','date_on_sale_to','date_on_sale_to_gmt','price_html','on_sale','purchasable','total_sales','virtual','downloadable','downloads','download_limit','download_expiry','external_url','button_text','tax_status','tax_class','manage_stock','stock_quantity','stock_status','backorders','backorders_allowed','backordered','sold_individually','weight','dimensions','shipping_required','shipping_taxable','shipping_class','shipping_class_id','reviews_allowed','average_rating','rating_count','related_ids','upsell_ids','cross_sell_ids','parent_id','purchase_note','categories','tags','images','attributes','default_attributes','variations','grouped_products','menu_order','meta_data','store','attributesData'];
+    private $whilelist = ['id','name','slug', 'permalink','date_created','date_created_gmt','date_modified','date_modified_gmt','type','status','featured','catalog_visibility','description','short_description','sku','price','regular_price','sale_price','date_on_sale_from','date_on_sale_from_gmt','date_on_sale_to','date_on_sale_to_gmt','price_html','on_sale','purchasable','total_sales','virtual','downloadable','downloads','download_limit','download_expiry','external_url','button_text','tax_status','tax_class','manage_stock','stock_quantity','stock_status','backorders','backorders_allowed','backordered','sold_individually','weight','dimensions','shipping_required','shipping_taxable','shipping_class','shipping_class_id','reviews_allowed','average_rating','rating_count','related_ids','upsell_ids','cross_sell_ids','parent_id','purchase_note','categories','tags','images','attributes','default_attributes','variations','grouped_products','menu_order','meta_data','store','attributesData', 'variation_products'];
     private $metaDataWhilelist = ['wc_appointments_','_aftership_', '_wcfmd_','_orddd_','_minmax_product_','product_id','order_id','staff_ids','_video_url','_woofv_video_embed','_product_addons','_wholesale_price','_have_wholesale_price'];
     private $supportedLayouts = ["fourColumn","threeColumn","twoColumn","staggered","saleOff","card","listTile","largeCardHorizontalListItems","largeCard","simpleVerticalListItems","simpleList"];
     /**
@@ -201,35 +201,44 @@ class FlutterHome extends WP_REST_Controller
             return [];
         }
         $params = array('order' => 'desc', 'orderby' => 'date', 'status' => 'publish');
-        if (isset($layout['category'])) {
+        if (isset($layout['category']) && $layout['category'] != null) {
             $params['category'] = $layout['category'];
         }
-        if (isset($layout['tag'])) {
+        if (isset($layout['tag']) && $layout['tag'] != null) {
             $params['tag'] = $layout['tag'];
         }
-        if (isset($layout['featured'])) {
+        if (isset($layout['featured']) && $layout['featured'] == true) {
             $params['featured'] = $layout['featured'];
         }
         if (isset($layout["layout"]) && $layout["layout"] == "saleOff") {
-            $params['on_sale'] = "true";
+			$params['include'] = [];
+            $params['on_sale'] = true;
         }
         $limit = get_option("mstore_limit_product");
         $limit = (!isset($limit) || $limit == false) ? 10 : $limit;
         $limit = isset($layout['limit']) && is_int($layout['limit']) ? $layout['limit'] : $limit;
         $params['per_page'] = $limit;
         $params['page'] = 0;
-
+        $params['is_all_data'] = true;
+	
         $request->set_query_params($params);
 
         $response = $api->get_items($request);
         $products = $response->get_data();
-        $products = $this->arrayWhitelist($products, $this->whilelist);
-        foreach ($products as &$value) {
+
+        $items = [];
+        foreach ($products as $item) {
+            if($item['catalog_visibility'] !== 'hidden'){
+                $items[] = $item;
+            }
+        }
+        $items = $this->arrayWhitelist($items, $this->whilelist);
+        foreach ($items as &$value) {
             if(isset($value['meta_data'])){
                 $value['meta_data'] =  $this->arrayMetaDataWhitelist($value['meta_data']);
             }
         }
-        return $products;
+        return $items;
     }
 
 
