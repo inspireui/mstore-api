@@ -150,27 +150,13 @@ class FlutterHome extends WP_REST_Controller
             $results = [];
             $horizontalLayout = $array["HorizonLayout"];
             foreach ($horizontalLayout as $layout) {
-                if ((isset($layout['category']) || isset($layout['tag']) || isset($layout['featured']) || (isset($layout["layout"]) && $layout["layout"] == "saleOff")) && in_array($layout['layout'], $this->supportedLayouts)) {
+                if (in_array($layout['layout'], $this->supportedLayouts)) {
                     if($countDataLayout <  4){
                         $layout["data"] = $this->getProductsByLayout($layout, $api, $request);
                         $countDataLayout += 1;
                     }
-                    $results[] = $layout;
-                } else {
-                    if (isset($layout["items"]) && count($layout["items"]) > 0) {
-                        $items = [];
-                        foreach ($layout["items"] as $item) {
-                            if($countDataLayout <  4 && array_key_exists('layout', $item) && in_array($item['layout'], $this->supportedLayouts)){
-                                $item["data"] = $this->getProductsByLayout($item, $api, $request);
-                                $countDataLayout += 1;
-                            }
-                            
-                            $items[] = $item;
-                        }
-                        $layout["items"] = $items;
-                    }
-                    $results[] = $layout;
                 }
+                $results[] = $layout;
             }
             $array['HorizonLayout'] = $results;
 
@@ -197,14 +183,17 @@ class FlutterHome extends WP_REST_Controller
 
     function getProductsByLayout($layout, $api, $request)
     {
-        if ((!isset($layout['category']) && !isset($layout['tag']) && !isset($layout['featured']) && (!isset($layout['layout']) || $layout["layout"] != "saleOff")) || (isset($layout['category']) && ($layout['category'] == null || $layout['category'] == "-1")) || (isset($layout['tag']) && ($layout['tag'] == null || $layout['tag'] == "-1"))) {
-            return [];
-        }
         $params = array('order' => 'desc', 'orderby' => 'date', 'status' => 'publish');
-        if (isset($layout['category']) && $layout['category'] != null) {
+        if (isset($layout['order']) && $layout['order'] != null) {
+            $params['order'] = $layout['order'];
+        }
+        if (isset($layout['orderby']) && $layout['orderby'] != null) {
+            $params['orderby'] = $layout['orderby'];
+        }
+        if (isset($layout['category']) && $layout['category'] != null && $layout['category'] != '-1') {
             $params['category'] = $layout['category'];
         }
-        if (isset($layout['tag']) && $layout['tag'] != null) {
+        if (isset($layout['tag']) && $layout['tag'] != null && $layout['tag'] != -1) {
             $params['tag'] = $layout['tag'];
         }
         if (isset($layout['featured']) && $layout['featured'] == true) {
