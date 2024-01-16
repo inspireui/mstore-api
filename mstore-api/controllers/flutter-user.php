@@ -111,20 +111,10 @@ class FlutterUserController extends FlutterBaseController
             ),
         ));
 
-        register_rest_route($this->namespace, '/apple_login', array(
-            array(
-                'methods' => 'POST',
-                'callback' => array($this, 'apple_login'),
-                'permission_callback' => function () {
-                    return parent::checkApiPermission();
-                }
-            ),
-        ));
-
         register_rest_route($this->namespace, '/apple_login_2', array(
             array(
                 'methods' => 'POST',
-                'callback' => array($this, 'apple_login_2'),
+                'callback' => array($this, 'apple_login'),
                 'permission_callback' => function () {
                     return parent::checkApiPermission();
                 }
@@ -704,7 +694,7 @@ class FlutterUserController extends FlutterBaseController
         if (!isset($phone)) {
             return parent::sendError("invalid_login", "You must include a 'phone' variable.", 400);
         }
-        $domain = $_SERVER['SERVER_NAME'];
+        $domain = $_SERVER['SERVER_NAME'] == 'default_server' ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'];
         if (count(explode(".", $domain)) == 1) {
             $domain = "flutter.io";
         }
@@ -724,7 +714,7 @@ class FlutterUserController extends FlutterBaseController
             $args = array('meta_key' => 'registered_phone_number', 'meta_value' => $phone);
             $search_users = get_users($args);
             if (empty($search_users)) {
-                $domain = $_SERVER['SERVER_NAME'];
+                $domain = $_SERVER['SERVER_NAME'] == 'default_server' ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'];
                 if (count(explode(".", $domain)) == 1) {
                     $domain = "flutter.io";
                 }
@@ -765,30 +755,6 @@ class FlutterUserController extends FlutterBaseController
     }
 
     public function apple_login($request)
-    {
-        $json = file_get_contents('php://input');
-        $params = json_decode($json, TRUE);
-        $token = $params["token"];
-        $firstName = $params["first_name"];
-        $lastName = $params["last_name"];
-        $decoded = $this->jwtDecode($token);
-        $user_email = $decoded["email"];
-        if (!isset($user_email)) {
-            return parent::sendError("invalid_login", "Can't get the email to create account.", 400);
-        }
-        $display_name = explode("@", $user_email)[0];
-        if(isset($firstName) && isset($lastName) && !empty($firstName)){
-            $display_name = $firstName.' '.$lastName;
-        }else{
-            $firstName =  $display_name;
-            $lastName = "";
-        }
-        $user_name = $display_name;
-
-        return $this->createSocialAccount($user_email, $display_name, $firstName, $lastName, $user_name);
-    }
-
-    public function apple_login_2($request)
     {
         $json = file_get_contents('php://input');
         $params = json_decode($json, TRUE);
@@ -984,6 +950,10 @@ class FlutterUserController extends FlutterBaseController
             $user_update['last_name'] = $params->last_name;
             update_user_meta($user_id, 'shipping_last_name', $params->last_name, '');
             update_user_meta($user_id, 'billing_last_name', $params->last_name, '');
+        }
+        if (isset($params->phone)) {
+            update_user_meta($user_id, 'shipping_phone', $params->phone, '');
+            update_user_meta($user_id, 'billing_phone', $params->phone, '');
         }
         if (isset($params->shipping_company)) {
             update_user_meta($user_id, 'shipping_company', $params->shipping_company, '');
@@ -1245,7 +1215,23 @@ class FlutterUserController extends FlutterBaseController
         $_POST['dig_nounce'] = wp_create_nonce('dig_form');
         $_POST['crsf-otp'] = wp_create_nonce('crsf-otp');
 
-        $_POST['digits_reg_password'] = wp_generate_password();
+        if (isset($params['password'])) {
+            $_POST['digits_reg_password'] = $params['password'];
+        }else{
+            $_POST['digits_reg_password'] = wp_generate_password();
+        }
+
+        $reg_custom_fields = stripslashes(base64_decode(get_option("dig_reg_custom_field_data", "e30=")));
+        $reg_custom_fields = json_decode($reg_custom_fields, true);
+        foreach ($reg_custom_fields as $key => $values) {
+            $required = $values['required'];
+            if($required == 1){
+                $meta_key = cust_dig_filter_string($values['meta_key']);
+                $post_index = 'digits_reg_' . $meta_key;
+                $_POST[$post_index] = '1';
+            }
+            
+        }
         $_REQUEST['json'] = 1;
     }
 

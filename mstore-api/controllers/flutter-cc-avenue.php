@@ -52,7 +52,7 @@ class FlutterCCAvenue extends FlutterBaseController
         $redirect_url = sanitize_text_field($body['redirect_url']);
         $cancel_url = sanitize_text_field($body['cancel_url']);
 
-        $available_payment_methods = WC()->payment_gateways()->get_available_payment_gateways();
+        $available_payment_methods = WC()->payment_gateways->payment_gateways();
         if(!isset($available_payment_methods['ccavenue'])){
             return parent::sendError("invalid_plugin", "You need to install CCAvenue Payment Gateway for WooCommerce plugin to use this api", 404);
         }

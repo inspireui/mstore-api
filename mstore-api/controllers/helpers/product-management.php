@@ -112,26 +112,40 @@ class ProductManagementHelper
 
         $table_name = $wpdb->prefix . "posts";
         $postmeta_table = $wpdb->prefix . "postmeta";
-        if(isset($is_admin) && $is_admin == true){
+        $is_admin = isset($is_admin) && $is_admin == true;
+        if($is_admin){
             $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
         }else{
-            $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_author` = $vendor_id AND `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
+            $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_author` = %s AND `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
         }
 
         if (isset($request["search"])) {
             $search =  sanitize_text_field($request["search"]);
             $search = "%$search%";
 
-            if (isset($is_admin) && $is_admin == true) {
+            if ($is_admin) {
                 $sql = "SELECT DISTINCT `$table_name`.ID, `$table_name`.* FROM `$table_name` LEFT JOIN `$postmeta_table` ON {$table_name}.ID = {$postmeta_table}.post_id WHERE `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
             } else {
-                $sql = "SELECT DISTINCT `$table_name`.ID, `$table_name`.* FROM `$table_name` LEFT JOIN `$postmeta_table` ON {$table_name}.ID = {$postmeta_table}.post_id WHERE `$table_name`.`post_author` = $vendor_id AND `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
+                $sql = "SELECT DISTINCT `$table_name`.ID, `$table_name`.* FROM `$table_name` LEFT JOIN `$postmeta_table` ON {$table_name}.ID = {$postmeta_table}.post_id WHERE `$table_name`.`post_author` = %s AND `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
             }
 
-            $sql .= " AND (`$table_name`.`post_content` LIKE '$search' OR `$table_name`.`post_title` LIKE '$search' OR `$table_name`.`post_excerpt` LIKE '$search' OR (`$postmeta_table`.`meta_key` = '_sku' AND `$postmeta_table`.`meta_value` LIKE '$search'))";
+            $sql .= " AND (`$table_name`.`post_content` LIKE %s OR `$table_name`.`post_title` LIKE %s OR `$table_name`.`post_excerpt` LIKE %s OR (`$postmeta_table`.`meta_key` = '_sku' AND `$postmeta_table`.`meta_value` LIKE %s))";
         }
-        $sql .= " ORDER BY `ID` DESC LIMIT $limit OFFSET $page";
+        $sql .= " ORDER BY `ID` DESC LIMIT %d OFFSET %d";
 
+        $args = array();
+        if(!$is_admin){
+            $args[] = $vendor_id;
+        }
+        if (isset($search)) {
+            $args[] = $search;
+            $args[] = $search;
+            $args[] = $search;
+            $args[] = $search;
+        }
+        $args[] = $limit;
+        $args[] = $page;
+        $sql = $wpdb->prepare($sql, $args);
         $item = $wpdb->get_results($sql);
 
         $products_arr = [];
@@ -568,6 +582,16 @@ class ProductManagementHelper
                                 : "private"
                         );
                         $variationProduct->save();
+
+                        if(isset($variation['wholesale_prices']) && count($variation['wholesale_prices']) > 0){
+                            foreach($variation['wholesale_prices'] as $item){
+                                update_post_meta($variation_id, $item['type'].'_wholesale_discount_type', $item['wholesale_discount_type']);
+                                if(!empty($item['wholesale_percentage_discount'])){
+                                    update_post_meta($variation_id, $item['type'].'_wholesale_percentage_discount', $item['wholesale_percentage_discount']);
+                                }
+                                update_post_meta($variation_id, $item['type'].'_wholesale_price', $item['wholesale_price']);
+                            }
+                        }
                     }
                 }
 
@@ -582,6 +606,15 @@ class ProductManagementHelper
                     "post_status" => $requestStatus,
                 ]);
 
+                if(isset($request['wholesale_prices']) && count($request['wholesale_prices']) > 0){
+                    foreach($request['wholesale_prices'] as $item){
+                        update_post_meta($product->get_id(), $item['type'].'_wholesale_discount_type', $item['wholesale_discount_type']);
+                        if(!empty($item['wholesale_percentage_discount'])){
+                            update_post_meta($product->get_id(), $item['type'].'_wholesale_percentage_discount', $item['wholesale_percentage_discount']);
+                        }
+                        update_post_meta($product->get_id(), $item['type'].'_wholesale_price', $item['wholesale_price']);
+                    }
+                }
                 wp_update_post([
                     "ID" => $product->get_id(),
                     "post_author" => $user_id,
@@ -590,76 +623,49 @@ class ProductManagementHelper
                 $image_arr = [];
                 $p = $product->get_data();
 		
-                foreach (array_filter($p["gallery_image_ids"]) as $img) {
-                    $image = wp_get_attachment_image_src($img, "full");
-
-                    if (is_array($image) && count($image) > 0) {
-                        $image_arr[] = $image[0];
-                    }
-                }
-                $p["description"] = strip_tags($p["description"]);
-                $p["short_description"] = strip_tags($p["short_description"]);
-                $p["images"] = $image_arr;
-                $image = wp_get_attachment_image_src($p["image_id"], "full");
-                if (!is_null($image[0])) {
-                    $p["featured_image"] = $image[0];
-                }
-                $p["type"] = $product->get_type();
-                $p["on_sale"] = $product->is_on_sale();
-                if ($product->get_type() == "variable") {
-                    $query = [
-                        "post_parent" => $product->get_id(),
-                        "post_status" => ["publish", "private"],
-                        "post_type" => ["product_variation"],
-                        "posts_per_page" => -1,
-                    ];
-
-                    $wc_query = new WP_Query($query);
-                    while ($wc_query->have_posts()) {
-                        $wc_query->next_post();
-                        $result[] = $wc_query->post;
-                    }
-
-                    foreach ($result as $variation) {
-                        $p_varation = new WC_Product_Variation($variation->ID);
-                        $dataVariation = array();
-                        $dataVariation["variation_id"] = $p_varation->get_id();
-                        $dataVariation["max_qty"] = $p_varation->get_stock_quantity();
-                        $dataVariation["variation_is_active"] =
-                            $p_varation->get_status() == "publish";
-                        $dataVariation["display_price"] = $p_varation->get_sale_price();
-                        $dataVariation["display_regular_price"] = $p_varation->get_regular_price();
-                        $dataVariation["attributes"] = $p_varation->get_attributes();
-                        $dataVariation["manage_stock"] = $p_varation->get_manage_stock();
-                        $p["variation_products"][] = $dataVariation;
-                    }
-					
-                }
-			
                 $controller = new CUSTOM_WC_REST_Products_Controller();
                 $req = new WP_REST_Request('GET');
-                $params = array('status' => 'published', 'include' => [$p['id']], 'page'=>1, 'per_page'=>10, 'lang'=>'en');
+                $params = array('id' => $p['id']);
                 $req->set_query_params($params);
 
-                $response = $controller->get_items($req);
+                $response = $controller->get_item($req);
                 $pData = $response->get_data();
-                if(count($pData) > 0){
-                    return new WP_REST_Response(
-                        [
-                            "status" => "success",
-                            "response" => $pData[0],
-                        ],
-                        200
-                    );
-                }else{
-                    return new WP_REST_Response(
-                        [
-                            "status" => "success",
-                            "response" => $p,
-                        ],
-                        200
-                    );
+
+                $attributes = [];
+                foreach ($product->get_attributes() as $attribute) {
+                    $attributes[] = [
+                        "id" => $attribute["is_taxonomy"]
+                            ? wc_attribute_taxonomy_id_by_name($attribute["name"])
+                            : 0,
+                        "name" =>
+                            0 === strpos($attribute["name"], "pa_")
+                                ? get_taxonomy($attribute["name"])->labels
+                                ->singular_name
+                                : $attribute["name"],
+                        "position" => (int)$attribute["position"],
+                        "visible" => (bool)$attribute["is_visible"],
+                        "variation" => (bool)$attribute["is_variation"],
+                        "options" => $this->get_attribute_options(
+                            $product->get_id(),
+                            $attribute
+                        ),
+                        "slugs" => $this->get_attribute_slugs(
+                            $product->get_id(),
+                            $attribute
+                        ),
+                        "default" => 0 === strpos($attribute["name"], "pa_"),
+                        "slug" => str_replace(' ','-',$attribute["name"]),
+                    ];
                 }
+                $pData["attributesData"] = $attributes;
+
+                return new WP_REST_Response(
+                        [
+                            "status" => "success",
+                            "response" => $pData,
+                        ],
+                        200
+                    );
             }
         } else {
             return $this->sendError(

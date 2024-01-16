@@ -74,6 +74,8 @@ function one_signal_push_notification($title = '', $message = '', $user_ids = ar
 			'title' => $title,
 			'message' => $message,
 		),
+        'priority'=> "10",
+        'existing_android_channel_id' => 'high_importance_channel',
         'include_external_user_ids' => $external_ids,
         'contents' => $content,
         'headings' => $headings,
@@ -132,10 +134,13 @@ function sendNotificationToUser($userId, $orderId, $previous_status, $next_statu
     $message = str_replace("{{prevStatus}}", $previous_status_label, $message);
     $message = str_replace("{{nextStatus}}", $next_status_label, $message);
 
-    if (isset($deviceToken) && $deviceToken != false) {
-        _pushNotificationFirebase($userId,$title, $message, $deviceToken);
+    if (is_plugin_active('onesignal-free-web-push-notifications/onesignal.php')) {
+        _pushNotificationOneSignal($userId, $title, $message);
+    } else {
+        if (isset($deviceToken) && $deviceToken != false) {
+            _pushNotificationFirebase($userId,$title, $message, $deviceToken);
+        }
     }
-    _pushNotificationOneSignal($userId, $title,$message);
 }
 
 function trackOrderStatusChanged($id, $previous_status, $next_status)
@@ -157,9 +162,10 @@ function sendNewOrderNotificationToDelivery($order_id, $status)
         if ($status == 'cancelled' || $status == 'refunded') {
             $sql = "SELECT `{$wpdb->prefix}wcfm_delivery_orders`.delivery_boy FROM `{$wpdb->prefix}wcfm_delivery_orders`";
             $sql .= " WHERE 1=1";
-            $sql .= " AND order_id = {$order_id}";
+            $sql .= " AND order_id = %s";
             $sql .= " AND is_trashed = 0";
             $sql .= " AND delivery_status = 'pending'";
+            $sql = $wpdb->prepare($sql, $order_id);
             $result = $wpdb->get_results($sql);
 
             foreach ($result as $item) {
@@ -365,10 +371,40 @@ function isPHP8()
     return version_compare(phpversion(), '8.0.0') >= 0;
 }
 
+function addQRCodeUrlToMetaResponse($response){
+    if (is_plugin_active('yith-woocommerce-barcodes-premium/init.php')) {
+        $barcode = YITH_Barcode::get($response->data['id']);
+        $barcode_img_path = get_post_meta( $response->data['id'], '_ywbc_barcode_filename', false );
+        if($barcode && $barcode_img_path){
+            $barcode_value    = $barcode->get_display_value();
+            $barcode_protocol = $barcode->get_protocol();
+            $barcode_src = apply_filters(
+                'yith_ywbc_barcode_src',
+                $barcode_img_path ? esc_url(  YITH_YWBC()->get_public_file_path( $barcode ) ) : 'data:image/png;base64,' . $barcode->image,
+                $barcode_value,
+                $barcode_protocol,
+                'default'
+            );
+            $meta_data = $response->data['meta_data'];
+            $meta_data[] = new WC_Meta_Data(
+                array(
+                    'key'   =>'_ywbc_barcode_image_url',
+                    'value' => $barcode_src,
+                )
+            );
+            $response->data['meta_data'] = $meta_data;
+        }
+    }
+    return $response;
+}
+
 function customProductResponse($response, $object, $request)
 {
     global $woocommerce_wpml;
-
+    $is_detail_api = isset($request->get_params()['id']);
+    if($request['is_all_data'] == true){
+        $is_detail_api = true;
+    }
     $is_purchased = false;
     if (isset($request['user_id'])) {
         $user_id = $request['user_id'];
@@ -380,6 +416,15 @@ function customProductResponse($response, $object, $request)
     }
     $response->data['is_purchased'] = $is_purchased;
 
+    //update correct product price with tax setting
+    $response->data['price'] = wc_get_price_to_display(  $object );
+    $response->data['regular_price'] = wc_get_price_to_display(  $object, array( 'price' => $object->get_regular_price() ) );
+    if($object->get_sale_price() != ""){
+		$response->data['sale_price'] = wc_get_price_to_display(  $object, array( 'price' => $object->get_sale_price() ) );
+	}else{
+		$response->data['sale_price'] = null;
+	}
+    
     if (!empty($woocommerce_wpml->multi_currency) && !empty($woocommerce_wpml->settings['currencies_order'])) {
 
         $type = $response->data['type'];
@@ -394,14 +439,14 @@ function customProductResponse($response, $object, $request)
     $product = wc_get_product($response->data['id']);
 
     /* Update price for product variant */
-    if ($product->is_type('variable')) {
+    if ($product && $product->is_type('variable')) {
         $prices = $product->get_variation_prices();
         if (!empty($prices['price'])) {
             $response->data['price'] = current($prices['price']);
             $response->data['regular_price'] = current($prices['regular_price']);
             $response->data['sale_price'] = current($prices['sale_price']);
-            $response->data['min_price'] = $product->get_variation_price();
-            $response->data['max_price'] = $product->get_variation_price('max');
+            $response->data['min_price'] = wc_get_price_to_display(  $product, array( 'price' => $product->get_variation_price() ) );
+            $response->data['max_price'] = wc_get_price_to_display(  $product, array( 'price' => $product->get_variation_price('max') ) );
             
             if(!$response->data['min_price']){
                 $response->data['min_price'] = '0';
@@ -409,78 +454,82 @@ function customProductResponse($response, $object, $request)
             if(!$response->data['max_price']){
                 $response->data['max_price'] = '0';
             }
-            $variations = $response->data['variations'];
-            $variation_arr = array();
-            foreach($variations as $variation_id){
-                $variation_data = array();
-                $variation_p = new WC_Product_Variation($variation_id);
-                $variation_data['id'] = $variation_id;
-                $variation_data['product_id'] = $product->get_id();
-                $variation_data['price'] = $variation_p->get_price();
-                $variation_data['regular_price'] = $variation_p->get_regular_price() ;
-                $variation_data['sale_price'] =$variation_p->get_sale_price() ;
-                $variation_data['date_on_sale_from'] = $variation_p->get_date_on_sale_from();
-                $variation_data['date_on_sale_to'] = $variation_p->get_date_on_sale_to();
-                $variation_data['on_sale'] = $variation_p->is_on_sale();
-                $variation_data['in_stock'] =$variation_p->is_in_stock() ;
-                $variation_data['stock_quantity'] = $variation_p->get_stock_quantity();
-                $variation_data['stock_status'] = $variation_p->get_stock_status();
-                $feature_image = wp_get_attachment_image_src( $variation_p->get_image_id(), 'single-post-thumbnail' );
-                $variation_data['feature_image'] = $feature_image ? $feature_image[0] : null;
-        
-                $attr_arr = array();
-                $variation_attributes = $variation_p->get_attributes();
-                foreach($variation_attributes as $k=>$v){
-                    $attr_data = array();
-                    $attr_data['name'] = $k;
-                    $attr_data['slug'] = $v;
-                    $meta = get_post_meta($variation_id, 'attribute_'.$k, true);
-                    $term = get_term_by('slug', $meta, $k);
-                    $attr_data['attribute_name'] = $term == false ? null : $term->name;
-                    $attr_arr[]=$attr_data;
+            //convert to string
+            $response->data['min_price'] = strval($response->data['min_price']);
+            $response->data['max_price'] = strval($response->data['max_price']);
+
+            if($is_detail_api){
+				$variations = $response->data['variations'];
+				$controller = new WC_REST_Product_Variations_V2_Controller();
+				$variation_arr = array();
+                foreach($variations as $variation_id){
+					$variation = new WC_Product_Variation($variation_id);
+                    $variation_data = $controller->prepare_object_for_response($variation, $request)->get_data();
+					$variation_arr[] = $variation_data;
+				}
+                $response->data['variation_products'] = $variation_arr;
+            }
+            
+        }
+    }
+
+    if($product) {
+        $attributes = $product->get_attributes();
+        $attributesData = [];
+        foreach ($attributes as $key => $attr) {
+            if(!is_string($attr)){
+                $check = $attr->is_taxonomy();
+                if ($check) {
+                    $taxonomy = $attr->get_taxonomy_object();
+                    $label = $taxonomy->attribute_label;
+                } else {
+                    $label = $attr->get_name();
                 }
-                $variation_data['attributes_arr'] = $attr_arr;
-                $variation_arr[]=$variation_data;
+                $attrOptions = wc_get_product_terms($response->data['id'], $attr["name"]);
+                $attrOptions = empty($attrOptions) ? array_map(function ($v){
+                    return ['name'=>$v, 'slug' => $v];
+                },$attr["options"]) : $attrOptions;
+                $attributesData[] = array_merge($attr->get_data(), ["label" => $label, "name" => urldecode($key)], ['options' =>$attrOptions]);
             }
-            $response->data['variation_products'] = $variation_arr;
         }
+        $response->data['attributesData'] = $attributesData;
     }
-
-    $attributes = $product->get_attributes();
-    $attributesData = [];
-    foreach ($attributes as $key => $attr) {
-        if(!is_string($attr)){
-            $check = $attr->is_taxonomy();
-            if ($check) {
-                $taxonomy = $attr->get_taxonomy_object();
-                $label = $taxonomy->attribute_label;
-            } else {
-                $label = $attr->get_name();
-            }
-            $attrOptions = wc_get_product_terms($response->data['id'], $attr["name"]);
-            $attrOptions = empty($attrOptions) ? array_map(function ($v){
-                return ['name'=>$v, 'slug' => $v];
-            },$attr["options"]) : $attrOptions;
-            $attributesData[] = array_merge($attr->get_data(), ["label" => $label, "name" => urldecode($key)], ['options' =>$attrOptions]);
-        }
-    }
-    $response->data['attributesData'] = $attributesData;
-
+    
     /* Product Add On */
-    $addOns = getAddOns($response->data["categories"]);
-    $meta_data = $response->data['meta_data'];
-    $new_meta_data = [];
-    foreach ($meta_data as $meta_data_item) {
-        if ($meta_data_item->get_data()["key"] == "_product_addons") {
-            if(class_exists('WC_Product_Addons_Helper')){
-                $product_addons = WC_Product_Addons_Helper::get_product_addons( $response->data['id'], false );
-                $meta_data_item->__set("value", count($addOns) == 0 ? $product_addons : array_merge($product_addons, $addOns));
+    if(class_exists('WC_Product_Addons_Helper')){
+        $add_ons_list =  [];
+        $product_addons = WC_Product_Addons_Helper::get_product_addons( $response->data['id'], false );
+        //$add_ons_list  = count($addOns) == 0 ? $product_addons : array_merge($product_addons, $addOns);
+        $add_ons_list  = array_map(function($item){
+            if($item['type']  == 'file_upload' && !array_key_exists('options',$item)){
+                $item['options'] = [['label'=>'','price'=>'','image'=>'','price_type'=>'']];
+            }
+            return $item;
+        },$product_addons);
+
+        $add_ons_exists = false;
+
+        $meta_data = $response->data['meta_data'];
+        $new_meta_data = [];
+        foreach ($meta_data as $meta_data_item) {
+            if ($meta_data_item->get_data()["key"] == "_product_addons") {
+                $add_ons_exists = true;
+                $meta_data_item->__set("value", $add_ons_list);
                 $meta_data_item->apply_changes();
             }
+            $new_meta_data[] = $meta_data_item;
         }
-        $new_meta_data[] = $meta_data_item;
+        if(!$add_ons_exists && count($add_ons_list) > 0){
+            $new_meta_data[] = new WC_Meta_Data(
+                array(
+                    'key'   =>'_product_addons',
+                    'value' => $add_ons_list,
+                )
+            );
+        }
+        $response->data['meta_data'] = $new_meta_data;
     }
-    $response->data['meta_data'] = $new_meta_data;
+    
 
     /* Product Booking */
     if (is_plugin_active('woocommerce-appointments/woocommerce-appointments.php')) {
@@ -489,6 +538,24 @@ function customProductResponse($response, $object, $request)
             $response->data['type'] = 'appointment';
         }
     }
+
+    /*Update product price for subscription product*/
+    if($product && ($product->is_type('subscription') || $product->is_type('variable-subscription'))){
+        $meta_data = $response->data['meta_data'];
+        $sign_up_fee = null;
+        foreach ($meta_data as $meta_data_item) {
+            if ($meta_data_item->get_data()["key"] == "_subscription_sign_up_fee") {
+                $sign_up_fee = $meta_data_item->get_data()["value"];
+            }
+        }
+        if($sign_up_fee != null){
+            $response->data['regular_price']= $sign_up_fee;
+            $response->data['price']= $sign_up_fee;
+        }
+    }
+    
+    /* YITH WooCommerce Barcodes and QR Codes Premium */
+    $response = addQRCodeUrlToMetaResponse($response);
 
     $blackListKeys = ['yoast_head','yoast_head_json','_links'];
     $response->data = array_diff_key($response->data,array_flip($blackListKeys));
@@ -649,7 +716,7 @@ function _pushNotificationFirebase($user_id, $title, $message, $deviceToken){
 function _pushNotificationOneSignal($user_id, $title, $message){
     $is_on = isNotificationEnabled($user_id);
     if($is_on){
-        one_signal_push_notification($title,$message,array($userId));
+        one_signal_push_notification($title,$message,array($user_id));
     }
 }
 
@@ -718,5 +785,13 @@ function getCommissionOrderResponse($responseData, $vendor_id){
         $responseData["admin_fee"] = 0;
     }
     return $responseData;
+}
+
+function customOrderResponse($response, $object, $request)
+{
+    /* YITH WooCommerce Barcodes and QR Codes Premium */
+    $response = addQRCodeUrlToMetaResponse($response);
+
+    return $response;
 }
 ?>

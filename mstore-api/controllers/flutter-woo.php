@@ -307,8 +307,9 @@ class FlutterWoo extends FlutterBaseController
                             $table_name = $wpdb->prefix . "wcfm_delivery_orders";
                             $sql = "SELECT delivery_boy FROM `{$table_name}`";
                             $sql .= " WHERE 1=1";
-                            $sql .= " AND product_id = '{$product_id}'";
-                            $sql .= " AND order_id = '{$item->order_id}'";
+                            $sql .= " AND product_id = %s";
+                            $sql .= " AND order_id = %s";
+                            $sql = $wpdb->prepare($sql, $product_id, $item->order_id);
                             $users = $wpdb->get_results($sql);
 
                             if (count($users) > 0) {
@@ -388,14 +389,18 @@ class FlutterWoo extends FlutterBaseController
 				$url = str_replace("/". $lang,"",$url);
 			 }
             $product_id = url_to_postid($url);
-            $controller = new CUSTOM_WC_REST_Products_Controller();
-            $req = new WP_REST_Request('GET');
-            //$params = array('status' => 'published', 'include[0]' => $product_id, 'page'=>1, 'per_page'=>10, 'lang'=>'en');
-            $params = array('status' => 'published', 'include' => [$product_id], 'page'=>1, 'per_page'=>10, 'lang'=>'en');
-            $req->set_query_params($params);
+            if (isset($product_id)) {
+                $controller = new CUSTOM_WC_REST_Products_Controller();
+                $req = new WP_REST_Request('GET');
+                $params = array('id' => $product_id);
+                $req->set_query_params($params);
 
-            $response = $controller->get_items($req);
-            return $response->get_data();
+                $response = $controller->get_item($req);
+                $data = $response->get_data();
+                return [$data];
+            }else{
+                return [];
+            }
         }
         return parent::sendError("invalid_url", "Not Found", 404);
     }
@@ -575,7 +580,9 @@ class FlutterWoo extends FlutterBaseController
                 $attributes = [];
                 if (isset($product["meta_data"])) {
                     foreach ($product["meta_data"] as $item) {
-                        $attributes[strtolower($item["key"])] = $item["value"];
+                        if($item['value'] != null){
+                            $attributes[strtolower($item["key"])] = $item["value"];
+                        }
                     }
                 }
 
@@ -706,7 +713,7 @@ class FlutterWoo extends FlutterBaseController
 
         $this->check_prerequisites();
 
-        $shipping = $body["shipping"];
+        $shipping = array_key_exists('shipping', $body) ? $body["shipping"] : null;
         if (isset($shipping)) {
             WC()->customer->set_shipping_first_name($shipping["first_name"]);
             WC()->customer->set_shipping_last_name($shipping["last_name"]);
@@ -1242,6 +1249,7 @@ class FlutterWoo extends FlutterBaseController
         $errMsg = null;
         if(isset($meta_arr['ihc_mb_type']) && $meta_arr['ihc_mb_type'] == 'block'){
             $errMsg = 'This item is blocked';
+            return parent::sendError('blocked', $errMsg, 401);
         }else {
             if(isset($meta_arr['ihc_mb_who'])){
                 //getting current user type and target user types
@@ -1268,7 +1276,7 @@ class FlutterWoo extends FlutterBaseController
                 }
 
                 if($meta_arr['ihc_mb_block_type']=='redirect'){
-                    return parent::sendError('redirect', $errMsg, 401);
+                    return parent::sendError($result == 2 ? 'expired' : 'blocked', $errMsg, 401);
                 }else{
                     return parent::sendError('replace_content', $meta_arr['ihc_replace_content'], 401);
                 }
@@ -1307,9 +1315,10 @@ class FlutterWoo extends FlutterBaseController
 
     function get_products_video($request){
         global $wpdb;
-        $table_name = $wpdb->prefix . "postmeta";
+
         $page = 1;
         $per_page = 10;
+        $lang = null;
 
         if (isset($request['page'])) {
             $page = sanitize_text_field($request['page']);
@@ -1323,15 +1332,36 @@ class FlutterWoo extends FlutterBaseController
                 $per_page = 10;
             }
         }
+        if (isset($request['lang'])) {
+            $lang = sanitize_text_field($request['lang']);
+        }
         $page = ($page - 1) * $per_page;
-        $items = $wpdb->get_results("SELECT * FROM $table_name WHERE meta_key='_mstore_video_url' AND meta_value IS NOT NULL AND meta_value <> '' LIMIT $per_page OFFSET $page");
+
+        $postmeta_table = $wpdb->prefix . "postmeta";
+        $post_table = $wpdb->prefix . "posts";
+
+        $sql = "SELECT $postmeta_table.post_id AS post_id";
+        $sql .= " FROM $postmeta_table";
+        $sql .= " INNER JOIN $post_table ON $post_table.ID = $postmeta_table.post_id";
+        $sql .= " WHERE $postmeta_table.meta_key='_mstore_video_url' AND $postmeta_table.meta_value IS NOT NULL AND $postmeta_table.meta_value <> ''";
+        $sql .= " AND $post_table.post_type = 'product' AND $post_table.post_status = 'publish'";
+        $sql .= " ORDER BY $post_table.post_modified DESC";
+        if($lang == null){
+            $sql .= " LIMIT %d OFFSET %d";
+            $sql = $wpdb->prepare($sql, $per_page, $page);
+        }
+       
+        $items = $wpdb->get_results($sql);
 
         if(count($items) > 0){
             $controller = new CUSTOM_WC_REST_Products_Controller();
             $req = new WP_REST_Request('GET');
             $params = array('include' => array_map(function($item){
                 return $item->post_id;
-            }, $items), 'page'=>$page, 'per_page'=>$per_page, 'orderby' => 'date','order' => 'DESC');
+            }, $items), 'page' => $page, 'per_page' => $per_page, 'orderby' => 'modified', 'order' => 'DESC');
+            if($lang != null){
+                $params['lang'] = $lang;
+            }
             $req->set_query_params($params);
             $response = $controller->get_items($req);
             return $response->get_data();

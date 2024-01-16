@@ -53,6 +53,9 @@ include_once plugin_dir_path(__FILE__) . "controllers/flutter-thawani.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-expresspay.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-2c2p.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-cc-avenue.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-flow-flow.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-store-locator.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-composite-products.php";
 
 if (is_readable(__DIR__ . '/vendor/autoload.php')) {
     require __DIR__ . '/vendor/autoload.php';
@@ -60,7 +63,7 @@ if (is_readable(__DIR__ . '/vendor/autoload.php')) {
 
 class MstoreCheckOut
 {
-    public $version = '4.0.9';
+    public $version = '4.11.2';
 
     public function __construct()
     {
@@ -464,6 +467,7 @@ add_filter('woocommerce_rest_prepare_product_variation_object', 'custom_woocomme
 add_filter('woocommerce_rest_prepare_product_object', 'flutter_custom_change_product_response', 20, 3);
 add_filter('woocommerce_rest_prepare_product_review', 'custom_product_review', 20, 3);
 add_filter('woocommerce_rest_prepare_product_cat', 'custom_product_category', 20, 3);
+add_filter('woocommerce_rest_prepare_shop_order_object', 'flutter_custom_change_order_response', 20, 3);
 
 function custom_product_category($response, $object, $request)
 {
@@ -493,7 +497,11 @@ function custom_product_review($response, $object, $request)
     }
     return $response;
 }
-
+ 
+function flutter_custom_change_order_response($response, $object, $request)
+{
+    return customOrderResponse($response, $object, $request);
+}
 
 function flutter_custom_change_product_response($response, $object, $request)
 {
@@ -505,6 +513,11 @@ function custom_woocommerce_rest_prepare_product_variation_object($response, $ob
 
     global $woocommerce_wpml;
 
+    //update correct product price with tax setting
+    $response->data['price'] = wc_get_price_to_display(  $object );
+    $response->data['regular_price'] = wc_get_price_to_display(  $object, array( 'price' => $object->get_regular_price() ) );
+    $response->data['sale_price'] = wc_get_price_to_display(  $object, array( 'price' => $object->get_sale_price() ) );
+    
     $is_purchased = false;
     if (isset($request['user_id'])) {
         $user_id = $request['user_id'];
@@ -520,6 +533,21 @@ function custom_woocommerce_rest_prepare_product_variation_object($response, $ob
         foreach ($woocommerce_wpml->settings['currency_options'] as $key => $currency) {
             $rate = (float)$currency["rate"];
             $response->data['multi-currency-prices'][$key]['price'] = $rate == 0 ? $price : sprintf("%.2f", $price * $rate);
+        }
+    }
+
+    /*Update product price for subscription product*/
+    if($object->get_type() == 'subscription_variation'){
+        $meta_data = $response->data['meta_data'];
+        $sign_up_fee = null;
+        foreach ($meta_data as $meta_data_item) {
+            if ($meta_data_item->get_data()["key"] == "_subscription_sign_up_fee") {
+                $sign_up_fee = $meta_data_item->get_data()["value"];
+            }
+        }
+        if($sign_up_fee != null){
+            $response->data['regular_price']= $sign_up_fee;
+            $response->data['price']= $sign_up_fee;
         }
     }
 
@@ -545,7 +573,8 @@ function flutter_prepare_checkout()
         $code = sanitize_text_field($_GET['code']);
         global $wpdb;
         $table_name = $wpdb->prefix . "mstore_checkout";
-        $item = $wpdb->get_row("SELECT * FROM $table_name WHERE code = '$code'");
+        $sql = $wpdb->prepare("SELECT * FROM $table_name WHERE code = %s", $code);
+        $item = $wpdb->get_row($sql);
         if ($item) {
             $data = json_decode(urldecode(base64_decode($item->order)), true);
         } else {
@@ -703,7 +732,10 @@ function flutter_prepare_checkout()
                             $cart_item_data['recharge_amount'] = $product['total'];
                         }
                     }
-
+                    if(isset($product['ywgc_amount'])){
+                        $cart_item_data['ywgc_amount'] = $product['ywgc_amount'];
+                        $cart_item_data['ywgc_product_id'] = $productId;
+                    }
                     $woocommerce->cart->add_to_cart($productId, $quantity, 0, $attributes, $cart_item_data);
                 }
             }
@@ -853,3 +885,34 @@ function custom_status_bulk_edit($actions)
 }
 
 add_filter('bulk_actions-edit-shop_order', 'custom_status_bulk_edit', 20, 1);
+
+add_action('rest_api_init', 'get_promptpay_qrcode_routes');
+function get_promptpay_qrcode_routes()
+{
+    register_rest_route('promptpay', '/detail' . '/(?P<id>[\d]+)', array(
+            'methods' => 'GET',
+            'callback' => function($request){
+                $available_payment_methods = WC()->payment_gateways()->payment_gateways();
+                $paymentMethod = $available_payment_methods['thai-promptpay-easy'];
+                $order = wc_get_order($request['id'] );
+                $thank_msg = $paymentMethod->thank_msg;
+ $promptpay_id = $paymentMethod->promptpay_id;
+ $promptpay_type = $paymentMethod->promptpay_type;
+ $promptpay_name = $paymentMethod->promptpay_name;
+ $include_price = $paymentMethod->include_price;
+                $image_url = get_site_url() . "/wp-content/plugins/thai-promptpay-payment-easy-gateway-plugin/images/promptpay_qrcode/promptpay-qr-l.php?type=$promptpay_type&promptpay_id=$promptpay_id";
+ 
+ if($include_price=='yes'){
+ $price = $order->get_total();
+ $image_url .= "&price=$price&p=1";
+ }
+
+
+                return  ['thank_msg' => $thank_msg, 'qrcode_url' => $image_url, 'promptpay_id' => $promptpay_id, 'promptpay_name' => $promptpay_name, 'promptpay_type' => $paymentMethod->promptpay_type_name[$promptpay_type]];
+            },
+            'permission_callback' => function () {
+                return true;
+            },
+        )
+    );
+}

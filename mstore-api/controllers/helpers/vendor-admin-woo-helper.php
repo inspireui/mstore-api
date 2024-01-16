@@ -234,16 +234,18 @@ class VendorAdminWooHelper
         if (isset($request['search'])) {
             $sql .= " AND ID LIKE %s";
         }
-        $sql .= " GROUP BY $table_name.`ID` ORDER BY $table_name.`ID` DESC LIMIT $per_page OFFSET $page";
-        if (isset($request['status']) && isset($request['search'])) {
-            $sql = $wpdb->prepare($sql, 'wc-'.sanitize_text_field($request['status']), sanitize_text_field($request['search']).'%');
-        }else if (isset($request['status']) && !isset($request['search'])) {
-            $sql = $wpdb->prepare($sql, 'wc-'.sanitize_text_field($request['status']));
-        }else if (!isset($request['status']) && isset($request['search'])) {
-            $sql = $wpdb->prepare($sql, sanitize_text_field($request['search']).'%');
-        }else{
-            $sql = $wpdb->prepare($sql);
+        $sql .= " GROUP BY $table_name.`ID` ORDER BY $table_name.`ID` DESC LIMIT %d OFFSET %d";
+ 
+        $args = array();
+        if (isset($request['status'])) {
+            $args[] = 'wc-'.sanitize_text_field($request['status']);
         }
+        if (isset($request['search'])) {
+            $args[] = '%'.sanitize_text_field($request['search']).'%';
+        }
+        $args[] = $per_page;
+        $args[] = $page;
+        $sql = $wpdb->prepare($sql, $args);
         $query = $wpdb->get_results($sql);
         // Loop through each order post object
         foreach ($query as $item) {
