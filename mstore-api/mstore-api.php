@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 4.11.2
+ * Version: 4.11.3
  * Author: InspireUI
  * Author URI: https://inspireui.com
  *
@@ -51,7 +51,7 @@ if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
 
 class MstoreCheckOut
 {
-    public $version = '4.11.2';
+    public $version = '4.11.3';
 
     public function __construct()
     {
@@ -513,6 +513,34 @@ function custom_woocommerce_rest_prepare_product_variation_object($response, $ob
         }
     }
 
+    $variation_product = wc_get_product( $response->data['id'] );
+    if($variation_product) {
+        $_product = wc_get_product( $variation_product->get_parent_id() );
+        foreach ( $variation_product->get_variation_attributes() as $attribute_name => $attribute ) {
+				$name = str_replace( 'attribute_', '', $attribute_name );
+
+				if ( empty( $attribute ) && '0' !== $attribute ) {
+					continue;
+				}
+
+				// Taxonomy-based attributes are prefixed with `pa_`, otherwise simply `attribute_`.
+				if ( 0 === strpos( $attribute_name, 'attribute_pa_' ) ) {
+					$option_term  = get_term_by( 'slug', $attribute, $name );
+					$attributes[] = array(
+						'id'     => wc_attribute_taxonomy_id_by_name( $name ),
+						'name'   => $variation_product->get_attribute_taxonomy_name( $name, $_product ),
+						'option' => $option_term && ! is_wp_error( $option_term ) ? $option_term->name : $attribute,
+					);
+				} else {
+					$attributes[] = array(
+						'id'     => 0,
+						'name'   => $variation_product->get_attribute_taxonomy_name( $name, $_product ),
+						'option' => $attribute,
+					);
+				}
+			}
+        $response->data['attributes'] = $attributes;
+    }
     return $response;
 }
 
@@ -681,7 +709,13 @@ function flutter_prepare_checkout()
                     $listVariations = $productVariable->get_available_variations();
                     foreach ($listVariations as $vartiation => $value) {
                         if ($variationId == $value['variation_id']) {
-                            $attributes = array_merge($value['attributes'], $attributes);
+                            /*encode attribute name to fix for arabic language*/
+                            $attrs = [];
+                            foreach ($attributes as $key => $val) {
+                                $attr_name = str_replace( 'attribute_pa_', '', urldecode( $key ) );
+                                $attrs['attribute_pa_' . sanitize_title( $attr_name )] = $val;
+                            }
+                            $attributes = array_merge($value['attributes'], $attrs);
                             $woocommerce->cart->add_to_cart($productId, $quantity, $variationId, $attributes);
                         }
                     }

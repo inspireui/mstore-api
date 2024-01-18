@@ -59,23 +59,31 @@ class FlutterCompositeProducts extends FlutterBaseController
         $results = [];
         foreach ($components as $item) {
             foreach ($item as $key => &$component) {
+                $productIds = [];
                 if ($component["option_type"] == "product") {
                     $productIds = $component["option_type_product_id_values"];
-
-                    if(count($productIds) > 0){
-                        $controller = new CUSTOM_WC_REST_Products_Controller();
-                        $req = new WP_REST_Request('GET');
-                        $params = array('status' =>'published', 'include' => $productIds, 'page'=>1, 'per_page'=>count($productIds));
-                        $req->set_query_params($params);
-                        $pRes = $controller->get_items($req);
-                        $products = $pRes->get_data();
-                    }else{
-                        $products = [];
-                    }
-                    $component['option_type_products'] = $products;
-                    $component['id'] = $key;
-                    $results[] = $component;
                 }
+                if ($component["option_type"] == "product_categories" || $component["option_type"] == "product_tags") {
+                    $args = YITH_WCP()->getProductsQueryArgs( $product_id, $component);
+                    $query = new WP_Query( $args );
+                    $productIds = array_map(function($post){
+                        return $post->ID;
+                    },$query->posts);
+                }
+
+                if(count($productIds) > 0){
+                    $controller = new CUSTOM_WC_REST_Products_Controller();
+                    $req = new WP_REST_Request('GET');
+                    $params = array('status' =>'published', 'include' => $productIds, 'page'=>1, 'per_page'=>count($productIds));
+                    $req->set_query_params($params);
+                    $pRes = $controller->get_items($req);
+                    $products = $pRes->get_data();
+                }else{
+                    $products = [];
+                }
+                $component['option_type_products'] = $products;
+                $component['id'] = $key;
+                $results[] = $component;
             }
         }
         

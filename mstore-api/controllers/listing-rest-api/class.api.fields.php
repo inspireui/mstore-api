@@ -402,6 +402,17 @@ class FlutterTemplate extends WP_REST_Posts_Controller
                 return true;
             }
         ));
+
+        register_rest_route('wp/v2', '/get-listing-types', array(
+            'methods' => 'GET',
+            'callback' => array(
+                $this,
+                'get_listing_types'
+            ),
+            'permission_callback' => function () {
+                return true;
+            }
+        ));
     }
 
 
@@ -441,6 +452,18 @@ class FlutterTemplate extends WP_REST_Posts_Controller
             return $response->get_data();
         }else{
             return new WP_Error("no_permission",  "You need to add User-Cookie in header request", array('status' => 400));
+        }
+    }
+
+    public function get_listing_types($request){
+        if ($this->_isMyListing) {
+            $types = get_posts( [
+				'post_type' => 'case27_listing_type',
+				'posts_per_page' => -1,
+			] );
+            return  $types;
+        } else {
+            return new WP_Error("not_found",  "get_listing_types is not implemented", array('status' => 404));
         }
     }
 
@@ -484,7 +507,8 @@ class FlutterTemplate extends WP_REST_Posts_Controller
             endforeach;
         }
         if( $this->_isMyListing){
-            $bodyReq = ['proximity_units'=>'km','listing_type'=>'place', 'form_data'=>[
+            $listing_type = $request['listing_type'] ?? 'place';
+            $bodyReq = ['proximity_units'=>'km','listing_type'=>$listing_type, 'form_data'=>[
                 'page'=>$offset / $limit,
                 'per_page'=>$limit,
                 'search_keywords'=>'',
@@ -1106,7 +1130,7 @@ class FlutterTemplate extends WP_REST_Posts_Controller
         // Blog section
         public function get_blog_image_feature($object)
         {
-            $image_feature = wp_get_attachment_image_src($object['featured_media']);
+            $image_feature = wp_get_attachment_image_src($object['featured_media'], 'full');
             return is_array($image_feature) && count($image_feature) > 0 ? $image_feature[0] : null;
         }
 
@@ -1353,6 +1377,9 @@ class FlutterTemplate extends WP_REST_Posts_Controller
             endforeach;
             if($this->_isMyListing){
                 $meta['_job_description'] = get_the_content($post_id);
+                $listing_type = $meta['_case27_listing_type'];
+                $listing_type = \MyListing\Src\Listing_Type::get_by_name( $listing_type );
+                $meta['_case27_listing_type_name'] = $listing_type->get_name();
             }
             
             return $meta;

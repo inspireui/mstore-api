@@ -210,7 +210,7 @@ class FlutterHome extends WP_REST_Controller
         if (isset($layout['featured']) && $layout['featured'] == true) {
             $params['featured'] = $layout['featured'];
         }
-        if (isset($layout["layout"]) && $layout["layout"] == "saleOff") {
+        if ((isset($layout["layout"]) && $layout["layout"] == "saleOff") || $layout['onSale'] == true) {
 			$params['include'] = [];
             $params['on_sale'] = true;
         }

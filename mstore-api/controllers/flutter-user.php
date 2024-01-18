@@ -446,7 +446,8 @@ class FlutterUserController extends FlutterBaseController
                     }
                 }
 
-                $user['role'] = isset($params["role"]) ? sanitize_text_field($params["role"]) : get_option('default_role');
+                $default_role = class_exists( 'WooCommerce' ) ? 'customer' : get_option('default_role');
+                $user['role'] = isset($params["role"]) ? sanitize_text_field($params["role"]) : $default_role;
                 $_POST['user_role'] = $user['role'];//fix to register account with role in listeo
                 $user_id = wp_insert_user($user);
 
