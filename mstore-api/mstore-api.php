@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 4.11.3
+ * Version: 4.11.4
  * Author: InspireUI
  * Author URI: https://inspireui.com
  *
@@ -51,7 +51,7 @@ if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
 
 class MstoreCheckOut
 {
-    public $version = '4.11.3';
+    public $version = '4.11.4';
 
     public function __construct()
     {
@@ -470,6 +470,34 @@ function flutter_custom_change_product_response($response, $object, $request)
     return customProductResponse($response, $object, $request);
 }
 
+
+function custom_get_attribute_taxonomy_name( $slug, $product ) {
+	// Format slug so it matches attributes of the product.
+	$slug       = wc_attribute_taxonomy_slug( $slug );
+	$attributes = $product->get_attributes();
+	$attribute  = false;
+
+	// pa_ attributes.
+	if ( isset( $attributes[ wc_attribute_taxonomy_name( $slug ) ] ) ) {
+		$attribute = $attributes[ wc_attribute_taxonomy_name( $slug ) ];
+	} elseif ( isset( $attributes[ $slug ] ) ) {
+		$attribute = $attributes[ $slug ];
+	}
+
+	if ( ! $attribute ) {
+		return $slug;
+	}
+
+	// Taxonomy attribute name.
+	if ( $attribute->is_taxonomy() ) {
+		$taxonomy = $attribute->get_taxonomy_object();
+		return $taxonomy->attribute_label;
+	}
+
+	// Custom product attribute name.
+	return $attribute->get_name();
+}
+
 function custom_woocommerce_rest_prepare_product_variation_object($response, $object, $request)
 {
 
@@ -528,13 +556,13 @@ function custom_woocommerce_rest_prepare_product_variation_object($response, $ob
 					$option_term  = get_term_by( 'slug', $attribute, $name );
 					$attributes[] = array(
 						'id'     => wc_attribute_taxonomy_id_by_name( $name ),
-						'name'   => $variation_product->get_attribute_taxonomy_name( $name, $_product ),
+						'name'   => custom_get_attribute_taxonomy_name( $name, $_product ),
 						'option' => $option_term && ! is_wp_error( $option_term ) ? $option_term->name : $attribute,
 					);
 				} else {
 					$attributes[] = array(
 						'id'     => 0,
-						'name'   => $variation_product->get_attribute_taxonomy_name( $name, $_product ),
+						'name'   => custom_get_attribute_taxonomy_name( $name, $_product ),
 						'option' => $attribute,
 					);
 				}
