@@ -150,7 +150,7 @@ class FlutterHome extends WP_REST_Controller
             $results = [];
             $horizontalLayout = $array["HorizonLayout"];
             foreach ($horizontalLayout as $layout) {
-                if ((isset($layout['category']) || isset($layout['tag']) || isset($layout['featured']) || (isset($layout["layout"]) && $layout["layout"] == "saleOff")) && in_array($layout['layout'], $this->supportedLayouts)) {
+                if (in_array($layout['layout'], $this->supportedLayouts)) {
                     if($countDataLayout <  4){
                         $layout["data"] = $this->getProductsByLayout($layout, $api, $request);
                         $countDataLayout += 1;
@@ -197,14 +197,19 @@ class FlutterHome extends WP_REST_Controller
 
     function getProductsByLayout($layout, $api, $request)
     {
-        if ((!isset($layout['category']) && !isset($layout['tag']) && !isset($layout['featured']) && (!isset($layout['layout']) || $layout["layout"] != "saleOff")) || (isset($layout['category']) && ($layout['category'] == null || $layout['category'] == "-1")) || (isset($layout['tag']) && ($layout['tag'] == null || $layout['tag'] == "-1"))) {
-            return [];
-        }
-        $params = array('order' => 'desc', 'orderby' => 'date', 'status' => 'publish');
-        if (isset($layout['category']) && $layout['category'] != null) {
+        $category = $layout['category'];
+        $tag = $layout['tag'];
+        $order = $layout['order'] ?? 'desc';
+        $orderby = $layout['orderby'] ?? 'date';
+        $include = $layout['include'];
+        if ($category == '-1') $category = null;
+        if ($tag == '-1') $tag = null;
+        
+        $params = array('order' => $order, 'orderby' => $orderby, 'status' => 'publish');
+        if (isset($category) && $layout['category'] != null) {
             $params['category'] = $layout['category'];
         }
-        if (isset($layout['tag']) && $layout['tag'] != null) {
+        if (isset($tag) && $layout['tag'] != null) {
             $params['tag'] = $layout['tag'];
         }
         if (isset($layout['featured']) && $layout['featured'] == true) {
@@ -213,6 +218,8 @@ class FlutterHome extends WP_REST_Controller
         if ((isset($layout["layout"]) && $layout["layout"] == "saleOff") || $layout['onSale'] == true) {
 			$params['include'] = [];
             $params['on_sale'] = true;
+        } else if (isset($include) && $include != null && is_string($include)) {
+            $params['include'] = explode(',', $include);
         }
         $limit = get_option("mstore_limit_product");
         $limit = (!isset($limit) || $limit == false) ? 10 : $limit;
