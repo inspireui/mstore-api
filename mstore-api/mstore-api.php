@@ -572,6 +572,24 @@ function custom_woocommerce_rest_prepare_product_variation_object($response, $ob
     return $response;
 }
 
+function cleanup_appointment_cart_data($customer_id) {
+    if(class_exists( 'WC_Appointments' )){
+        $appointment_ids = WC_Appointment_Data_Store::get_appointment_ids_by(
+			[
+				'status'           => [ 'in-cart', 'was-in-cart' ],
+				'object_id'   => $customer_id,
+				'object_type' => 'customer',
+			]
+		);
+
+		if ( $appointment_ids ) {
+			foreach ( $appointment_ids as $appointment_id ) {
+				wp_trash_post( $appointment_id );
+			}
+		}
+    }	
+}
+
 // Prepare data before checkout by webview
 function flutter_prepare_checkout()
 {
@@ -695,6 +713,7 @@ function flutter_prepare_checkout()
     
                     header("Refresh:0");
                 }
+                cleanup_appointment_cart_data($userId);
             }
         } else {
             if (is_user_logged_in()) {
