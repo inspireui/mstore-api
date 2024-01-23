@@ -49,6 +49,120 @@ class FlutterWCFMHelper
         return apply_filters("wcfmapi_rest_prepare_store_vendors_objects", $response, $request);
     }
 
+    function wcfm_get_products_by_vendor($vendor_id, $custom_args = array(), $page, $per_page)
+    {
+        $args = array(
+            'posts_per_page'   => apply_filters('wcfm_break_loop_offset', $per_page),
+            'offset'           => ($page - 1) * $per_page,
+            'post_type'        => 'product',
+            'author'           => $vendor_id,
+            'post_status'      => 'publish',
+            'suppress_filters' => 0,
+            'fields'           => 'ids'
+        );
+        $args = array_merge($args, $custom_args);
+        $args = apply_filters('wcfm_products_by_vendor_args', $args);
+
+        if (class_exists('WooCommerce_simple_auction')) {
+            remove_all_filters('pre_get_posts');
+        }
+
+        $vendor_products = get_posts($args);
+        return $vendor_products;
+    }
+
+    function get_posts($args = array())
+    {
+        global $WCFM, $WCFMmp, $wpdb, $wcfmmp_radius_lat, $wcfmmp_radius_lng, $wcfmmp_radius_range;
+        $where = $wpdb->prepare( "{$wpdb->posts}.post_type = %s", 'product' );
+        $join = '';
+        if ($args['category']) {
+            $term = term_exists($args['category'], 'category');
+            if ($term) {
+                $join   = "INNER JOIN {$wpdb->term_relationships} ON ({$wpdb->posts}.ID = {$wpdb->term_relationships}.object_id)";
+                $where .= $wpdb->prepare(" AND {$wpdb->term_relationships}.term_taxonomy_id = %d", $term['term_taxonomy_id']);
+            }
+        }
+
+        // if (in_array($args['content'], array('post', 'page', 'attachment'), true)) {
+        //     if ($args['author']) {
+        //         $where .= $wpdb->prepare(" AND {$wpdb->posts}.post_author = %d", $args['author']);
+        //     }
+
+        //     if ($args['start_date']) {
+        //         $where .= $wpdb->prepare(" AND {$wpdb->posts}.post_date >= %s", gmdate('Y-m-d', strtotime($args['start_date'])));
+        //     }
+
+        //     if ($args['end_date']) {
+        //         $where .= $wpdb->prepare(" AND {$wpdb->posts}.post_date < %s", gmdate('Y-m-d', strtotime('+1 month', strtotime($args['end_date']))));
+        //     }
+        // }
+
+        // Grab a snapshot of post IDs, just in case it changes during the export.
+        $post_ids = $wpdb->get_col("SELECT ID FROM {$wpdb->posts} $join WHERE $where");
+        return array('id' => "SELECT ID FROM {$wpdb->posts} $join WHERE $where");
+    }
+
+    public function flutter_get_wcfm_products($request)
+    {
+        global $WCFM, $WCFMmp, $wpdb, $wcfmmp_radius_lat, $wcfmmp_radius_lng, $wcfmmp_radius_range;
+
+        $search_data = array();
+
+        $wcfmmp_radius_lat = $request->get_param('wcfmmp_radius_lat');
+        $wcfmmp_radius_lng = $request->get_param('wcfmmp_radius_lng');
+        $wcfmmp_radius_range = $request->get_param('wcfmmp_radius_range');
+
+        if ($wcfmmp_radius_lat && $wcfmmp_radius_lng && $wcfmmp_radius_range) {
+            $search_data['wcfmmp_radius_lat'] = $wcfmmp_radius_lat;
+            $search_data['wcfmmp_radius_lng'] = $wcfmmp_radius_lng;
+            $search_data['wcfmmp_radius_range'] = $wcfmmp_radius_range;
+        }
+        $sql = "SELECT * FROM {$wpdb->posts} 
+        WHERE post_type = 'product'
+        INNER JOIN {$wpdb->term_relationships} ON ({$wpdb->posts}.ID = {$wpdb->term_relationships}.object_id)
+        ";
+        // $sql = $wpdb->prepare($sql, $reviewid);
+        $review_data = $this->get_posts(array('category' => 3));
+
+        $stores = $WCFMmp->wcfmmp_vendor->wcfmmp_search_vendor_list(true, '', '', '', '', $search_data, 'true', '');
+        $category = $request->get_param('category') ?? null;
+        $tag = $request->get_param('tag') ?? null;
+        $order = $request->get_param('order') ?? 'desc';
+        $orderby = $request->get_param('orderby') ?? 'date';
+        $featured = $request->get_param('featured') ?? null;
+        $page = $request->get_param('page') ?? 1;
+        $per_page = $request->get_param('per_page') ?? 10;
+        if ($category == '-1') $category = null;
+        if ($tag == '-1') $tag = null;
+        $custom_args = array('order' => $order, 'orderby' => $orderby);
+        if ($category != null) {
+            $custom_args['category'] = $category;
+        }
+        if ($tag != null) {
+            $custom_args['tag'] = $tag;
+        }
+        if ($featured == true) {
+            $custom_args['featured'] = $featured;
+        }
+
+        $includes = $this->wcfm_get_products_by_vendor(implode(',', array_keys($stores)), $custom_args, $page, $per_page);
+        $api = new WC_REST_Products_Controller();
+        $params = array('order' => $order, 'orderby' => $orderby, 'status' => 'publish', 'page' => $page, 'per_page' => $per_page);
+        $params['per_page'] = 10;
+        $params['page'] = 1;
+        $products = array();
+        if (!(count($includes) === 0)) {
+            $response = array();
+            $params['include'] = $includes;
+            $request->set_query_params($params);
+            $response = $api->get_items($request);
+            $products = $response->get_data();
+        }
+
+        return apply_filters("wcfmapi_rest_prepare_store_vendor_products_objects", $review_data, $request);
+    }
+
     public function flutter_get_wcfm_stores_by_id($wcfm_vendors_id)
     {
         $wcfm_vendors_json_arr = array();
@@ -75,10 +189,10 @@ class FlutterWCFMHelper
         $wcfm_vendors_json_arr['vendor_display_name'] = $wcfm_vendors_name;
         $wcfm_vendors_json_arr['vendor_shop_name'] = $WCFM->wcfm_vendor_support->wcfm_get_vendor_store_name_by_vendor($wcfm_vendors_id);
 
-        if( class_exists('WCFMmp_Store')){
-            require_once(plugin_dir_path(__FILE__  ) . 'extensions/flutter-wcfmmp-store.php');
-            $store_user = new Flutter_WCFMmp_Store( absint($wcfm_vendors_id) );
-        }else{
+        if (class_exists('WCFMmp_Store')) {
+            require_once(plugin_dir_path(__FILE__) . 'extensions/flutter-wcfmmp-store.php');
+            $store_user = new Flutter_WCFMmp_Store(absint($wcfm_vendors_id));
+        } else {
             $store_user = wcfmmp_get_store(absint($wcfm_vendors_id));
         }
         $email = $store_user->get_email();
@@ -141,7 +255,6 @@ class FlutterWCFMHelper
                     $wcfm_vendors_json_arr['vendor_additional_info'][$key]['value'] = $field_value;
                 }
             }
-
         } else {
             $wcfm_vendors_json_arr['vendor_additional_info'] = array();
         }
@@ -189,11 +302,9 @@ class FlutterWCFMHelper
                             $wcfm_vendors_json_arr['membership_details']['membership_expiry_on'] = __('Never Expire', 'wc-frontend-manager');
                         }
                     }
-
                 } else {
                     $wcfm_vendors_json_arr['membership_details']['membership_expiry_on'] = __('Never Expire', 'wc-frontend-manager');
                 }
-
             }
         }
 
@@ -488,18 +599,18 @@ class FlutterWCFMHelper
     function wcfm_query_time_range_filter($sql, $time, $interval = '7day', $start_date = '', $end_date = '', $table_handler = 'commission')
     {
         switch ($interval) {
-            case 'year' :
+            case 'year':
                 $sql .= " AND YEAR( {$table_handler}.{$time} ) = YEAR( CURDATE() )";
                 break;
-            case 'last_month' :
+            case 'last_month':
                 $sql .= " AND MONTH( {$table_handler}.{$time} ) = MONTH( NOW() ) - 1";
                 break;
-            case 'month' :
+            case 'month':
                 $sql .= " AND MONTH( {$table_handler}.{$time} ) = MONTH( NOW() )";
                 break;
-            case 'all' :
+            case 'all':
                 break;
-            case '7day' :
+            case '7day':
                 $sql .= " AND DATE( {$table_handler}.{$time} ) BETWEEN DATE_SUB( NOW(), INTERVAL 7 DAY ) AND NOW()";
                 break;
             case '14day':
@@ -514,7 +625,7 @@ class FlutterWCFMHelper
             case '35day':
                 $sql .= " AND DATE( {$table_handler}.{$time} ) BETWEEN DATE_SUB( NOW(), INTERVAL 35 DAY ) AND DATE_SUB( NOW(), INTERVAL 28 DAY )";
                 break;
-            case 'default' :
+            case 'default':
         }
 
         return $sql;
@@ -966,7 +1077,6 @@ class FlutterWCFMHelper
             }
             return $wcfm_messages;
         }
-
     }
 
     function get_nearest_vendors($request)
@@ -1000,12 +1110,10 @@ class FlutterWCFMHelper
         }
 
         $result = array();
-        foreach ($list_nearby_users as $item):
+        foreach ($list_nearby_users as $item) :
             $result[] = $this->get_formatted_item_data($item, array(), null, null, null);
         endforeach;
         return $result;
-
-
     }
 
     function distance($lat1, $lon1, $lat2, $lon2)
@@ -1073,7 +1181,7 @@ class FlutterWCFMHelper
                 );
                 $products = wc_get_products($args);
             }
-            
+
             $categoryIds = array();
             foreach ($products as $object) {
                 $terms = get_the_terms($object->ID ?? $object->get_id(), 'product_cat');
