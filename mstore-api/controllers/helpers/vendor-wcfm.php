@@ -49,58 +49,76 @@ class FlutterWCFMHelper
         return apply_filters("wcfmapi_rest_prepare_store_vendors_objects", $response, $request);
     }
 
-    function wcfm_get_products_by_vendor($vendor_id, $custom_args = array(), $page, $per_page)
+    function wcfm_get_products_by_vendor($vendor_id, $category = null, $search = null, $on_sale = null, $featured = null, $order, $order_by, $page, $per_page)
     {
         $args = array(
-            'posts_per_page'   => apply_filters('wcfm_break_loop_offset', $per_page),
-            'offset'           => ($page - 1) * $per_page,
-            'post_type'        => 'product',
-            'author'           => $vendor_id,
-            'post_status'      => 'publish',
-            'suppress_filters' => 0,
-            'fields'           => 'ids'
+            'author' => $vendor_id,
+            'post_type' => 'product',
+            'posts_per_page' => $per_page,
+            'offset' => ($page - 1) * $per_page,
+            'post_status' => 'publish',
         );
-        $args = array_merge($args, $custom_args);
-        $args = apply_filters('wcfm_products_by_vendor_args', $args);
 
-        if (class_exists('WooCommerce_simple_auction')) {
-            remove_all_filters('pre_get_posts');
+        if ($on_sale == 'true') {
+            $args['meta_query'] = array(
+                'relation' => 'OR',
+                array( // Simple products type
+                    'key' => '_sale_price',
+                    'value' => 0,
+                    'compare' => '>',
+                    'type' => 'numeric'
+                ),
+                array( // Variable products type
+                    'key' => '_min_variation_sale_price',
+                    'value' => 0,
+                    'compare' => '>',
+                    'type' => 'numeric'
+                )
+            );
         }
 
-        $vendor_products = get_posts($args);
-        return $vendor_products;
-    }
-
-    function get_posts($args = array())
-    {
-        global $WCFM, $WCFMmp, $wpdb, $wcfmmp_radius_lat, $wcfmmp_radius_lng, $wcfmmp_radius_range;
-        $where = $wpdb->prepare( "{$wpdb->posts}.post_type = %s", 'product' );
-        $join = '';
-        if ($args['category']) {
-            $term = term_exists($args['category'], 'category');
-            if ($term) {
-                $join   = "INNER JOIN {$wpdb->term_relationships} ON ({$wpdb->posts}.ID = {$wpdb->term_relationships}.object_id)";
-                $where .= $wpdb->prepare(" AND {$wpdb->term_relationships}.term_taxonomy_id = %d", $term['term_taxonomy_id']);
+        if ($order != null && $order_by != null) {
+            $args['meta_key'] = 'total_sales';
+            $args['order'] = $order;
+            if ($order_by == 'popularity') {
+                $args['orderby'] = 'meta_value_num';
+                $meta_query = $args['meta_query'] ?? array();
+                $meta_query[] = array(
+                    'key' => 'total_sales',
+                    'value' => 0,
+                    'compare' => '>'
+                );
+                $args['meta_query'] = $meta_query;
+            }
+            if ($order_by == 'date') {
+                $args['orderby'] = 'date';
             }
         }
 
-        // if (in_array($args['content'], array('post', 'page', 'attachment'), true)) {
-        //     if ($args['author']) {
-        //         $where .= $wpdb->prepare(" AND {$wpdb->posts}.post_author = %d", $args['author']);
-        //     }
+        if ($featured == 'true') {
+            $tax_query = $args['tax_query'] ?? array();
+            $tax_query[] = array('taxonomy' => 'product_visibility', 'field' => 'slug', 'terms' => 'featured');
+            $args['tax_query'] = $tax_query;
+        }
 
-        //     if ($args['start_date']) {
-        //         $where .= $wpdb->prepare(" AND {$wpdb->posts}.post_date >= %s", gmdate('Y-m-d', strtotime($args['start_date'])));
-        //     }
+        if ($search != null) {
+            $args['orderby'] = 'title';
+            $args['order'] = 'ASC';
+            $args['s'] = $search;
+        }
+        if ($category != null) {
+            $tax_query = $args['tax_query'] ?? array();
+            $tax_query[] = array(
+                'taxonomy' => 'product_cat',
+                'field' => 'term_id',
+                'terms' => $category,
+                'operator' => 'IN'
+            );
+            $args['tax_query'] = $tax_query;
+        }
 
-        //     if ($args['end_date']) {
-        //         $where .= $wpdb->prepare(" AND {$wpdb->posts}.post_date < %s", gmdate('Y-m-d', strtotime('+1 month', strtotime($args['end_date']))));
-        //     }
-        // }
-
-        // Grab a snapshot of post IDs, just in case it changes during the export.
-        $post_ids = $wpdb->get_col("SELECT ID FROM {$wpdb->posts} $join WHERE $where");
-        return array('id' => "SELECT ID FROM {$wpdb->posts} $join WHERE $where");
+        $products = get_posts($args);
+        return $products;
     }
 
     public function flutter_get_wcfm_products($request)
@@ -118,12 +136,6 @@ class FlutterWCFMHelper
             $search_data['wcfmmp_radius_lng'] = $wcfmmp_radius_lng;
             $search_data['wcfmmp_radius_range'] = $wcfmmp_radius_range;
         }
-        $sql = "SELECT * FROM {$wpdb->posts} 
-        WHERE post_type = 'product'
-        INNER JOIN {$wpdb->term_relationships} ON ({$wpdb->posts}.ID = {$wpdb->term_relationships}.object_id)
-        ";
-        // $sql = $wpdb->prepare($sql, $reviewid);
-        $review_data = $this->get_posts(array('category' => 3));
 
         $stores = $WCFMmp->wcfmmp_vendor->wcfmmp_search_vendor_list(true, '', '', '', '', $search_data, 'true', '');
         $category = $request->get_param('category') ?? null;
@@ -133,20 +145,15 @@ class FlutterWCFMHelper
         $featured = $request->get_param('featured') ?? null;
         $page = $request->get_param('page') ?? 1;
         $per_page = $request->get_param('per_page') ?? 10;
+        $search = $request->get_param('search') ?? null;
+        $on_sale = $request->get_param('on_sale') ?? null;
         if ($category == '-1') $category = null;
         if ($tag == '-1') $tag = null;
-        $custom_args = array('order' => $order, 'orderby' => $orderby);
-        if ($category != null) {
-            $custom_args['category'] = $category;
+        $posts = $this->wcfm_get_products_by_vendor(implode(',', array_keys($stores)), $category, $search, $on_sale, $featured, $order, $orderby, $page, $per_page);
+        $includes = array();
+        foreach ($posts as $object) {
+            $includes[] = $object->ID;
         }
-        if ($tag != null) {
-            $custom_args['tag'] = $tag;
-        }
-        if ($featured == true) {
-            $custom_args['featured'] = $featured;
-        }
-
-        $includes = $this->wcfm_get_products_by_vendor(implode(',', array_keys($stores)), $custom_args, $page, $per_page);
         $api = new WC_REST_Products_Controller();
         $params = array('order' => $order, 'orderby' => $orderby, 'status' => 'publish', 'page' => $page, 'per_page' => $per_page);
         $params['per_page'] = 10;
@@ -160,7 +167,7 @@ class FlutterWCFMHelper
             $products = $response->get_data();
         }
 
-        return apply_filters("wcfmapi_rest_prepare_store_vendor_products_objects", $review_data, $request);
+        return apply_filters("wcfmapi_rest_prepare_store_vendor_products_objects", $products, $request);
     }
 
     public function flutter_get_wcfm_stores_by_id($wcfm_vendors_id)
@@ -933,7 +940,7 @@ class FlutterWCFMHelper
                 if ($vendor_id) $sql .= " AND withdraw.user_id = %s";
                 $sql .= " AND withdraw.status = 1";
                 $sql = $this->wcfm_query_time_range_filter($sql, 'date', $interval, $filter_date_form, $filter_date_to, 'withdraw');
-                
+
                 if ($vendor_id) {
                     $sql = $wpdb->prepare($sql, $vendor_id);
                 } else {
@@ -1151,17 +1158,17 @@ class FlutterWCFMHelper
             $sql = "SELECT * FROM `$table_name` ";
             $sql .= "WHERE `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` = 'publish' ";
             $sql .= "AND `$table_name`.`post_author` = %s";
-            $sql = $wpdb->prepare($sql,$store_id);
+            $sql = $wpdb->prepare($sql, $store_id);
             $products = $wpdb->get_results($sql);
 
             $theme = wp_get_theme();
             $is_listeo = $theme->name == 'Listeo';
-            if($is_listeo){
+            if ($is_listeo) {
                 $productIDs = [];
                 foreach ($products as $object) {
                     $productIDs[] = $object->ID;
                 }
-                if(empty($productIDs)){
+                if (empty($productIDs)) {
                     return [];
                 }
                 $args = array();
@@ -1291,7 +1298,6 @@ class FlutterWCFMHelper
             }
 
             $data[] = $d;
-
         }
 
         return $data;
