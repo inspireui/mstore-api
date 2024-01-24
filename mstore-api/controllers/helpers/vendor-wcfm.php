@@ -49,78 +49,6 @@ class FlutterWCFMHelper
         return apply_filters("wcfmapi_rest_prepare_store_vendors_objects", $response, $request);
     }
 
-    function wcfm_get_products_by_vendor($vendor_id, $category = null, $search = null, $on_sale = null, $featured = null, $order, $order_by, $page, $per_page)
-    {
-        $args = array(
-            'author' => $vendor_id,
-            'post_type' => 'product',
-            'posts_per_page' => $per_page,
-            'offset' => ($page - 1) * $per_page,
-            'post_status' => 'publish',
-        );
-
-        if ($on_sale == 'true') {
-            $args['meta_query'] = array(
-                'relation' => 'OR',
-                array( // Simple products type
-                    'key' => '_sale_price',
-                    'value' => 0,
-                    'compare' => '>',
-                    'type' => 'numeric'
-                ),
-                array( // Variable products type
-                    'key' => '_min_variation_sale_price',
-                    'value' => 0,
-                    'compare' => '>',
-                    'type' => 'numeric'
-                )
-            );
-        }
-
-        if ($order != null && $order_by != null) {
-            $args['meta_key'] = 'total_sales';
-            $args['order'] = $order;
-            if ($order_by == 'popularity') {
-                $args['orderby'] = 'meta_value_num';
-                $meta_query = $args['meta_query'] ?? array();
-                $meta_query[] = array(
-                    'key' => 'total_sales',
-                    'value' => 0,
-                    'compare' => '>'
-                );
-                $args['meta_query'] = $meta_query;
-            }
-            if ($order_by == 'date') {
-                $args['orderby'] = 'date';
-            }
-        }
-
-        if ($featured == 'true') {
-            $tax_query = $args['tax_query'] ?? array();
-            $tax_query[] = array('taxonomy' => 'product_visibility', 'field' => 'slug', 'terms' => 'featured');
-            $args['tax_query'] = $tax_query;
-        }
-
-        if ($search != null) {
-            $args['orderby'] = 'title';
-            $args['order'] = 'ASC';
-            $args['s'] = $search;
-        }
-        if ($category != null) {
-            $tax_query = $args['tax_query'] ?? array();
-            $tax_query[] = array(
-                'taxonomy' => 'product_cat',
-                'field' => 'term_id',
-                'terms' => $category,
-                'operator' => 'IN'
-            );
-            $args['tax_query'] = $tax_query;
-        }
-
-        $products = get_posts($args);
-        return $products;
-    }
-
     public function flutter_get_wcfm_products($request)
     {
         global $WCFM, $WCFMmp, $wpdb, $wcfmmp_radius_lat, $wcfmmp_radius_lng, $wcfmmp_radius_range;
@@ -138,36 +66,38 @@ class FlutterWCFMHelper
         }
 
         $stores = $WCFMmp->wcfmmp_vendor->wcfmmp_search_vendor_list(true, '', '', '', '', $search_data, 'true', '');
-        $category = $request->get_param('category') ?? null;
-        $tag = $request->get_param('tag') ?? null;
+        $params = $request->get_params();
         $order = $request->get_param('order') ?? 'desc';
         $orderby = $request->get_param('orderby') ?? 'date';
-        $featured = $request->get_param('featured') ?? null;
         $page = $request->get_param('page') ?? 1;
         $per_page = $request->get_param('per_page') ?? 10;
-        $search = $request->get_param('search') ?? null;
-        $on_sale = $request->get_param('on_sale') ?? null;
-        if ($category == '-1') $category = null;
-        if ($tag == '-1') $tag = null;
-        $posts = $this->wcfm_get_products_by_vendor(implode(',', array_keys($stores)), $category, $search, $on_sale, $featured, $order, $orderby, $page, $per_page);
-        $includes = array();
-        foreach ($posts as $object) {
-            $includes[] = $object->ID;
+        $featured = $request->get_param('featured');
+        $on_sale = $request->get_param('on_sale');
+        $params['author'] = implode(',', array_keys($stores));
+        $params['order'] = $order;
+        $params['orderby'] = $orderby;
+        $params['page'] = $page;
+        $params['per_page'] = $per_page;
+        if ($featured) {
+            $params['featured'] = filter_var($featured, FILTER_VALIDATE_BOOLEAN);
         }
-        $api = new WC_REST_Products_Controller();
-        $params = array('order' => $order, 'orderby' => $orderby, 'status' => 'publish', 'page' => $page, 'per_page' => $per_page);
-        $params['per_page'] = 10;
-        $params['page'] = 1;
-        $products = array();
-        if (!(count($includes) === 0)) {
-            $response = array();
-            $params['include'] = $includes;
-            $request->set_query_params($params);
-            $response = $api->get_items($request);
-            $products = $response->get_data();
+        if ($on_sale) {
+            $value = filter_var($on_sale, FILTER_VALIDATE_BOOLEAN);
+            $on_sale_key = $value ? 'include' : 'exclude';
+			$on_sale_ids = wc_get_product_ids_on_sale();
+			// Use 0 when there's no on sale products to avoid return all products.
+			$on_sale_ids = empty( $on_sale_ids ) ? array( 0 ) : $on_sale_ids;
+            $items = $params[ $on_sale_key ] ?? array();
+            $items = array_merge($items, $on_sale_ids);
+			$params[ $on_sale_key ] = $items;
         }
+        $api = new CUSTOM_WC_REST_Products_Controller();
+        $request->set_query_params($params);
+        
+        $response = $api->get_items($request);
+        $products = $response->get_data();
 
-        return apply_filters("wcfmapi_rest_prepare_store_vendor_products_objects", $products, $request);
+        return $products;
     }
 
     public function flutter_get_wcfm_stores_by_id($wcfm_vendors_id)
