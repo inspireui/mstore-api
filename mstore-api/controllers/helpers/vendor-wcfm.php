@@ -73,11 +73,19 @@ class FlutterWCFMHelper
         $per_page = $request->get_param('per_page') ?? 10;
         $featured = $request->get_param('featured');
         $on_sale = $request->get_param('on_sale');
+        $include = $request->get_param('include');
+        $exclude = $request->get_param('exclude');
         $params['author'] = implode(',', array_keys($stores));
         $params['order'] = $order;
         $params['orderby'] = $orderby;
         $params['page'] = $page;
         $params['per_page'] = $per_page;
+        if ($include && !is_array($include)) {
+            $params['include'] = explode(',',$include);
+        }
+        if ($exclude && !is_array($exclude)) {
+            $params['exclude'] = explode(',',$exclude);
+        }
         if ($featured) {
             $params['featured'] = filter_var($featured, FILTER_VALIDATE_BOOLEAN);
         }
