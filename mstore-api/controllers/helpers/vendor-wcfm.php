@@ -53,20 +53,24 @@ class FlutterWCFMHelper
     {
         global $WCFM, $WCFMmp, $wpdb, $wcfmmp_radius_lat, $wcfmmp_radius_lng, $wcfmmp_radius_range;
 
-        $search_data = array();
+        $params = $request->get_params();
 
         $wcfmmp_radius_lat = $request->get_param('wcfmmp_radius_lat');
         $wcfmmp_radius_lng = $request->get_param('wcfmmp_radius_lng');
         $wcfmmp_radius_range = $request->get_param('wcfmmp_radius_range');
 
         if ($wcfmmp_radius_lat && $wcfmmp_radius_lng && $wcfmmp_radius_range) {
+            $search_data = array();
             $search_data['wcfmmp_radius_lat'] = $wcfmmp_radius_lat;
             $search_data['wcfmmp_radius_lng'] = $wcfmmp_radius_lng;
             $search_data['wcfmmp_radius_range'] = $wcfmmp_radius_range;
+            $stores = $WCFMmp->wcfmmp_vendor->wcfmmp_search_vendor_list(true, '', '', '', '', $search_data, 'true', '');
+            if (count($stores) === 0) {
+                return array();
+            }
+            $params['author'] = implode(',', array_keys($stores));
         }
 
-        $stores = $WCFMmp->wcfmmp_vendor->wcfmmp_search_vendor_list(true, '', '', '', '', $search_data, 'true', '');
-        $params = $request->get_params();
         $order = $request->get_param('order') ?? 'desc';
         $orderby = $request->get_param('orderby') ?? 'date';
         $page = $request->get_param('page') ?? 1;
@@ -75,16 +79,15 @@ class FlutterWCFMHelper
         $on_sale = $request->get_param('on_sale');
         $include = $request->get_param('include');
         $exclude = $request->get_param('exclude');
-        $params['author'] = implode(',', array_keys($stores));
         $params['order'] = $order;
         $params['orderby'] = $orderby;
         $params['page'] = $page;
         $params['per_page'] = $per_page;
         if ($include && !is_array($include)) {
-            $params['include'] = explode(',',$include);
+            $params['include'] = explode(',', $include);
         }
         if ($exclude && !is_array($exclude)) {
-            $params['exclude'] = explode(',',$exclude);
+            $params['exclude'] = explode(',', $exclude);
         }
         if ($featured) {
             $params['featured'] = filter_var($featured, FILTER_VALIDATE_BOOLEAN);
@@ -92,16 +95,16 @@ class FlutterWCFMHelper
         if ($on_sale) {
             $value = filter_var($on_sale, FILTER_VALIDATE_BOOLEAN);
             $on_sale_key = $value ? 'include' : 'exclude';
-			$on_sale_ids = wc_get_product_ids_on_sale();
-			// Use 0 when there's no on sale products to avoid return all products.
-			$on_sale_ids = empty( $on_sale_ids ) ? array( 0 ) : $on_sale_ids;
-            $items = $params[ $on_sale_key ] ?? array();
+            $on_sale_ids = wc_get_product_ids_on_sale();
+            // Use 0 when there's no on sale products to avoid return all products.
+            $on_sale_ids = empty($on_sale_ids) ? array(0) : $on_sale_ids;
+            $items = $params[$on_sale_key] ?? array();
             $items = array_merge($items, $on_sale_ids);
-			$params[ $on_sale_key ] = $items;
+            $params[$on_sale_key] = $items;
         }
         $api = new CUSTOM_WC_REST_Products_Controller();
         $request->set_query_params($params);
-        
+
         $response = $api->get_items($request);
         $products = $response->get_data();
 

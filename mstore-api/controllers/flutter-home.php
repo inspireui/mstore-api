@@ -221,6 +221,20 @@ class FlutterHome extends WP_REST_Controller
         $params['page'] = 0;
         $params['is_all_data'] = true;
 	
+        if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
+            $wcfmmp_radius_lat = $request->get_param('wcfmmp_radius_lat');
+            $wcfmmp_radius_lng = $request->get_param('wcfmmp_radius_lng');
+            $wcfmmp_radius_range = $request->get_param('wcfmmp_radius_range');
+            if ($wcfmmp_radius_lat && $wcfmmp_radius_lng && $wcfmmp_radius_range) {
+                $params['wcfmmp_radius_lat'] = $wcfmmp_radius_lat;
+                $params['wcfmmp_radius_lng'] = $wcfmmp_radius_lng;
+                $params['wcfmmp_radius_range'] = $wcfmmp_radius_range;
+                $request->set_query_params($params);
+                $helper = new FlutterWCFMHelper();
+                return $helper->flutter_get_wcfm_products($request);
+            }
+        }
+        
         $request->set_query_params($params);
 
         $response = $api->get_items($request);
