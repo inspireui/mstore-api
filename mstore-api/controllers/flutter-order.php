@@ -157,6 +157,36 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
             }
         }
 
+        /*** Fix: can not save all meta_data if they have same key ***/
+        $has_change = false;
+        if (isset($params['line_items']) && count($params['line_items']) > 0) {
+            $line_items = array();
+            foreach ($params['line_items'] as $key => $value) {
+               if (isset($value['meta_data']) && count($value['meta_data']) > 0){
+                $meta_data = array();
+                $keys = array();
+                foreach ($value['meta_data'] as $k => $v) {
+                    $keys[] = $v['key'];
+                    $count = array_count_values($keys)[$v['key']];
+                    if ($count > 1) {
+                        $has_change = true;
+                        $meta_data[] = ['key'=>$v['key'].' '.$count, 'value'=>$v['value']];
+                    }else{
+                        $meta_data[] = $v;
+                    }
+                }
+                $value['meta_data'] = $meta_data;
+                $line_items[] = $value;
+               }
+            }
+            $params['line_items'] = $line_items;
+        }
+        if($has_change){
+            $request = new WP_REST_Request( $request->get_method() );
+		    $request->set_body_params( $params );
+        }
+        /************************/
+
         $response = $this->create_item($request);
         if(is_wp_error($response)){
             return $response;

@@ -797,4 +797,82 @@ function customOrderResponse($response, $object, $request)
 
     return $response;
 }
+
+function cleanupAppointmentCartData($customer_id) {
+    if(class_exists( 'WC_Appointments' )){
+        $appointment_ids = WC_Appointment_Data_Store::get_appointment_ids_by(
+			[
+				'status'           => [ 'in-cart', 'was-in-cart' ],
+				'object_id'   => $customer_id,
+				'object_type' => 'customer',
+			]
+		);
+
+		if ( $appointment_ids ) {
+			foreach ( $appointment_ids as $appointment_id ) {
+				wp_trash_post( $appointment_id );
+			}
+		}
+    }	
+}
+
+function buildCartItemData($products, $callback){
+    foreach ($products as $product) {
+                $productId = absint($product['product_id']);
+
+                $quantity = $product['quantity'];
+                $variationId = isset($product['variation_id']) ? $product['variation_id'] : "";
+
+                $attributes = [];
+                if (isset($product["meta_data"])) {
+                    foreach ($product["meta_data"] as $item) {
+                        if($item["value"] != null){
+                            $attributes[strtolower($item["key"])] = $item["value"];
+                        }
+                    }
+                }
+
+                if (isset($product['addons'])) {
+                    $addons = array();
+                    foreach ($product['addons'] as $key => $value) {
+                        if(is_array($value)){
+                            $addons[$key] = array_map(function($val){
+                                return sanitize_title($val);
+                            },$value);
+                        }else if (is_string($value)) {
+                            $addons[$key] = sanitize_title($value);
+                        }else{
+                            $addons[$key] = $value;
+                        }
+                    }
+                    $_POST = $addons;
+                }
+                
+                // Check the product variation
+                if (!empty($variationId)) {
+                    $productVariable = new WC_Product_Variable($productId);
+                    $listVariations = $productVariable->get_available_variations();
+                    foreach ($listVariations as $vartiation => $value) {
+                        if ($variationId == $value['variation_id']) {
+                            $attributes = array_merge($value['attributes'], $attributes);
+                            $callback($productId, $quantity, $variationId, $attributes, array());
+                        }
+                    }
+                } else {
+                    parseMetaDataForBookingProduct($product);
+                    $cart_item_data = array();
+                    if (is_plugin_active('woo-wallet/woo-wallet.php')) {
+                        $wallet_product = get_wallet_rechargeable_product();
+                        if ($wallet_product->get_id() == $productId) {
+                            $cart_item_data['recharge_amount'] = $product['total'];
+                        }
+                    }
+                    if(isset($product['ywgc_amount'])){
+                        $cart_item_data['ywgc_amount'] = $product['ywgc_amount'];
+                        $cart_item_data['ywgc_product_id'] = $productId;
+                    }
+                    $callback($productId, $quantity, 0, $attributes, $cart_item_data);
+                }
+            }
+}
 ?>

@@ -1,9 +1,9 @@
 === MStore API ===
 Contributors:      InspireUI Ltd
-Tags:              mstore, fluxstore, react-native, flutter, inspireui, ios, android
+Tags:              mstore, fluxstore, react-native, flutter, inspireui, ios, android, nocode, app builder, mobile app, source code
 Requires at least: 4.4
 Tested up to:      6.4.1
-Stable tag:        4.11.4
+Stable tag:        4.11.5
 License:           GPL-2.0
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -43,6 +43,9 @@ Faster- Smoother- Closer.
 1. Click Install.
 
 == Changelog ==
+= 4.11.5 =
+  * Fix appointment checkout issues
+
 = 4.11.4 =
   * Fix crash variation
 

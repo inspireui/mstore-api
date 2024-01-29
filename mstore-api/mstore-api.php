@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 4.11.4
+ * Version: 4.11.5
  * Author: InspireUI
  * Author URI: https://inspireui.com
  *
@@ -51,7 +51,7 @@ if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
 
 class MstoreCheckOut
 {
-    public $version = '4.11.4';
+    public $version = '4.11.5';
 
     public function __construct()
     {
@@ -572,24 +572,6 @@ function custom_woocommerce_rest_prepare_product_variation_object($response, $ob
     return $response;
 }
 
-function cleanup_appointment_cart_data($customer_id) {
-    if(class_exists( 'WC_Appointments' )){
-        $appointment_ids = WC_Appointment_Data_Store::get_appointment_ids_by(
-			[
-				'status'           => [ 'in-cart', 'was-in-cart' ],
-				'object_id'   => $customer_id,
-				'object_type' => 'customer',
-			]
-		);
-
-		if ( $appointment_ids ) {
-			foreach ( $appointment_ids as $appointment_id ) {
-				wp_trash_post( $appointment_id );
-			}
-		}
-    }	
-}
-
 // Prepare data before checkout by webview
 function flutter_prepare_checkout()
 {
@@ -713,7 +695,7 @@ function flutter_prepare_checkout()
     
                     header("Refresh:0");
                 }
-                cleanup_appointment_cart_data($userId);
+                cleanupAppointmentCartData($userId);
             }
         } else {
             if (is_user_logged_in()) {
@@ -731,58 +713,10 @@ function flutter_prepare_checkout()
 
             $products = $data['line_items'];
 
-            foreach ($products as $product) {
-                $productId = absint($product['product_id']);
-
-                $quantity = $product['quantity'];
-                $variationId = isset($product['variation_id']) ? $product['variation_id'] : "";
-
-                $attributes = [];
-                if (isset($product["meta_data"])) {
-                    foreach ($product["meta_data"] as $item) {
-                        if($item["value"] != null){
-                            $attributes[strtolower($item["key"])] = $item["value"];
-                        }
-                    }
-                }
-
-                if (isset($product['addons'])) {
-                    $_POST = $product['addons'];
-                }
-                
-                // Check the product variation
-                if (!empty($variationId)) {
-                    $productVariable = new WC_Product_Variable($productId);
-                    $listVariations = $productVariable->get_available_variations();
-                    foreach ($listVariations as $vartiation => $value) {
-                        if ($variationId == $value['variation_id']) {
-                            /*encode attribute name to fix for arabic language*/
-                            $attrs = [];
-                            foreach ($attributes as $key => $val) {
-                                $attr_name = str_replace( 'attribute_pa_', '', urldecode( $key ) );
-                                $attrs['attribute_pa_' . sanitize_title( $attr_name )] = $val;
-                            }
-                            $attributes = array_merge($value['attributes'], $attrs);
-                            $woocommerce->cart->add_to_cart($productId, $quantity, $variationId, $attributes);
-                        }
-                    }
-                } else {
-                    parseMetaDataForBookingProduct($product);
-                    $cart_item_data = array();
-                    if (is_plugin_active('woo-wallet/woo-wallet.php')) {
-                        $wallet_product = get_wallet_rechargeable_product();
-                        if ($wallet_product->get_id() == $productId) {
-                            $cart_item_data['recharge_amount'] = $product['total'];
-                        }
-                    }
-                    if(isset($product['ywgc_amount'])){
-                        $cart_item_data['ywgc_amount'] = $product['ywgc_amount'];
-                        $cart_item_data['ywgc_product_id'] = $productId;
-                    }
-                    $woocommerce->cart->add_to_cart($productId, $quantity, 0, $attributes, $cart_item_data);
-
-                }
-            }
+            buildCartItemData($products, function($productId, $quantity, $variationId, $attributes, $cart_item_data){
+                global $woocommerce;
+                $woocommerce->cart->add_to_cart($productId, $quantity, $variationId, $attributes, $cart_item_data);
+            });
 
             if (isset($shipping)) {
                 $woocommerce->customer->set_shipping_first_name($shipping["first_name"]);
