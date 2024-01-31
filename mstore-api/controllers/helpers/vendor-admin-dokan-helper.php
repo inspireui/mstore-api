@@ -76,127 +76,127 @@ class VendorAdminDokanHelper
     }
 
 
-       /// GET FUNCTIONS
-       public function get_vendor_profile($user_id)
-       {
-           $vendor_data = get_user_meta($user_id, "dokan_profile_settings", true);
-           if (is_string($vendor_data)) {
-               $vendor_data = [];
-           }
-           $user = get_userdata($user_id);
-           $vendor_data['store_email'] = $user->user_email;
-           $vendor_data["logo"] = wp_get_attachment_image_src(
+    /// GET FUNCTIONS
+    public function get_vendor_profile($user_id)
+    {
+        $vendor_data = get_user_meta($user_id, "dokan_profile_settings", true);
+        if (is_string($vendor_data)) {
+            $vendor_data = [];
+        }
+        $user = get_userdata($user_id);
+        $vendor_data['store_email'] = $user->user_email;
+        $vendor_data["logo"] = wp_get_attachment_image_src(
             $vendor_data["gravatar"]
-            )[0];
-            $vendor_data["banner"] = wp_get_attachment_image_src(
+        )[0];
+        $vendor_data["banner"] = wp_get_attachment_image_src(
             $vendor_data["banner"]
-            )[0];
-           return new WP_REST_Response(
-               [
-                   "status" => "success",
-                   "response" => $vendor_data,
-               ],
-               200
-           );
-       }
-   
-       public function update_vendor_profile($request, $user_id)
-       {
-           $data = json_decode( $request, true);
-           $vendor_data = get_user_meta($user_id, "dokan_profile_settings", true);
-           if (is_string($vendor_data)) {
-               $vendor_data = [];
-           }
+        )[0];
+        return new WP_REST_Response(
+            [
+                "status" => "success",
+                "response" => $vendor_data,
+            ],
+            200
+        );
+    }
 
-           $store_name = sanitize_text_field($data["store_name"]);
-           $store_nicename = sanitize_text_field($data["store_slug"]);
-           $store_location = sanitize_text_field($data["store_location"]);
-           $store_lat = sanitize_text_field($data["store_lat"]);
-           $store_lng = sanitize_text_field($data["store_lng"]);
-           $phone =  sanitize_text_field($data["phone"]);
-           $store_email =  sanitize_text_field($data["store_email"]);
-           
+    public function update_vendor_profile($request, $user_id)
+    {
+        $data = json_decode($request, true);
+        $vendor_data = get_user_meta($user_id, "dokan_profile_settings", true);
+        if (is_string($vendor_data)) {
+            $vendor_data = [];
+        }
 
-           if(!empty($store_name)){
-                $vendor_data['store_name'] = $store_name;
-           }
-           if(!empty($phone)){
-                $vendor_data['phone'] = $phone;  
-           }
-           if(!empty($data['address'])){
-                $vendor_data['address'] =  $data['address'];
-           }
-           if(!empty($store_lat) && !empty($store_lng) ){
-                $vendor_data['location'] = $store_lat . ',' . $store_lng;
-           }
-           if(!empty($store_location)){
-                $vendor_data['find_address'] =  $store_location;
-           }
-           if(!empty($store_email)){
-                $args = array(
-                    'ID'         => $user_id,
-                    'user_email' => esc_attr( $store_email )
-                );
-                wp_update_user( $args );
-           }
+        $store_name = sanitize_text_field($data["store_name"]);
+        $store_nicename = sanitize_text_field($data["store_slug"]);
+        $store_location = sanitize_text_field($data["store_location"]);
+        $store_lat = sanitize_text_field($data["store_lat"]);
+        $store_lng = sanitize_text_field($data["store_lng"]);
+        $phone =  sanitize_text_field($data["phone"]);
+        $store_email =  sanitize_text_field($data["store_email"]);
 
-           $count = 0;
 
-           if(isset($data['store_time'])){
-                $vendor_data['dokan_store_time'] = $data['store_time'];
-           }
-           if(isset($data['dokan_store_open_notice'])){
-                $vendor_data['dokan_store_open_notice'] = $data['dokan_store_open_notice'];
-            }
-            if(isset($data['dokan_store_close_notice'])){
-                $vendor_data['dokan_store_close_notice'] = $data['dokan_store_close_notice'];
-            }
-            if(isset($data['dokan_store_time_enabled'])){
-                $vendor_data['dokan_store_time_enabled'] = $data['dokan_store_time_enabled'];
-            }
-   
-           if (isset($data["logo"])) {
-               $img_id = upload_image_from_mobile(
-                   $data["logo"],
-                   $count,
-                   $user_id
-               );
-               $count = $count + 1;
-               $vendor_data["gravatar"] = $img_id;
-           }
+        if (!empty($store_name)) {
+            $vendor_data['store_name'] = $store_name;
+        }
+        if (!empty($phone)) {
+            $vendor_data['phone'] = $phone;
+        }
+        if (!empty($data['address'])) {
+            $vendor_data['address'] =  $data['address'];
+        }
+        if (!empty($store_lat) && !empty($store_lng)) {
+            $vendor_data['location'] = $store_lat . ',' . $store_lng;
+        }
+        if (!empty($store_location)) {
+            $vendor_data['find_address'] =  $store_location;
+        }
+        if (!empty($store_email)) {
+            $args = array(
+                'ID'         => $user_id,
+                'user_email' => esc_attr($store_email)
+            );
+            wp_update_user($args);
+        }
 
-           if (isset($data["banner"]) && isset($data["banner_type"])) {
-                $img_id = upload_image_from_mobile(
-                    $data["banner"],
-                    $count,
-                    $user_id
-                );
-                $vendor_data["banner"] = $img_id;
-                $count++;
-            }
-        
-            if(isset($store_lng) && isset($store_lat) && isset($store_location)){
-                update_user_meta( $user_id, 'dokan_geo_latitude', $store_lat );
-                update_user_meta( $user_id, 'dokan_geo_longitude', $store_lng );
-                update_user_meta( $user_id, 'dokan_geo_address', $store_location);
-            }
+        $count = 0;
 
-            wp_update_user(array(
-                'ID' => $user_id,
-                'user_nicename' => $store_nicename,
-            ));
+        if (isset($data['store_time'])) {
+            $vendor_data['dokan_store_time'] = $data['store_time'];
+        }
+        if (isset($data['dokan_store_open_notice'])) {
+            $vendor_data['dokan_store_open_notice'] = $data['dokan_store_open_notice'];
+        }
+        if (isset($data['dokan_store_close_notice'])) {
+            $vendor_data['dokan_store_close_notice'] = $data['dokan_store_close_notice'];
+        }
+        if (isset($data['dokan_store_time_enabled'])) {
+            $vendor_data['dokan_store_time_enabled'] = $data['dokan_store_time_enabled'];
+        }
 
-            update_user_meta( $user_id, 'dokan_profile_settings', $vendor_data );
-            update_user_meta( $user_id, 'dokan_store_name', $store_name);
-   
-            return new WP_REST_Response(
-               [
-                   "status" => "success",
-                   "response" => 1,
-               ],
-               200
-           );
-       }
+        if (isset($data["logo"])) {
+            $img_id = upload_image_from_mobile(
+                $data["logo"],
+                $count,
+                $user_id
+            );
+            $count = $count + 1;
+            $vendor_data["gravatar"] = $img_id;
+        }
+
+        if (isset($data["banner"]) && isset($data["banner_type"])) {
+            $img_id = upload_image_from_mobile(
+                $data["banner"],
+                $count,
+                $user_id
+            );
+            $vendor_data["banner"] = $img_id;
+            $count++;
+        }
+
+        if (isset($store_lng) && isset($store_lat) && isset($store_location)) {
+            update_user_meta($user_id, 'dokan_geo_latitude', $store_lat);
+            update_user_meta($user_id, 'dokan_geo_longitude', $store_lng);
+            update_user_meta($user_id, 'dokan_geo_address', $store_location);
+        }
+
+        wp_update_user(array(
+            'ID' => $user_id,
+            'user_nicename' => $store_nicename,
+        ));
+
+        update_user_meta($user_id, 'dokan_profile_settings', $vendor_data);
+        update_user_meta($user_id, 'dokan_store_name', $store_name);
+
+        return new WP_REST_Response(
+            [
+                "status" => "success",
+                "response" => 1,
+            ],
+            200
+        );
+    }
 
     /// GET FUNCTIONS
     public function flutter_get_products($request, $user_id)
@@ -204,10 +204,10 @@ class VendorAdminDokanHelper
         global $woocommerce, $wpdb;
         $page = isset($request["page"]) ? sanitize_text_field($request["page"])  : 1;
         $limit = isset($request["per_page"]) ? sanitize_text_field($request["per_page"]) : 10;
-        if(!is_numeric($page)){
+        if (!is_numeric($page)) {
             $page = 1;
         }
-        if(!is_numeric($limit)){
+        if (!is_numeric($limit)) {
             $limit = 10;
         }
         if ($page >= 1) {
@@ -231,7 +231,7 @@ class VendorAdminDokanHelper
         } else {
             $sql = $wpdb->prepare($sql, $limit, $page);
         }
-        
+
         $item = $wpdb->get_results($sql);
 
         $products_arr = array();
@@ -287,7 +287,7 @@ class VendorAdminDokanHelper
                 $query = ['post_parent' => $product->get_id(), 'post_status' => ['publish', 'private'], 'post_type' => ['product_variation'], 'posts_per_page' => -1,];
 
                 $wc_query = new WP_Query($query);
-                while ($wc_query->have_posts()):
+                while ($wc_query->have_posts()) :
                     $wc_query->next_post();
                     $result[] = $wc_query->post;
                 endwhile;
@@ -320,7 +320,6 @@ class VendorAdminDokanHelper
                     }
                     $p['variable_products'][] = $dataVariation;
                 }
-
             }
             $products_arr[] = $p;
         }
@@ -334,13 +333,13 @@ class VendorAdminDokanHelper
         $per_page = 10;
         if (isset($request['page'])) {
             $page = sanitize_text_field($request['page']);
-            if(!is_numeric($page)){
+            if (!is_numeric($page)) {
                 $page = 1;
             }
         }
         if (isset($request['per_page'])) {
             $per_page = sanitize_text_field($request['per_page']);
-            if(!is_numeric($per_page)){
+            if (!is_numeric($per_page)) {
                 $per_page = 10;
             }
         }
@@ -359,13 +358,13 @@ class VendorAdminDokanHelper
                 $sql .= " AND order_id LIKE %s";
             }
             $sql .= " GROUP BY $table_name.`order_id` ORDER BY $table_name.`order_id` DESC LIMIT %d OFFSET %d";
-            
+
             $args = [$user_id];
             if (isset($request['status'])) {
-                $args[] = 'wc-'.sanitize_text_field($request['status']);
+                $args[] = 'wc-' . sanitize_text_field($request['status']);
             }
             if (isset($request['search'])) {
-                $args[] = '%'.sanitize_text_field($request['search']).'%';
+                $args[] = '%' . sanitize_text_field($request['search']) . '%';
             }
             $args[] = $per_page;
             $args[] = $page;
@@ -398,19 +397,91 @@ class VendorAdminDokanHelper
         ), 200);
     }
 
+    public function add_date_filter($args, $interval)
+    {
+        $query_args = array_replace([], $args);
+        switch ($interval) {
+            case 'last_month':
+                $query_args['date']['from'] = date('d-m-Y', strtotime('-1 month', strtotime(date('Y-m-1'))));
+                $query_args['date']['to']   = date('d-m-Y', strtotime(date('Y-m-1')));
+                return $query_args;
+            case 'month':
+                $query_args['date']['from'] = date('d-m-Y', strtotime(date('Y-m-1')));
+                $query_args['date']['to']   = date('d-m-Y', strtotime('+1 month', strtotime(date('Y-m-1'))));
+                return $query_args;
+            case 'year':
+                $query_args['date']['from'] = date('d-m-Y', strtotime(date('Y-1-1')));
+                $query_args['date']['to']   = date('d-m-Y', strtotime('+1 year', strtotime(date('Y-1-1'))));;
+                return $query_args;
+            case 'week_1':
+                $query_args['date']['from'] = date('d-m-Y', strtotime('-1 week', strtotime(date('Y-m-d'))));
+                $query_args['date']['to']   = date('d-m-Y');
+                return $query_args;
+            case 'week_2':
+                $query_args['date']['from'] = date('d-m-Y', strtotime('-2 weeks', strtotime(date('Y-m-d'))));
+                $query_args['date']['to']   = date('d-m-Y');
+                return $query_args;
+            case 'week_3':
+                $query_args['date']['from'] = date('d-m-Y', strtotime('-3 weeks', strtotime(date('Y-m-d'))));
+                $query_args['date']['to']   = date('d-m-Y');
+                return $query_args;
+            case 'week_4':
+                $query_args['date']['from'] = date('d-m-Y', strtotime('-4 weeks', strtotime(date('Y-m-d'))));
+                $query_args['date']['to']   = date('d-m-Y');
+                return $query_args;
+            case 'week_5':
+                $query_args['date']['from'] = date('d-m-Y', strtotime('-5 weeks', strtotime(date('Y-m-d'))));
+                $query_args['date']['to']   = date('d-m-Y');
+                return $query_args;
+            default:
+                return $query_args;
+        }
+    }
+
+    public function get_gross_sales_orders($orders) {
+        $price_decimal = get_option('woocommerce_price_num_decimals', 2);
+        $total = 0;
+        if ($orders) {
+            foreach ( $orders as $order ) {
+                $total += $order->get_total();
+            }
+        }
+        return round($total, $price_decimal);
+    }
+
+    public function get_gross_earnings_orders($orders) {
+        $price_decimal = get_option('woocommerce_price_num_decimals', 2);
+        $total = 0;
+        if ($orders) {
+            foreach ( $orders as $order ) {
+                $total += dokan()->commission->get_earning_by_order($order);
+            }
+        }
+        return round($total, $price_decimal);
+    }
+
     public function flutter_get_sale_stats($user_id)
     {
-        $id = $user_id;
-        $price_decimal = get_option('woocommerce_price_num_decimals', 2);
-        $sales_stats['gross_sales']['last_month'] = round($this->wcfm_get_gross_sales_by_vendor($id, 'last_month'), $price_decimal);
-        $sales_stats['gross_sales']['month'] = round($this->wcfm_get_gross_sales_by_vendor($id, 'month'), $price_decimal);
-        $sales_stats['gross_sales']['year'] = round($this->wcfm_get_gross_sales_by_vendor($id, 'year'), $price_decimal);
-        $sales_stats['gross_sales']['week_1'] = round($this->wcfm_get_gross_sales_by_vendor($id, '7day'), $price_decimal);
-        $sales_stats['gross_sales']['week_2'] = round($this->wcfm_get_gross_sales_by_vendor($id, '14day'), $price_decimal);
-        $sales_stats['gross_sales']['week_3'] = round($this->wcfm_get_gross_sales_by_vendor($id, '21day'), $price_decimal);
-        $sales_stats['gross_sales']['week_4'] = round($this->wcfm_get_gross_sales_by_vendor($id, '28day'), $price_decimal);
-        $sales_stats['gross_sales']['week_5'] = round($this->wcfm_get_gross_sales_by_vendor($id, '35day'), $price_decimal);
-        $sales_stats['gross_sales']['all'] = round($this->wcfm_get_gross_sales_by_vendor($id, 'all'), $price_decimal);
+        $args = ['seller_id' => $user_id, 'return' => 'objects'];
+        $last_month_orders = dokan()->order->all($this->add_date_filter($args,'last_month'));
+        $month_orders = dokan()->order->all($this->add_date_filter($args, 'month'));
+        $year_orders = dokan()->order->all($this->add_date_filter($args, 'year'));
+        $week_1_orders = dokan()->order->all($this->add_date_filter($args, 'week_1'));
+        $week_2_orders = dokan()->order->all($this->add_date_filter($args, 'week_2'));
+        $week_3_orders = dokan()->order->all($this->add_date_filter($args, 'week_3'));
+        $week_4_orders = dokan()->order->all($this->add_date_filter($args, 'week_4'));
+        $week_5_orders = dokan()->order->all($this->add_date_filter($args, 'month'));
+        $all_orders = dokan()->order->all($args);
+      
+        $sales_stats['gross_sales']['last_month'] = $this->get_gross_sales_orders($last_month_orders);
+        $sales_stats['gross_sales']['month'] = $this->get_gross_sales_orders($month_orders);
+        $sales_stats['gross_sales']['year'] = $this->get_gross_sales_orders($year_orders);
+        $sales_stats['gross_sales']['week_1'] = $this->get_gross_sales_orders($week_1_orders);
+        $sales_stats['gross_sales']['week_2'] = $this->get_gross_sales_orders($week_2_orders);
+        $sales_stats['gross_sales']['week_3'] = $this->get_gross_sales_orders($week_3_orders);
+        $sales_stats['gross_sales']['week_4'] = $this->get_gross_sales_orders($week_4_orders);
+        $sales_stats['gross_sales']['week_5'] = $this->get_gross_sales_orders($week_5_orders);
+        $sales_stats['gross_sales']['all'] = $this->get_gross_sales_orders($all_orders);
         if ($sales_stats['gross_sales']['last_month'] != 0) {
             $profit_percentage = round($sales_stats['gross_sales']['month'] - $sales_stats['gross_sales']['last_month'], 2);
             $profit_percentage = round($profit_percentage / $sales_stats['gross_sales']['last_month'] * 100 / 100, 2);
@@ -419,15 +490,15 @@ class VendorAdminDokanHelper
             $profit_percentage = round($profit_percentage / 1 * 100 / 100, 2);
         }
         $sales_stats['gross_sales']['profit_percentage'] = $profit_percentage;
-        $sales_stats['earnings']['last_month'] = round($this->wcfm_get_commission_by_vendor($id, 'last_month'), $price_decimal);
-        $sales_stats['earnings']['month'] = round($this->wcfm_get_commission_by_vendor($id, 'month'), $price_decimal);
-        $sales_stats['earnings']['year'] = round($this->wcfm_get_commission_by_vendor($id, 'year'), $price_decimal);
-        $sales_stats['earnings']['week_1'] = round($this->wcfm_get_commission_by_vendor($id, '7day'), $price_decimal);
-        $sales_stats['earnings']['week_2'] = round($this->wcfm_get_commission_by_vendor($id, '14day'), $price_decimal);
-        $sales_stats['earnings']['week_3'] = round($this->wcfm_get_commission_by_vendor($id, '21day'), $price_decimal);
-        $sales_stats['earnings']['week_4'] = round($this->wcfm_get_commission_by_vendor($id, '28day'), $price_decimal);
-        $sales_stats['earnings']['week_5'] = round($this->wcfm_get_commission_by_vendor($id, '35day'), $price_decimal);
-        $sales_stats['earnings']['all'] = round($this->wcfm_get_commission_by_vendor($id, 'all'), $price_decimal);
+        $sales_stats['earnings']['last_month'] = $this->get_gross_earnings_orders($last_month_orders);
+        $sales_stats['earnings']['month'] = $this->get_gross_earnings_orders($month_orders);
+        $sales_stats['earnings']['year'] = $this->get_gross_earnings_orders($year_orders);
+        $sales_stats['earnings']['week_1'] = $this->get_gross_earnings_orders($week_1_orders);
+        $sales_stats['earnings']['week_2'] = $this->get_gross_earnings_orders($week_2_orders);
+        $sales_stats['earnings']['week_3'] = $this->get_gross_earnings_orders($week_3_orders);
+        $sales_stats['earnings']['week_4'] = $this->get_gross_earnings_orders($week_4_orders);
+        $sales_stats['earnings']['week_5'] = $this->get_gross_earnings_orders($week_5_orders);
+        $sales_stats['earnings']['all'] = $this->get_gross_earnings_orders($all_orders);
         if ($sales_stats['earnings']['last_month'] != 0) {
             $profit_percentage = round($sales_stats['earnings']['month'] - $sales_stats['earnings']['last_month'], 2);
             $profit_percentage = round($profit_percentage / $sales_stats['earnings']['last_month'] * 100 / 100, 2);
@@ -451,7 +522,7 @@ class VendorAdminDokanHelper
 
         $order_id = sanitize_text_field($request['order_id']);
         $order_status = sanitize_text_field($request['order_status']);
-        
+
         if (!dokan_is_seller_has_order($user_id, $order_id) || !is_numeric($order_id)) {
             return new WP_REST_Response(array(
                 'status' => 'success',
@@ -520,9 +591,11 @@ class VendorAdminDokanHelper
 
     public function prepare_reviews_for_response($item, $request, $additional_fields = [])
     {
-        if (dokan()->is_pro_exists() && dokan_pro()
-                ->module
-                ->is_active('store_reviews')) {
+        if (
+            dokan()->is_pro_exists() && dokan_pro()
+            ->module
+            ->is_active('store_reviews')
+        ) {
             $user = get_user_by('id', $item->post_author);
             $user_gravatar = get_avatar_url($user->user_email);
 
@@ -551,16 +624,19 @@ class VendorAdminDokanHelper
         if (dokan()->is_pro_exists()) {
             if (dokan_pro()
                 ->module
-                ->is_active('store_reviews')) {
+                ->is_active('store_reviews')
+            ) {
                 if ($status_filter == 'pending') {
                     return new WP_REST_Response(array(
                         'status' => 'success',
                         'response' => []
                     ), 200);
                 }
-                $args = ['post_type' => 'dokan_store_reviews', 'meta_key' => 'store_id', //phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+                $args = [
+                    'post_type' => 'dokan_store_reviews', 'meta_key' => 'store_id', //phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
                     'meta_value' => $store_id, //phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
-                    'post_status' => 'publish', 'posts_per_page' => (int)$request['per_page'], 'paged' => (int)$request['page'], 'author__not_in' => [$store_id],];
+                    'post_status' => 'publish', 'posts_per_page' => (int)$request['per_page'], 'paged' => (int)$request['page'], 'author__not_in' => [$store_id],
+                ];
 
                 $query = new WP_Query($args);
 
@@ -614,98 +690,6 @@ class VendorAdminDokanHelper
     // Update review status
     function flutter_update_review($request)
     {
-
-    }
-
-    /* GET WCFM SALE STATS FUNCTIONS. CUSTOM BY TOAN 04/11/2020 */
-
-    function wcfm_query_time_range_filter($sql, $time, $interval = '7day', $start_date = '', $end_date = '', $table_handler = 'commission')
-    {
-        switch ($interval) {
-            case 'year':
-                $sql .= " AND YEAR( {$table_handler}.{$time} ) = YEAR( CURDATE() )";
-                break;
-            case 'last_month':
-                $sql .= " AND MONTH( {$table_handler}.{$time} ) = MONTH( NOW() ) - 1 AND YEAR( {$table_handler}.{$time} ) = YEAR( CURDATE() )";
-                break;
-            case 'month':
-                $sql .= " AND MONTH( {$table_handler}.{$time} ) = MONTH( NOW() ) AND YEAR( {$table_handler}.{$time} ) = YEAR( CURDATE() )";
-                break;
-            case 'all':
-                break;
-            case '7day':
-                $sql .= " AND DATE( {$table_handler}.{$time} ) BETWEEN DATE_SUB( NOW(), INTERVAL 7 DAY ) AND NOW()";
-                break;
-            case '14day':
-                $sql .= " AND DATE( {$table_handler}.{$time} ) BETWEEN DATE_SUB( NOW(), INTERVAL 14 DAY ) AND DATE_SUB( NOW(), INTERVAL 7 DAY )";
-                break;
-            case '21day':
-                $sql .= " AND DATE( {$table_handler}.{$time} ) BETWEEN DATE_SUB( NOW(), INTERVAL 21 DAY ) AND DATE_SUB( NOW(), INTERVAL 14 DAY )";
-                break;
-            case '28day':
-                $sql .= " AND DATE( {$table_handler}.{$time} ) BETWEEN DATE_SUB( NOW(), INTERVAL 28 DAY ) AND DATE_SUB( NOW(), INTERVAL 21 DAY )";
-                break;
-            case '35day':
-                $sql .= " AND DATE( {$table_handler}.{$time} ) BETWEEN DATE_SUB( NOW(), INTERVAL 35 DAY ) AND DATE_SUB( NOW(), INTERVAL 28 DAY )";
-                break;
-            case 'default':
-        }
-
-        return $sql;
-    }
-
-    function wcfm_get_gross_sales_by_vendor($vendor_id = '', $interval = '7day', $is_paid = false, $order_id = 0, $filter_date_form = '', $filter_date_to = '')
-    {
-        global $woocommerce, $wpdb;
-
-        if ($vendor_id) $vendor_id = absint($vendor_id);
-
-        $gross_sales = 0;
-        $table_1 = "{$wpdb->prefix}posts";
-        $table_2 = "{$wpdb->prefix}dokan_orders";
-
-        $sql = "SELECT {$table_2}.order_total FROM {$table_2} INNER JOIN {$table_1} ON {$table_1}.ID = {$table_2}.order_id WHERE {$table_1}.post_type = 'shop_order'";
-        $sql .= " AND {$table_1}.post_status = 'wc-completed' AND {$table_2}.seller_id = %s";
-        $sql = $this->wcfm_query_time_range_filter($sql, 'post_date', $interval, '', '', "{$wpdb->prefix}posts");
-        $sql = $wpdb->prepare($sql, $vendor_id);
-        $result = $wpdb->get_results($sql);
-
-        foreach ($result as $order_id) {
-            $gross_sales += $order_id->order_total;
-        }
-
-        if (!$gross_sales) $gross_sales = 0;
-
-        return $gross_sales;
-    }
-
-    /**
-     * Total commission paid by Admin
-     */
-    function wcfm_get_commission_by_vendor($vendor_id = '', $interval = '7day', $is_paid = false, $order_id = 0, $filter_date_form = '', $filter_date_to = '')
-    {
-        global $woocommerce, $wpdb;
-
-        if ($vendor_id) $vendor_id = absint($vendor_id);
-
-        $commission = 0;
-
-        $table_1 = "{$wpdb->prefix}posts";
-        $table_2 = "{$wpdb->prefix}dokan_orders";
-
-        $sql = "SELECT {$table_2}.net_amount FROM {$table_2} INNER JOIN {$table_1} ON {$table_1}.ID = {$table_2}.order_id WHERE {$table_1}.post_type = 'shop_order'";
-        $sql .= " AND {$table_1}.post_status = 'wc-completed' AND {$table_2}.seller_id = %s";
-        $sql = $this->wcfm_query_time_range_filter($sql, 'post_date', $interval, '', '', "{$wpdb->prefix}posts");
-        $sql = $wpdb->prepare($sql, $vendor_id);
-        $result = $wpdb->get_results($sql);
-
-        foreach ($result as $order_id) {
-            $commission += $order_id->net_amount;
-        }
-
-        if (!$commission) $commission = 0;
-
-        return $commission;
     }
 
     /* GET WCFM SALE STATS FUNCTIONS. CUSTOM BY TOAN 04/11/2020 */
@@ -718,10 +702,10 @@ class VendorAdminDokanHelper
         if (isset($request['per_page']) && $request['per_page']) {
             $limit = sanitize_text_field($request['per_page']);
             $offset = sanitize_text_field($request['page']);
-            if(!is_numeric($offset)){
+            if (!is_numeric($offset)) {
                 $offset = 1;
             }
-            if(!is_numeric($limit)){
+            if (!is_numeric($limit)) {
                 $limit = 10;
             }
             $offset = ($offset - 1) * $limit;
@@ -780,8 +764,8 @@ class VendorAdminDokanHelper
         $backorders = sanitize_text_field($request['backorders']);
         $categories = sanitize_text_field($request['categories']);
         $productAttributes = sanitize_text_field($request['productAttributes']);
-        $variations = sanitize_text_field($request['variations']);      
-        $inventory_delta = sanitize_text_field($request['inventory_delta']);      
+        $variations = sanitize_text_field($request['variations']);
+        $inventory_delta = sanitize_text_field($request['inventory_delta']);
 
         $count = 1;
 
@@ -797,7 +781,7 @@ class VendorAdminDokanHelper
             // Create a simple WooCommerce product
             $post_id = wp_insert_post($args);
             $product = wc_get_product($post_id);
-           
+
             if ($product->get_type() != $type) {
                 // Get the correct product classname from the new product type
                 $product_classname = WC_Product_Factory::get_product_classname($product->get_id(), $type);
@@ -805,10 +789,9 @@ class VendorAdminDokanHelper
                 // Get the new product object from the correct classname
                 $product = new $product_classname($product->get_id());
                 $product->save();
-
             }
 
-            
+
             if (isset($featured_image)) {
                 if (!empty($featured_image)) {
                     if ($this->http_check($featured_image)) {
@@ -822,7 +805,6 @@ class VendorAdminDokanHelper
                 } else {
                     $product->set_image_id('');
                 }
-
             }
 
             if (isset($product_images)) {
@@ -863,7 +845,7 @@ class VendorAdminDokanHelper
                     $product->set_sku(wc_clean($request['sku']));
                 }
 
-        
+
                 // Sales and prices.
                 if (in_array($product->get_type(), array(
                     'variable',
@@ -897,7 +879,6 @@ class VendorAdminDokanHelper
                     if (isset($date_on_sale_to_gmt)) {
                         $product->set_date_on_sale_to($date_on_sale_to_gmt ? strtotime($date_on_sale_to_gmt) : null);
                     }
-
                 }
 
                 // Description
@@ -1153,11 +1134,11 @@ class VendorAdminDokanHelper
         $backorders = sanitize_text_field($request['backorders']);
         $categories = sanitize_text_field($request['categories']);
         $productAttributes = sanitize_text_field($request['productAttributes']);
-        $variations = sanitize_text_field($request['variations']);      
-        $inventory_delta = sanitize_text_field($request['inventory_delta']);     
-        $status = sanitize_text_field($request['status']);     
+        $variations = sanitize_text_field($request['variations']);
+        $inventory_delta = sanitize_text_field($request['inventory_delta']);
+        $status = sanitize_text_field($request['status']);
         $stock_status = sanitize_text_field($request['stock_status']);
-         
+
         $count = 1;
         if ($product->get_type() != $type) {
             // Get the correct product classname from the new product type
@@ -1186,7 +1167,6 @@ class VendorAdminDokanHelper
             } else {
                 $product->set_image_id('');
             }
-
         }
 
         if (isset($product_images)) {
@@ -1257,7 +1237,6 @@ class VendorAdminDokanHelper
                 if (isset($date_on_sale_to_gmt)) {
                     $product->set_date_on_sale_to($date_on_sale_to_gmt ? strtotime($date_on_sale_to_gmt) : null);
                 }
-
             }
 
             // Description
@@ -1507,4 +1486,3 @@ class VendorAdminDokanHelper
         ), 200);
     }
 }
-    
