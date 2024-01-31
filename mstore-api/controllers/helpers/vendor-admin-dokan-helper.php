@@ -462,7 +462,7 @@ class VendorAdminDokanHelper
 
     public function flutter_get_sale_stats($user_id)
     {
-        $args = ['seller_id' => $user_id, 'return' => 'objects'];
+        $args = ['seller_id' => $user_id, 'return' => 'objects', 'status' => 'wc-completed'];
         $last_month_orders = dokan()->order->all($this->add_date_filter($args,'last_month'));
         $month_orders = dokan()->order->all($this->add_date_filter($args, 'month'));
         $year_orders = dokan()->order->all($this->add_date_filter($args, 'year'));
