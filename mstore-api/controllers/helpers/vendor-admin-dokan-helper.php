@@ -402,36 +402,36 @@ class VendorAdminDokanHelper
         $query_args = array_replace([], $args);
         switch ($interval) {
             case 'last_month':
-                $query_args['date']['from'] = date('d-m-Y', strtotime('-1 month', strtotime(date('Y-m-1'))));
-                $query_args['date']['to']   = date('d-m-Y', strtotime(date('Y-m-1')));
+                $query_args['date']['from'] = date('Y-m-d', strtotime('-1 month', strtotime(date('Y-m-1'))));
+                $query_args['date']['to']   = date('Y-m-d', strtotime(date('Y-m-1')));
                 return $query_args;
             case 'month':
-                $query_args['date']['from'] = date('d-m-Y', strtotime(date('Y-m-1')));
-                $query_args['date']['to']   = date('d-m-Y', strtotime('+1 month', strtotime(date('Y-m-1'))));
+                $query_args['date']['from'] = date('Y-m-d', strtotime(date('Y-m-1')));
+                $query_args['date']['to']   = date('Y-m-d', strtotime('+1 month', strtotime(date('Y-m-1'))));
                 return $query_args;
             case 'year':
-                $query_args['date']['from'] = date('d-m-Y', strtotime(date('Y-1-1')));
-                $query_args['date']['to']   = date('d-m-Y', strtotime('+1 year', strtotime(date('Y-1-1'))));;
+                $query_args['date']['from'] = date('Y-m-d', strtotime(date('Y-1-1')));
+                $query_args['date']['to']   = date('Y-m-d', strtotime('+1 year', strtotime(date('Y-1-1'))));;
                 return $query_args;
             case 'week_1':
-                $query_args['date']['from'] = date('d-m-Y', strtotime('-1 week', strtotime(date('Y-m-d'))));
-                $query_args['date']['to']   = date('d-m-Y');
+                $query_args['date']['from'] = date('Y-m-d', strtotime('-1 week', strtotime(date('Y-m-d'))));
+                $query_args['date']['to']   = date('Y-m-d');
                 return $query_args;
             case 'week_2':
-                $query_args['date']['from'] = date('d-m-Y', strtotime('-2 weeks', strtotime(date('Y-m-d'))));
-                $query_args['date']['to']   = date('d-m-Y');
+                $query_args['date']['from'] = date('Y-m-d', strtotime('-2 weeks', strtotime(date('Y-m-d'))));
+                $query_args['date']['to']   = date('Y-m-d');
                 return $query_args;
             case 'week_3':
-                $query_args['date']['from'] = date('d-m-Y', strtotime('-3 weeks', strtotime(date('Y-m-d'))));
-                $query_args['date']['to']   = date('d-m-Y');
+                $query_args['date']['from'] = date('Y-m-d', strtotime('-3 weeks', strtotime(date('Y-m-d'))));
+                $query_args['date']['to']   = date('Y-m-d');
                 return $query_args;
             case 'week_4':
-                $query_args['date']['from'] = date('d-m-Y', strtotime('-4 weeks', strtotime(date('Y-m-d'))));
-                $query_args['date']['to']   = date('d-m-Y');
+                $query_args['date']['from'] = date('Y-m-d', strtotime('-4 weeks', strtotime(date('Y-m-d'))));
+                $query_args['date']['to']   = date('Y-m-d');
                 return $query_args;
             case 'week_5':
-                $query_args['date']['from'] = date('d-m-Y', strtotime('-5 weeks', strtotime(date('Y-m-d'))));
-                $query_args['date']['to']   = date('d-m-Y');
+                $query_args['date']['from'] = date('Y-m-d', strtotime('-5 weeks', strtotime(date('Y-m-d'))));
+                $query_args['date']['to']   = date('Y-m-d');
                 return $query_args;
             default:
                 return $query_args;
@@ -462,7 +462,7 @@ class VendorAdminDokanHelper
 
     public function flutter_get_sale_stats($user_id)
     {
-        $args = ['seller_id' => $user_id, 'return' => 'objects', 'status' => 'wc-completed'];
+        $args = ['seller_id' => $user_id, 'return' => 'objects'];
         $last_month_orders = dokan()->order->all($this->add_date_filter($args,'last_month'));
         $month_orders = dokan()->order->all($this->add_date_filter($args, 'month'));
         $year_orders = dokan()->order->all($this->add_date_filter($args, 'year'));
