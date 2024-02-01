@@ -26,9 +26,9 @@ Faster- Smoother- Closer.
 
 - App demo: [iOS](https://apps.apple.com/us/app/mstore-flutter/id1469772800), [Android](https://github.com/inspireui/fluxstore/releases/download/demo/fluxstore.apk)
 - App Builder: [https://fluxbuilder.com](https://fluxbuilder.com)
-- Showcase: [https://fluxbuilder.com/showcase](https://fluxbuilder.com/showcase)
+- Showcase: [https://showcase.fluxbuilder.com](https://showcase.fluxbuilder.com)
 - Company Website: [https://inspireui.com](https://inspireui.com)
-- [Youtube](https://www.youtube.com/inspireui) 
+- [Youtube](https://www.youtube.com/inspireui?sub_confirmation=1) 
 - [Facebook](https://www.facebook.com/groups/1401824449973438) 
 - [Document](https://support.inspireui.com/help-center) 
 - [Products](https://1.envato.market/mKdNe)
@@ -46,6 +46,9 @@ Faster- Smoother- Closer.
 1. Click Install.
 
 == Changelog ==
+= 4.11.7 =
+  * Support B2BKing
+
 = 4.11.6 =
   * Update description
 
