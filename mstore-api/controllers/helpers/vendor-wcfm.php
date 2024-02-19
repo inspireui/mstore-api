@@ -49,6 +49,68 @@ class FlutterWCFMHelper
         return apply_filters("wcfmapi_rest_prepare_store_vendors_objects", $response, $request);
     }
 
+    public function flutter_get_wcfm_products($request)
+    {
+        global $WCFM, $WCFMmp, $wpdb, $wcfmmp_radius_lat, $wcfmmp_radius_lng, $wcfmmp_radius_range;
+
+        $params = $request->get_params();
+
+        $wcfmmp_radius_lat = $request->get_param('wcfmmp_radius_lat');
+        $wcfmmp_radius_lng = $request->get_param('wcfmmp_radius_lng');
+        $wcfmmp_radius_range = $request->get_param('wcfmmp_radius_range');
+
+        if ($wcfmmp_radius_lat && $wcfmmp_radius_lng && $wcfmmp_radius_range) {
+            $search_data = array();
+            $search_data['wcfmmp_radius_lat'] = $wcfmmp_radius_lat;
+            $search_data['wcfmmp_radius_lng'] = $wcfmmp_radius_lng;
+            $search_data['wcfmmp_radius_range'] = $wcfmmp_radius_range;
+            $stores = $WCFMmp->wcfmmp_vendor->wcfmmp_search_vendor_list(true, '', '', '', '', $search_data, 'true', '');
+            if (count($stores) === 0) {
+                return array();
+            }
+            $params['author'] = implode(',', array_keys($stores));
+        }
+
+        $order = $request->get_param('order') ?? 'desc';
+        $orderby = $request->get_param('orderby') ?? 'date';
+        $page = $request->get_param('page') ?? 1;
+        $per_page = $request->get_param('per_page') ?? 10;
+        $featured = $request->get_param('featured');
+        $on_sale = $request->get_param('on_sale');
+        $include = $request->get_param('include');
+        $exclude = $request->get_param('exclude');
+        $params['order'] = $order;
+        $params['orderby'] = $orderby;
+        $params['page'] = $page;
+        $params['per_page'] = $per_page;
+        if ($include && !is_array($include)) {
+            $params['include'] = explode(',', $include);
+        }
+        if ($exclude && !is_array($exclude)) {
+            $params['exclude'] = explode(',', $exclude);
+        }
+        if ($featured) {
+            $params['featured'] = filter_var($featured, FILTER_VALIDATE_BOOLEAN);
+        }
+        if ($on_sale) {
+            $value = filter_var($on_sale, FILTER_VALIDATE_BOOLEAN);
+            $on_sale_key = $value ? 'include' : 'exclude';
+            $on_sale_ids = wc_get_product_ids_on_sale();
+            // Use 0 when there's no on sale products to avoid return all products.
+            $on_sale_ids = empty($on_sale_ids) ? array(0) : $on_sale_ids;
+            $items = $params[$on_sale_key] ?? array();
+            $items = array_merge($items, $on_sale_ids);
+            $params[$on_sale_key] = $items;
+        }
+        $api = new CUSTOM_WC_REST_Products_Controller();
+        $request->set_query_params($params);
+
+        $response = $api->get_items($request);
+        $products = $response->get_data();
+
+        return $products;
+    }
+
     public function flutter_get_wcfm_stores_by_id($wcfm_vendors_id)
     {
         $wcfm_vendors_json_arr = array();
@@ -821,6 +883,7 @@ class FlutterWCFMHelper
                 if ($vendor_id) $sql .= " AND withdraw.user_id = %s";
                 $sql .= " AND withdraw.status = 1";
                 $sql = $this->wcfm_query_time_range_filter($sql, 'date', $interval, $filter_date_form, $filter_date_to, 'withdraw');
+
                 if ($vendor_id) {
                     $sql = $wpdb->prepare($sql, $vendor_id);
                 } else {

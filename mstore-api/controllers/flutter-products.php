@@ -5,6 +5,9 @@ class CUSTOM_WC_REST_Products_Controller extends WC_REST_Products_Controller
     public function get_items($request)
     {
         $query_args = $this->prepare_objects_query($request);
+        if (isset($request['author']) && $request['author'] != null) {
+            $query_args['author'] = $request['author'];
+        }
         if ( is_bool( $request['in_stock'] ) ) {
 			$query_args['meta_query'] = $this->add_meta_query(
 				$query_args,
