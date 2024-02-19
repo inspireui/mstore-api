@@ -20,6 +20,7 @@ class FlutterHome extends WP_REST_Controller
     private $whilelist = ['id','name','slug', 'permalink','date_created','date_created_gmt','date_modified','date_modified_gmt','type','status','featured','catalog_visibility','description','short_description','sku','price','regular_price','sale_price','date_on_sale_from','date_on_sale_from_gmt','date_on_sale_to','date_on_sale_to_gmt','price_html','on_sale','purchasable','total_sales','virtual','downloadable','downloads','download_limit','download_expiry','external_url','button_text','tax_status','tax_class','manage_stock','stock_quantity','stock_status','backorders','backorders_allowed','backordered','sold_individually','weight','dimensions','shipping_required','shipping_taxable','shipping_class','shipping_class_id','reviews_allowed','average_rating','rating_count','related_ids','upsell_ids','cross_sell_ids','parent_id','purchase_note','categories','tags','images','attributes','default_attributes','variations','grouped_products','menu_order','meta_data','store','attributesData', 'variation_products'];
     private $metaDataWhilelist = ['wc_appointments_','_aftership_', '_wcfmd_','_orddd_','_minmax_product_','product_id','order_id','staff_ids','_video_url','_woofv_video_embed','_product_addons','_wholesale_price','_have_wholesale_price'];
     private $supportedLayouts = ["fourColumn","threeColumn","twoColumn","staggered","saleOff","card","listTile","largeCardHorizontalListItems","largeCard","simpleVerticalListItems","simpleList"];
+    private $unSupportedVerticalLayouts = ["menu","menuCustom"];
     /**
      * Register all routes releated with stores
      *
@@ -150,7 +151,7 @@ class FlutterHome extends WP_REST_Controller
             $results = [];
             $horizontalLayout = $array["HorizonLayout"];
             foreach ($horizontalLayout as $layout) {
-                if ((isset($layout['category']) || isset($layout['tag']) || isset($layout['featured']) || (isset($layout["layout"]) && $layout["layout"] == "saleOff")) && in_array($layout['layout'], $this->supportedLayouts)) {
+                if (in_array($layout['layout'], $this->supportedLayouts)) {
                     if($countDataLayout <  4){
                         $layout["data"] = $this->getProductsByLayout($layout, $api, $request);
                         $countDataLayout += 1;
@@ -177,7 +178,7 @@ class FlutterHome extends WP_REST_Controller
             //get products for vertical layout
             if (isset($array["VerticalLayout"])) {
                 $layout = $array["VerticalLayout"];
-                if (isset($layout['category'])) {
+                if (!in_array($layout['layout'], $this->unSupportedVerticalLayouts)) {
                     if($countDataLayout <  4){
                         $layout["data"] = $this->getProductsByLayout($layout, $api, $request);
                         $countDataLayout += 1;
@@ -197,22 +198,31 @@ class FlutterHome extends WP_REST_Controller
 
     function getProductsByLayout($layout, $api, $request)
     {
-        if ((!isset($layout['category']) && !isset($layout['tag']) && !isset($layout['featured']) && (!isset($layout['layout']) || $layout["layout"] != "saleOff")) || (isset($layout['category']) && ($layout['category'] == null || $layout['category'] == "-1")) || (isset($layout['tag']) && ($layout['tag'] == null || $layout['tag'] == "-1"))) {
-            return [];
+        $category = $layout['category'] ?? null;
+        $tag = $layout['tag'] ?? null;
+        $order = $layout['order'] ?? 'desc';
+        $orderby = $layout['orderby'] ?? 'date';
+        $include = $layout['include'] ?? null;
+        $featured = $layout['featured'] ?? null;
+        $onSale = $layout['onSale'] ?? null;
+        if ($category == '-1') $category = null;
+        if ($tag == '-1') $tag = null;
+        
+        $params = array('order' => $order, 'orderby' => $orderby, 'status' => 'publish');
+        if ($category != null) {
+            $params['category'] = $category;
         }
-        $params = array('order' => 'desc', 'orderby' => 'date', 'status' => 'publish');
-        if (isset($layout['category']) && $layout['category'] != null) {
-            $params['category'] = $layout['category'];
+        if ($tag != null) {
+            $params['tag'] = $tag;
         }
-        if (isset($layout['tag']) && $layout['tag'] != null) {
-            $params['tag'] = $layout['tag'];
+        if ($featured == true) {
+            $params['featured'] = $featured;
         }
-        if (isset($layout['featured']) && $layout['featured'] == true) {
-            $params['featured'] = $layout['featured'];
-        }
-        if ((isset($layout["layout"]) && $layout["layout"] == "saleOff") || $layout['onSale'] == true) {
+        if ((isset($layout["layout"]) && $layout["layout"] == "saleOff") || $onSale == true) {
 			$params['include'] = [];
             $params['on_sale'] = true;
+        } else if ($include != null && is_string($include)) {
+            $params['include'] = explode(',', $include);
         }
         $limit = get_option("mstore_limit_product");
         $limit = (!isset($limit) || $limit == false) ? 10 : $limit;
