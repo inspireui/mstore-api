@@ -776,12 +776,30 @@ function flutter_prepare_checkout()
         if (!is_wp_error($userId)) {
             $user = get_userdata($userId);
             if ($user !== false) {
+                wp_logout();
+                $cookie_elements = explode( '|', $cookie );
+                if ( count( $cookie_elements ) !== 4 ) {
+                    die;
+                }
+                list( $username, $expiration, $token, $hmac ) = $cookie_elements;
                 wp_set_current_user($userId, $user->user_login);
-                wp_set_auth_cookie($userId);
+                wp_set_auth_cookie($userId, false, '', $token);
+                $_COOKIE[ LOGGED_IN_COOKIE ] = $cookie;
+
                 if (isset($_GET['vendor_admin'])) {
                     global $wp;
                     $request = $wp->request;
                     wp_redirect(esc_url_raw(home_url("/" . $request)));
+                    die;
+                }
+                if (isset($_GET['order_detail']) && isset($_GET['order_id']) && is_plugin_active('dokan-lite/dokan.php')) {
+                    $url = add_query_arg(
+                        [
+                            'order_id' => $_GET['order_id'],
+                            '_wpnonce' => wp_create_nonce( 'dokan_view_order' ),
+                        ], dokan_get_navigation_url( 'orders' )
+                    );
+                    wp_safe_redirect( $url );
                     die;
                 }
             }
