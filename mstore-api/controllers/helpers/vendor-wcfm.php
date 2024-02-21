@@ -49,6 +49,68 @@ class FlutterWCFMHelper
         return apply_filters("wcfmapi_rest_prepare_store_vendors_objects", $response, $request);
     }
 
+    public function flutter_get_wcfm_products($request)
+    {
+        global $WCFM, $WCFMmp, $wpdb, $wcfmmp_radius_lat, $wcfmmp_radius_lng, $wcfmmp_radius_range;
+
+        $params = $request->get_params();
+
+        $wcfmmp_radius_lat = $request->get_param('wcfmmp_radius_lat');
+        $wcfmmp_radius_lng = $request->get_param('wcfmmp_radius_lng');
+        $wcfmmp_radius_range = $request->get_param('wcfmmp_radius_range');
+
+        if ($wcfmmp_radius_lat && $wcfmmp_radius_lng && $wcfmmp_radius_range) {
+            $search_data = array();
+            $search_data['wcfmmp_radius_lat'] = $wcfmmp_radius_lat;
+            $search_data['wcfmmp_radius_lng'] = $wcfmmp_radius_lng;
+            $search_data['wcfmmp_radius_range'] = $wcfmmp_radius_range;
+            $stores = $WCFMmp->wcfmmp_vendor->wcfmmp_search_vendor_list(true, '', '', '', '', $search_data, 'true', '');
+            if (count($stores) === 0) {
+                return array();
+            }
+            $params['author'] = implode(',', array_keys($stores));
+        }
+
+        $order = $request->get_param('order') ?? 'desc';
+        $orderby = $request->get_param('orderby') ?? 'date';
+        $page = $request->get_param('page') ?? 1;
+        $per_page = $request->get_param('per_page') ?? 10;
+        $featured = $request->get_param('featured');
+        $on_sale = $request->get_param('on_sale');
+        $include = $request->get_param('include');
+        $exclude = $request->get_param('exclude');
+        $params['order'] = $order;
+        $params['orderby'] = $orderby;
+        $params['page'] = $page;
+        $params['per_page'] = $per_page;
+        if ($include && !is_array($include)) {
+            $params['include'] = explode(',', $include);
+        }
+        if ($exclude && !is_array($exclude)) {
+            $params['exclude'] = explode(',', $exclude);
+        }
+        if ($featured) {
+            $params['featured'] = filter_var($featured, FILTER_VALIDATE_BOOLEAN);
+        }
+        if ($on_sale) {
+            $value = filter_var($on_sale, FILTER_VALIDATE_BOOLEAN);
+            $on_sale_key = $value ? 'include' : 'exclude';
+            $on_sale_ids = wc_get_product_ids_on_sale();
+            // Use 0 when there's no on sale products to avoid return all products.
+            $on_sale_ids = empty($on_sale_ids) ? array(0) : $on_sale_ids;
+            $items = $params[$on_sale_key] ?? array();
+            $items = array_merge($items, $on_sale_ids);
+            $params[$on_sale_key] = $items;
+        }
+        $api = new CUSTOM_WC_REST_Products_Controller();
+        $request->set_query_params($params);
+
+        $response = $api->get_items($request);
+        $products = $response->get_data();
+
+        return $products;
+    }
+
     public function flutter_get_wcfm_stores_by_id($wcfm_vendors_id)
     {
         $wcfm_vendors_json_arr = array();
@@ -58,13 +120,16 @@ class FlutterWCFMHelper
 
     public function get_formatted_item_data($wcfm_vendors_id, $wcfm_vendors_json_arr, $wcfm_vendors_name, $filter_date_form, $filter_date_to)
     {
-        global $WCFM;
+        global $WCFM, $WCFMmp;
         if (is_plugin_active('wcfm-marketplace-rest-api/wcfm-marketplace-rest-api.php')) {
             $store_vendorController = new WCFM_REST_Store_Vendors_Controller();
             $vendorData = $store_vendorController->get_formatted_item_data($wcfm_vendors_id);
             if (!is_wp_error($vendorData) && is_array($vendorData)) {
                 $wcfm_vendors_json_arr = $vendorData;
             }
+
+            // Get approved vendor reviews count
+            $wcfm_vendors_json_arr['vendor_reviews_count'] = $WCFMmp->wcfmmp_reviews->get_vendor_reviews_count($wcfm_vendors_id);
         }
 
         $admin_fee_mode = apply_filters('wcfm_is_admin_fee_mode', false);
@@ -75,10 +140,10 @@ class FlutterWCFMHelper
         $wcfm_vendors_json_arr['vendor_display_name'] = $wcfm_vendors_name;
         $wcfm_vendors_json_arr['vendor_shop_name'] = $WCFM->wcfm_vendor_support->wcfm_get_vendor_store_name_by_vendor($wcfm_vendors_id);
 
-        if( class_exists('WCFMmp_Store')){
-            require_once(plugin_dir_path(__FILE__  ) . 'extensions/flutter-wcfmmp-store.php');
-            $store_user = new Flutter_WCFMmp_Store( absint($wcfm_vendors_id) );
-        }else{
+        if (class_exists('WCFMmp_Store')) {
+            require_once(plugin_dir_path(__FILE__) . 'extensions/flutter-wcfmmp-store.php');
+            $store_user = new Flutter_WCFMmp_Store(absint($wcfm_vendors_id));
+        } else {
             $store_user = wcfmmp_get_store(absint($wcfm_vendors_id));
         }
         $email = $store_user->get_email();
@@ -97,7 +162,6 @@ class FlutterWCFMHelper
             $wcfm_vendors_json_arr['vendor_phone'] = $phone;
         }
 
-        $wcfm_vendors_json_arr['vendor_shop_name'] = $WCFM->wcfm_vendor_support->wcfm_get_vendor_store_name_by_vendor($wcfm_vendors_id);
         $disable_vendor = get_user_meta($wcfm_vendors_id, '_disable_vendor', true);
         $is_store_offline = get_user_meta($wcfm_vendors_id, '_wcfm_store_offline', true);
         $wcfm_vendors_json_arr['disable_vendor'] = $disable_vendor == "1";
@@ -141,7 +205,6 @@ class FlutterWCFMHelper
                     $wcfm_vendors_json_arr['vendor_additional_info'][$key]['value'] = $field_value;
                 }
             }
-
         } else {
             $wcfm_vendors_json_arr['vendor_additional_info'] = array();
         }
@@ -189,11 +252,9 @@ class FlutterWCFMHelper
                             $wcfm_vendors_json_arr['membership_details']['membership_expiry_on'] = __('Never Expire', 'wc-frontend-manager');
                         }
                     }
-
                 } else {
                     $wcfm_vendors_json_arr['membership_details']['membership_expiry_on'] = __('Never Expire', 'wc-frontend-manager');
                 }
-
             }
         }
 
@@ -488,18 +549,18 @@ class FlutterWCFMHelper
     function wcfm_query_time_range_filter($sql, $time, $interval = '7day', $start_date = '', $end_date = '', $table_handler = 'commission')
     {
         switch ($interval) {
-            case 'year' :
+            case 'year':
                 $sql .= " AND YEAR( {$table_handler}.{$time} ) = YEAR( CURDATE() )";
                 break;
-            case 'last_month' :
+            case 'last_month':
                 $sql .= " AND MONTH( {$table_handler}.{$time} ) = MONTH( NOW() ) - 1";
                 break;
-            case 'month' :
+            case 'month':
                 $sql .= " AND MONTH( {$table_handler}.{$time} ) = MONTH( NOW() )";
                 break;
-            case 'all' :
+            case 'all':
                 break;
-            case '7day' :
+            case '7day':
                 $sql .= " AND DATE( {$table_handler}.{$time} ) BETWEEN DATE_SUB( NOW(), INTERVAL 7 DAY ) AND NOW()";
                 break;
             case '14day':
@@ -514,7 +575,7 @@ class FlutterWCFMHelper
             case '35day':
                 $sql .= " AND DATE( {$table_handler}.{$time} ) BETWEEN DATE_SUB( NOW(), INTERVAL 35 DAY ) AND DATE_SUB( NOW(), INTERVAL 28 DAY )";
                 break;
-            case 'default' :
+            case 'default':
         }
 
         return $sql;
@@ -822,7 +883,7 @@ class FlutterWCFMHelper
                 if ($vendor_id) $sql .= " AND withdraw.user_id = %s";
                 $sql .= " AND withdraw.status = 1";
                 $sql = $this->wcfm_query_time_range_filter($sql, 'date', $interval, $filter_date_form, $filter_date_to, 'withdraw');
-                
+
                 if ($vendor_id) {
                     $sql = $wpdb->prepare($sql, $vendor_id);
                 } else {
@@ -966,7 +1027,6 @@ class FlutterWCFMHelper
             }
             return $wcfm_messages;
         }
-
     }
 
     function get_nearest_vendors($request)
@@ -1000,12 +1060,10 @@ class FlutterWCFMHelper
         }
 
         $result = array();
-        foreach ($list_nearby_users as $item):
+        foreach ($list_nearby_users as $item) :
             $result[] = $this->get_formatted_item_data($item, array(), null, null, null);
         endforeach;
         return $result;
-
-
     }
 
     function distance($lat1, $lon1, $lat2, $lon2)
@@ -1043,17 +1101,17 @@ class FlutterWCFMHelper
             $sql = "SELECT * FROM `$table_name` ";
             $sql .= "WHERE `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` = 'publish' ";
             $sql .= "AND `$table_name`.`post_author` = %s";
-            $sql = $wpdb->prepare($sql,$store_id);
+            $sql = $wpdb->prepare($sql, $store_id);
             $products = $wpdb->get_results($sql);
 
             $theme = wp_get_theme();
             $is_listeo = $theme->name == 'Listeo';
-            if($is_listeo){
+            if ($is_listeo) {
                 $productIDs = [];
                 foreach ($products as $object) {
                     $productIDs[] = $object->ID;
                 }
-                if(empty($productIDs)){
+                if (empty($productIDs)) {
                     return [];
                 }
                 $args = array();
@@ -1073,7 +1131,7 @@ class FlutterWCFMHelper
                 );
                 $products = wc_get_products($args);
             }
-            
+
             $categoryIds = array();
             foreach ($products as $object) {
                 $terms = get_the_terms($object->ID ?? $object->get_id(), 'product_cat');
@@ -1183,7 +1241,6 @@ class FlutterWCFMHelper
             }
 
             $data[] = $d;
-
         }
 
         return $data;

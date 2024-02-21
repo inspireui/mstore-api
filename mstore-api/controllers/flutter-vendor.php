@@ -79,6 +79,16 @@ class FlutterVendor extends FlutterBaseController
             ),
         ));
 
+        register_rest_route($this->namespace, '/wcfm-products', array(
+            array(
+                'methods' => "GET",
+                'callback' => array($this, 'flutter_get_wcfm_products'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
+
         register_rest_route($this->namespace, '/wcfm-stores' . '/(?P<id>[\d]+)/', array(
             'args' => array(
                 'id' => array(
@@ -586,6 +596,12 @@ class FlutterVendor extends FlutterBaseController
     {
         $helper = new FlutterWCFMHelper();
         return $helper->flutter_get_wcfm_stores($request);
+    }
+
+    public function flutter_get_wcfm_products($request)
+    {
+        $helper = new FlutterWCFMHelper();
+        return $helper->flutter_get_wcfm_products($request);
     }
 
     public function flutter_get_wcfm_stores_by_id($request)
