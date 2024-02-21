@@ -76,6 +76,22 @@ class FlutterB2BKing extends FlutterBaseController
             ),
         ));
 
+        register_rest_route($this->namespace, '/product/(?P<id>[\d]+)/info_table', array(
+            'args' => array(
+                'id' => array(
+                    'description' => __('Unique identifier for the resource.', 'woocommerce'),
+                    'type' => 'integer',
+                ),
+            ),
+            array(
+                'methods' => "GET",
+                'callback' => array($this, 'get_info_table'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
+        
         register_rest_route($this->namespace, '/send_quote', array(
             array(
                 'methods' => "POST",
@@ -370,6 +386,53 @@ class FlutterB2BKing extends FlutterBaseController
             return $tired_prices;
         }
         return [];
+    }
+
+    function get_info_table($request){
+        $cookie = $request->get_header("User-Cookie");
+        $post_id = $request->get_param( 'id' );
+        if (isset($cookie) && $cookie != null) {
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
+                return $user_id;
+            }
+            
+        } else {
+            $user_id = 0;
+        }
+        
+        $results = [];
+
+        $is_enabled = get_post_meta($post_id, 'b2bking_show_information_table', true);
+		if ($is_enabled === 'no' && !apply_filters('b2bking_show_information_table_all', false)){
+            return $results;
+        }
+
+        $user_id = b2bking()->get_top_parent_account($user_id);
+        $currentusergroupidnr = b2bking()->get_user_group($user_id);
+        $customrows = get_post_meta($post_id, 'b2bking_product_customrows_group_'.$currentusergroupidnr, true);
+
+        // if didn't find anything as a price tier, give regular price tiers
+        if (empty($customrows)){
+            if (apply_filters('b2bking_information_table_apply_regular_all', true)){
+                $customrows = get_post_meta($post_id, 'b2bking_product_customrows_group_b2c', true);
+            }
+        }
+
+        if (!empty($customrows) || apply_filters('b2bking_show_information_table_all', false)){
+            $customrows = str_replace('&amp;', '&', $customrows);
+
+            $rows_array = explode(';',$customrows);
+            $rows_array = apply_filters('b2bking_information_table_content_rows', $rows_array);
+            foreach ($rows_array as $row){
+                $row_values = explode (':', $row, 2);
+                if (!empty($row_values[0]) && !empty($row_values[1])){
+                    $results[] = ['label' => $row_values[0], 'text' => $row_values[1]];
+                }
+            }
+        }
+
+        return $results;
     }
 
     public function send_quote()
