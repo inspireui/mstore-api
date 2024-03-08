@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 4.11.9
+ * Version: 4.12.0
  * Author: InspireUI
  * Author URI: https://inspireui.com
  *
@@ -52,7 +52,7 @@ if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
 
 class MstoreCheckOut
 {
-    public $version = '4.11.9';
+    public $version = '4.12.0';
 
     public function __construct()
     {
@@ -776,23 +776,17 @@ function flutter_prepare_checkout()
         if (!is_wp_error($userId)) {
             $user = get_userdata($userId);
             if ($user !== false) {
-                wp_logout();
-                $cookie_elements = explode( '|', $cookie );
-                if ( count( $cookie_elements ) !== 4 ) {
-                    die;
-                }
-                list( $username, $expiration, $token, $hmac ) = $cookie_elements;
-                wp_set_current_user($userId, $user->user_login);
-                wp_set_auth_cookie($userId, false, '', $token);
-                $_COOKIE[ LOGGED_IN_COOKIE ] = $cookie;
-
-                if (isset($_GET['vendor_admin'])) {
-                    global $wp;
-                    $request = $wp->request;
-                    wp_redirect(esc_url_raw(home_url("/" . $request)));
-                    die;
-                }
                 if (isset($_GET['order_detail']) && isset($_GET['order_id']) && is_plugin_active('dokan-lite/dokan.php')) {
+					wp_logout();
+					$cookie_elements = explode( '|', $cookie );
+					if ( count( $cookie_elements ) !== 4 ) {
+						die;
+					}
+					list( $username, $expiration, $token, $hmac ) = $cookie_elements;
+					$_COOKIE[ LOGGED_IN_COOKIE ] = $cookie;
+					wp_set_current_user($userId, $user->user_login);
+					wp_set_auth_cookie($userId, true, '', $token);
+					
                     $url = add_query_arg(
                         [
                             'order_id' => $_GET['order_id'],
@@ -800,6 +794,16 @@ function flutter_prepare_checkout()
                         ], dokan_get_navigation_url( 'orders' )
                     );
                     wp_safe_redirect( $url );
+                    die;
+                }else{
+					wp_set_current_user($userId, $user->user_login);
+                	wp_set_auth_cookie($userId, true);
+				}
+
+                if (isset($_GET['vendor_admin'])) {
+                    global $wp;
+                    $request = $wp->request;
+                    wp_redirect(esc_url_raw(home_url("/" . $request)));
                     die;
                 }
             }

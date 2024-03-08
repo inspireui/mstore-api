@@ -417,9 +417,7 @@ class ProductManagementHelper
                         }
                     }
                 }
-                if(!empty($img_array)){
-                    $product->set_gallery_image_ids($img_array);
-                }
+                $product->set_gallery_image_ids($img_array);
             }
           
             if (isset($product) && !is_wp_error($product)) {
@@ -620,9 +618,23 @@ class ProductManagementHelper
                     "post_author" => $user_id,
                 ]);
                 //print_r($product);
-                $image_arr = [];
                 $p = $product->get_data();
 		
+                /**** WC Rest Api doesn't return featured_image and the gallery is incorrect, it includes featured_image, so need to separate to get gallery and featured_image *****/
+                $image_arr = [];
+                foreach (array_filter($p["gallery_image_ids"]) as $img) {
+                    $image = wp_get_attachment_image_src($img, "full");
+                    if (is_array($image) && !is_null($image[0])) {
+                        $image_arr[] = $image[0];
+                    }
+                }
+
+                $image = wp_get_attachment_image_src($p["image_id"], "full");
+                if (is_array($image) && !is_null($image[0])) {
+                    $featured_image = $image[0];
+                }
+                /*********************/
+
                 $controller = new CUSTOM_WC_REST_Products_Controller();
                 $req = new WP_REST_Request('GET');
                 $params = array('id' => $p['id']);
@@ -658,7 +670,8 @@ class ProductManagementHelper
                     ];
                 }
                 $pData["attributesData"] = $attributes;
-
+                $pData["featured_image"] = isset($featured_image) ? $featured_image : null;
+                $pData["images"] = $image_arr;
                 return new WP_REST_Response(
                         [
                             "status" => "success",

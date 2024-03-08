@@ -474,7 +474,7 @@ class VendorAdminWCFMHelper
                         $user_str[] = $user->ID;
                     }
                     $user_strr = implode(',', $user_str);
-                    $sql .= " AND `{$table_name}`.customer_id IN (%s)";
+                    $sql .= " AND `{$table_name}`.customer_id IN ({$user_strr})";
                 } else {
                     return new WP_REST_Response(
                         [
@@ -489,13 +489,10 @@ class VendorAdminWCFMHelper
             
             $args = [$user_id];
             if (isset($request["status"])) {
-                $args[] = 'wc-'.sanitize_text_field($request["status"]);
+                $args[] = sanitize_text_field($request["status"]);
             }
             if (isset($request["search"])) {
                 $args[] = '%'.sanitize_text_field($request["search"]).'%';
-            }
-            if(isset($user_strr)){
-                $args[] = $user_strr;
             }
             $args[] = $per_page;
             $args[] = $page;
