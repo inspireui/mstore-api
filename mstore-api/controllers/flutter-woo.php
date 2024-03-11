@@ -249,6 +249,16 @@ class FlutterWoo extends FlutterBaseController
                 }
             ),
         ));
+
+        register_rest_route($this->namespace, '/products/min-max-prices', array(
+            array(
+                'methods' => "GET",
+                'callback' => array($this, 'get_min_max_prices'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
     }
 
     function get_data_from_scanner($request){
@@ -1339,6 +1349,26 @@ class FlutterWoo extends FlutterBaseController
             return [];
         }
 	}
+
+    function get_min_max_prices($request)
+    {
+        global $wpdb;
+
+        $sql = "SELECT MAX( CAST(meta_value AS UNSIGNED )) max_price, MIN( CAST(meta_value AS UNSIGNED )) min_price FROM {$wpdb->prefix}postmeta WHERE meta_key = '_price' AND post_id IN (
+            SELECT ID
+            FROM {$wpdb->prefix}posts
+            WHERE post_type = 'product'
+            AND post_status = 'publish'
+        )";
+
+        $result = $wpdb->get_results($sql);
+
+        if (count($result) > 0) {
+            return $result[0];
+        } else {
+            return new WP_Error(400, "Unable to get product price", array('status' => 400));
+        }
+    }
 }
 
 new FlutterWoo;
