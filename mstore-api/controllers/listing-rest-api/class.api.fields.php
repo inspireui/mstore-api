@@ -1360,7 +1360,7 @@ class FlutterTemplate extends WP_REST_Posts_Controller
                 return 'Success';
             }
 
-            if ($this->_isListeo)
+            if ($this->_isListeo || $this->_isMyListing)
             {
                 $cookie = $request->get_header("User-Cookie");
                 if (isset($cookie) && $cookie != null) {
