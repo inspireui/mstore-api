@@ -1332,10 +1332,9 @@ class FlutterWoo extends FlutterBaseController
             $req = new WP_REST_Request('GET');
             $params = array('include' => array_map(function($item){
                 return $item->post_id;
-            }, $items), 'page' => $page, 'per_page' => $per_page, 'orderby' => 'modified', 'order' => 'DESC');
+            }, $items), 'page' => 1, 'per_page' => count($items), 'orderby' => 'modified', 'order' => 'DESC');
             if($lang != null){
                 $params['lang'] = $lang;
-                $params['per_page'] = count($items);
             }
             $req->set_query_params($params);
             $response = $controller->get_items($req);
