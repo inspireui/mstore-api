@@ -775,11 +775,6 @@ class FlutterWoo extends FlutterBaseController
 
         $coupon_code = $body["coupon_code"];
 
-        // Coupons are globally disabled.
-        if (!wc_coupons_enabled()) {
-            return parent::sendError("invalid_coupon", "Coupon is disabled", 400);
-        }
-
         // Sanitize coupon code.
         $coupon_code = wc_format_coupon_code($coupon_code);
 

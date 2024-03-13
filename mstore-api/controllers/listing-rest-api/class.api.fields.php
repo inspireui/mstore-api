@@ -1360,6 +1360,20 @@ class FlutterTemplate extends WP_REST_Posts_Controller
                 return 'Success';
             }
 
+            if ($this->_isListeo)
+            {
+                $cookie = $request->get_header("User-Cookie");
+                if (isset($cookie) && $cookie != null) {
+                    $user_id = validateCookieLogin($cookie);
+                    if (is_wp_error($user_id)) {
+                        return $user_id;
+                    }
+                    wp_set_current_user( $user_id );
+                }
+                $comment = wp_handle_comment_submission( wp_unslash( $_POST ) );
+                return $comment;
+            }
+
             return 'Failed';
         }
 
