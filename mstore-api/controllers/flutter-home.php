@@ -145,46 +145,47 @@ class FlutterHome extends WP_REST_Controller
         }
         if (file_exists($path)) {
             $fileContent = file_get_contents($path);
-            $array = json_decode($fileContent, true);
+            $array = json_decode($fileContent);
 
             //get products for horizontal layout
             $countDataLayout = 0;
             $results = [];
-            $horizontalLayout = $array["HorizonLayout"];
+            $horizontalLayout = $array->HorizonLayout;
             foreach ($horizontalLayout as $layout) {
-                if (in_array($layout['layout'], $this->supportedLayouts)) {
-                    if($countDataLayout <  4){
-                        $layout["data"] = $this->getProductsByLayout($layout, $api, $request);
+                if (in_array($layout->layout, $this->supportedLayouts)) {
+                    if ($countDataLayout <  4) {
+                        $layout->data = $this->getProductsByLayout(json_decode(json_encode($layout), true), $api, $request);
                         $countDataLayout += 1;
                     }
                     $results[] = $layout;
                 } else {
-                    if (isset($layout["items"]) && count($layout["items"]) > 0) {
+                    if (isset($layout->items) && count($layout->items) > 0) {
                         $items = [];
-                        foreach ($layout["items"] as $item) {
-                            if($countDataLayout <  4 && array_key_exists('layout', $item) && in_array($item['layout'], $this->supportedLayouts)){
+                        $itemArr = json_decode(json_encode($layout->items), true);
+                        foreach ($itemArr as $item) {
+                            if ($countDataLayout <  4 && array_key_exists('layout', $item) && in_array($item['layout'], $this->supportedLayouts)) {
                                 $item["data"] = $this->getProductsByLayout($item, $api, $request);
                                 $countDataLayout += 1;
                             }
-                            
+
                             $items[] = $item;
                         }
-                        $layout["items"] = $items;
+                        $layout->items = $items;
                     }
                     $results[] = $layout;
                 }
             }
-            $array['HorizonLayout'] = $results;
+            $array->HorizonLayout = json_decode(json_encode($results));
 
             //get products for vertical layout
-            if (isset($array["VerticalLayout"])) {
-                $layout = $array["VerticalLayout"];
-                if (!in_array($layout['layout'], $this->unSupportedVerticalLayouts)) {
-                    if($countDataLayout <  4){
-                        $layout["data"] = $this->getProductsByLayout($layout, $api, $request);
+            if (isset($array->VerticalLayout)) {
+                $layout = $array->VerticalLayout;
+                if (!in_array($layout->layout, $this->unSupportedVerticalLayouts)) {
+                    if ($countDataLayout <  4) {
+                        $layout->data = $this->getProductsByLayout(json_decode(json_encode($layout), true), $api, $request);
                         $countDataLayout += 1;
                     }
-                    $array['VerticalLayout'] = $layout;
+                    $array->VerticalLayout = $layout;
                 }
             }
 
