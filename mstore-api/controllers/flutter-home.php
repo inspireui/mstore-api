@@ -15,12 +15,12 @@ class FlutterHome extends WP_REST_Controller
      *
      * @var string
      */
-    protected $namespace = 'wc/v2/flutter';//prefix must be wc/ or wc- to reuse check permission function in woo commerce
+    protected $namespace = 'wc/v2/flutter'; //prefix must be wc/ or wc- to reuse check permission function in woo commerce
     protected $namespace_v3 = 'wc/v3/flutter';
-    private $whilelist = ['id','name','slug', 'permalink','date_created','date_created_gmt','date_modified','date_modified_gmt','type','status','featured','catalog_visibility','description','short_description','sku','price','regular_price','sale_price','date_on_sale_from','date_on_sale_from_gmt','date_on_sale_to','date_on_sale_to_gmt','price_html','on_sale','purchasable','total_sales','virtual','downloadable','downloads','download_limit','download_expiry','external_url','button_text','tax_status','tax_class','manage_stock','stock_quantity','stock_status','backorders','backorders_allowed','backordered','sold_individually','weight','dimensions','shipping_required','shipping_taxable','shipping_class','shipping_class_id','reviews_allowed','average_rating','rating_count','related_ids','upsell_ids','cross_sell_ids','parent_id','purchase_note','categories','tags','images','attributes','default_attributes','variations','grouped_products','menu_order','meta_data','store','attributesData', 'variation_products'];
-    private $metaDataWhilelist = ['wc_appointments_','_aftership_', '_wcfmd_','_orddd_','_minmax_product_','product_id','order_id','staff_ids','_video_url','_woofv_video_embed','_product_addons','_wholesale_price','_have_wholesale_price'];
-    private $supportedLayouts = ["fourColumn","threeColumn","twoColumn","staggered","saleOff","card","listTile","largeCardHorizontalListItems","largeCard","simpleVerticalListItems","simpleList"];
-    private $unSupportedVerticalLayouts = ["menu","menuCustom"];
+    private $whilelist = ['id', 'name', 'slug', 'permalink', 'date_created', 'date_created_gmt', 'date_modified', 'date_modified_gmt', 'type', 'status', 'featured', 'catalog_visibility', 'description', 'short_description', 'sku', 'price', 'regular_price', 'sale_price', 'date_on_sale_from', 'date_on_sale_from_gmt', 'date_on_sale_to', 'date_on_sale_to_gmt', 'price_html', 'on_sale', 'purchasable', 'total_sales', 'virtual', 'downloadable', 'downloads', 'download_limit', 'download_expiry', 'external_url', 'button_text', 'tax_status', 'tax_class', 'manage_stock', 'stock_quantity', 'stock_status', 'backorders', 'backorders_allowed', 'backordered', 'sold_individually', 'weight', 'dimensions', 'shipping_required', 'shipping_taxable', 'shipping_class', 'shipping_class_id', 'reviews_allowed', 'average_rating', 'rating_count', 'related_ids', 'upsell_ids', 'cross_sell_ids', 'parent_id', 'purchase_note', 'categories', 'tags', 'images', 'attributes', 'default_attributes', 'variations', 'grouped_products', 'menu_order', 'meta_data', 'store', 'attributesData', 'variation_products'];
+    private $metaDataWhilelist = ['wc_appointments_', '_aftership_', '_wcfmd_', '_orddd_', '_minmax_product_', 'product_id', 'order_id', 'staff_ids', '_video_url', '_woofv_video_embed', '_product_addons', '_wholesale_price', '_have_wholesale_price'];
+    private $supportedLayouts = ["fourColumn", "threeColumn", "twoColumn", "staggered", "saleOff", "card", "listTile", "largeCardHorizontalListItems", "largeCard", "simpleVerticalListItems", "simpleList"];
+    private $unSupportedVerticalLayouts = ["menu", "menuCustom"];
     /**
      * Register all routes releated with stores
      *
@@ -86,7 +86,8 @@ class FlutterHome extends WP_REST_Controller
         return isPurchaseCodeVerified();
     }
 
-    private function get_config_file_path($lang){
+    private function get_config_file_path($lang)
+    {
         if (!isset($lang)) {
             $configs = FlutterUtils::get_all_json_files();
             if (!empty($configs)) {
@@ -99,19 +100,21 @@ class FlutterHome extends WP_REST_Controller
         }
     }
 
-    private function arrayWhitelist($array, $whitelist) {
+    private function arrayWhitelist($array, $whitelist)
+    {
         $results = [];
-        for ($i=0; $i < count($array); $i++) { 
+        for ($i = 0; $i < count($array); $i++) {
             $results[] = array_intersect_key(
-                $array[$i], 
+                $array[$i],
                 array_flip($whitelist)
             );
         }
-        return $results;	
+        return $results;
     }
 
-    private function arrayMetaDataWhitelist($array) {
-        return array_values(array_filter($array, function($v, $k) {
+    private function arrayMetaDataWhitelist($array)
+    {
+        return array_values(array_filter($array, function ($v, $k) {
             foreach ($this->metaDataWhilelist as $whilelist) {
                 $key = is_array($v) ? $v['key'] : $v->__get('key');
                 if (strpos($key, $whilelist) !== false) {
@@ -133,14 +136,14 @@ class FlutterHome extends WP_REST_Controller
     {
         $lang = sanitize_text_field($request["lang"]);
         $homeCache  =  FlutterUtils::get_home_cache_path($lang);
-        if($request["reset"]  == "false" && file_exists($homeCache)){
+        if ($request["reset"]  == "false" && file_exists($homeCache)) {
             $fileContent = file_get_contents($homeCache);
             return  json_decode($fileContent, true);
         }
 
         $api = new WC_REST_Products_Controller();
         $path = $this->get_config_file_path($lang);
-        if(is_wp_error($path)){
+        if (is_wp_error($path)) {
             return $path;
         }
         if (file_exists($path)) {
@@ -209,7 +212,7 @@ class FlutterHome extends WP_REST_Controller
         $onSale = $layout['onSale'] ?? null;
         if ($category == '-1') $category = null;
         if ($tag == '-1') $tag = null;
-        
+
         $params = array('order' => $order, 'orderby' => $orderby, 'status' => 'publish');
         if ($category != null) {
             $params['category'] = $category;
@@ -221,7 +224,7 @@ class FlutterHome extends WP_REST_Controller
             $params['featured'] = $featured;
         }
         if ((isset($layout["layout"]) && $layout["layout"] == "saleOff") || $onSale == true) {
-			$params['include'] = [];
+            $params['include'] = [];
             $params['on_sale'] = true;
         } else if ($include != null && is_string($include)) {
             $params['include'] = explode(',', $include);
@@ -246,7 +249,7 @@ class FlutterHome extends WP_REST_Controller
                 return $helper->flutter_get_wcfm_products($request);
             }
         }
-        
+
         $request->set_query_params($params);
 
         $response = $api->get_items($request);
@@ -254,13 +257,13 @@ class FlutterHome extends WP_REST_Controller
 
         $items = [];
         foreach ($products as $item) {
-            if($item['catalog_visibility'] !== 'hidden'){
+            if ($item['catalog_visibility'] !== 'hidden') {
                 $items[] = $item;
             }
         }
         $items = $this->arrayWhitelist($items, $this->whilelist);
         foreach ($items as &$value) {
-            if(isset($value['meta_data'])){
+            if (isset($value['meta_data'])) {
                 $value['meta_data'] =  $this->arrayMetaDataWhitelist($value['meta_data']);
             }
         }
@@ -300,7 +303,7 @@ class FlutterHome extends WP_REST_Controller
     {
         $api = new WC_REST_Products_Controller();
         $path = $this->get_config_file_path(sanitize_text_field($request["lang"]));
-        if(is_wp_error($path)){
+        if (is_wp_error($path)) {
             return $path;
         }
 
@@ -321,7 +324,6 @@ class FlutterHome extends WP_REST_Controller
             return new WP_Error("existed_config", "Config file hasn't been uploaded yet.", array('status' => 400));
         }
     }
-
 }
 
 new FlutterHome;
