@@ -99,6 +99,73 @@ class FlutterTeraWallet extends FlutterBaseController
                 }
             ),
         ));
+
+        register_rest_route($this->namespace, '/payment_methods', array(
+            array(
+                'methods' => "GET",
+                'callback' => array($this, 'get_payment_methods'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
+
+        register_rest_route($this->namespace, '/payment_settings', array(
+            array(
+                'methods' => "GET",
+                'callback' => array($this, 'get_payment_settings'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+            array(
+                'methods' => "POST",
+                'callback' => array($this, 'save_payment_settings'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
+
+        register_rest_route($this->namespace, '/pending_requests', array(
+            array(
+                'methods' => "GET",
+                'callback' => array($this, 'get_pending_requests'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
+
+        register_rest_route($this->namespace, '/approved_requests', array(
+            array(
+                'methods' => "GET",
+                'callback' => array($this, 'get_approved_requests'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
+
+        register_rest_route($this->namespace, '/cancelled_requests', array(
+            array(
+                'methods' => "GET",
+                'callback' => array($this, 'get_cancelled_requests'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
+
+        register_rest_route($this->namespace, '/submit_request', array(
+            array(
+                'methods' => "POST",
+                'callback' => array($this, 'submit_request'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
     }
 
     private function getUserInfo($user_id, &$cachedUsers = [])
@@ -359,6 +426,293 @@ class FlutterTeraWallet extends FlutterBaseController
             }
         }
 
+    }
+
+    public function get_payment_methods($request){
+        if (!class_exists('WOO_WALLET_WITHDRAWAL')) {
+            return parent::sendError("invalid_plugin", "You need to install TeraWallet Withdrawal plugin to use this api", 404);
+        }
+        return woo_wallet_withdrawal()->gateways->get_available_gateways();
+    }
+
+    public function get_payment_settings($request)
+    {
+        if (!class_exists('WOO_WALLET_WITHDRAWAL')) {
+            return parent::sendError("invalid_plugin", "You need to install TeraWallet Withdrawal plugin to use this api", 404);
+        }
+         $cookie = $request->get_header("User-Cookie");
+        if (isset($cookie) && $cookie != null) {
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
+                return $user_id;
+            }
+            $payment_method = $request['payment_method'];
+            $results = [];
+            if(isset($payment_method)){
+                if('bacs' === $payment_method){
+                    $bank_account_details = woo_wallet_withdrawal()->get_bank_account_settings();
+                    foreach ($bank_account_details as $account_details){
+                        $results[$account_details['name']] = get_user_meta($user_id, '_'.$account_details['name'], true);
+                    }
+                }
+                if('paypal' === $payment_method){
+                    $results['woo_wallet_withdrawal_paypal_email'] = get_user_meta($user_id, '_woo_wallet_withdrawal_paypal_email', true);
+                }
+                return $results;
+            }else{
+                return parent::sendError("required_params", "payment_method is required", 401);
+            }
+        }else{
+            return parent::sendError("required_login", "Require to login to use this api", 401);
+        }
+    }
+
+    public function save_payment_settings($request)
+    {
+        if (!class_exists('WOO_WALLET_WITHDRAWAL')) {
+            return parent::sendError("invalid_plugin", "You need to install TeraWallet Withdrawal plugin to use this api", 404);
+        }
+
+        $json = file_get_contents('php://input');
+        $params = json_decode($json, TRUE);
+        $cookie = $request->get_header("User-Cookie");
+        if (isset($cookie) && $cookie != null) {
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
+                return $user_id;
+            }
+
+            $payment_method = $params['payment_method'];
+            $user = new WP_User($user_id);
+            update_user_meta($user_id, '_wallet_withdrawal_method', $payment_method);
+            if('bacs' === $payment_method){
+                $bank_account_details = woo_wallet_withdrawal()->get_bank_account_settings();
+                
+                foreach ($bank_account_details as $details){
+                    $meta_value = isset($params[$details['name']]) && !empty($params[$details['name']]) ? wc_clean($params[$details['name']]) : '';
+                    update_user_meta($user_id, '_'.$details['name'], $meta_value);
+                }
+                return true;
+            }
+            if('paypal' === $payment_method){
+                $woo_wallet_withdrawal_paypal_email = !empty($params['woo_wallet_withdrawal_paypal_email']) ? wc_clean($params['woo_wallet_withdrawal_paypal_email']) : '';
+                update_user_meta($user_id, '_woo_wallet_withdrawal_paypal_email', $woo_wallet_withdrawal_paypal_email);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function get_pending_requests($request){
+        if (!class_exists('WOO_WALLET_WITHDRAWAL')) {
+            return parent::sendError("invalid_plugin", "You need to install TeraWallet Withdrawal plugin to use this api", 404);
+        }
+
+        $cookie = $request->get_header("User-Cookie");
+        if (isset($cookie) && $cookie != null) {
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
+                return $user_id;
+            }
+            $args = array(
+                'posts_per_page' => -1,
+                'author' => $user_id,
+                'post_type' => WOO_Wallet_Withdrawal_Post_Type::$post_type,
+                'post_status' => 'ww-pending',
+                'suppress_filters' => true
+            );
+            $withdrawal_requests = get_posts($args);
+            if($withdrawal_requests){
+                $results = [];
+                foreach ($withdrawal_requests as $withdrawal_request){
+                    $withdrawal = new Wallet_Withdrawal_Post($withdrawal_request->ID);
+                    $item = array();
+                    $item['price'] = get_post_meta($withdrawal_request->ID, '_wallet_withdrawal_amount', true);
+                    $item['status'] = get_post_status_object(get_post_status($withdrawal_request->ID))->label;
+                    $item['time'] = wc_string_to_datetime($withdrawal_request->post_date)->date_i18n(wc_date_format());
+                    $item['payment'] = $withdrawal->get_payment_method_title();
+                    $results[] = $item;
+                }
+                return $results;
+            }else if (woo_wallet()->settings_api->get_option('_min_withdrawal_limit', '_wallet_settings_withdrawal', 0) > woo_wallet()->wallet->get_wallet_balance($user_id, 'edit')){
+                return parent::sendError("error_limit", sprintf(__('Minimum withdrawal limit is %s', 'woo-wallet-withdrawal'), wc_price(woo_wallet()->settings_api->get_option('_min_withdrawal_limit', '_wallet_settings_withdrawal', 0))), 400);
+            }else {
+                return [];
+            }
+        }
+    }
+
+    public function get_approved_requests($request){
+        if (!class_exists('WOO_WALLET_WITHDRAWAL')) {
+            return parent::sendError("invalid_plugin", "You need to install TeraWallet Withdrawal plugin to use this api", 404);
+        }
+
+        $cookie = $request->get_header("User-Cookie");
+        if (isset($cookie) && $cookie != null) {
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
+                return $user_id;
+            }
+            $args = array(
+                'posts_per_page' => -1,
+                'author' => $user_id,
+                'post_type' => WOO_Wallet_Withdrawal_Post_Type::$post_type,
+                'post_status' => 'ww-approved',
+                'suppress_filters' => true
+            );
+            $withdrawal_requests = get_posts($args);
+            if($withdrawal_requests){
+                $results = [];
+                foreach ($withdrawal_requests as $withdrawal_request){
+                    $withdrawal = new Wallet_Withdrawal_Post($withdrawal_request->ID);
+                    $item = array();
+                    $item['price'] = get_post_meta($withdrawal_request->ID, '_wallet_withdrawal_amount', true);
+                    $item['status'] = get_post_status_object(get_post_status($withdrawal_request->ID))->label;
+                    $item['time'] = wc_string_to_datetime($withdrawal_request->post_date)->date_i18n(wc_date_format());
+                    $item['payment'] = $withdrawal->get_payment_method_title();
+                    $results[] = $item;
+                }
+                return $results;
+            }else {
+                return [];
+            }
+        }
+    }
+
+    public function get_cancelled_requests($request){
+        if (!class_exists('WOO_WALLET_WITHDRAWAL')) {
+            return parent::sendError("invalid_plugin", "You need to install TeraWallet Withdrawal plugin to use this api", 404);
+        }
+
+        $cookie = $request->get_header("User-Cookie");
+        if (isset($cookie) && $cookie != null) {
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
+                return $user_id;
+            }
+            $args = array(
+                'posts_per_page' => -1,
+                'author' => $user_id,
+                'post_type' => WOO_Wallet_Withdrawal_Post_Type::$post_type,
+                'post_status' => 'ww-cancelled',
+                'suppress_filters' => true
+            );
+            $withdrawal_requests = get_posts($args);
+            if($withdrawal_requests){
+                $results = [];
+                foreach ($withdrawal_requests as $withdrawal_request){
+                    $withdrawal = new Wallet_Withdrawal_Post($withdrawal_request->ID);
+                    $item = array();
+                    $item['price'] = get_post_meta($withdrawal_request->ID, '_wallet_withdrawal_amount', true);
+                    $item['status'] = get_post_status_object(get_post_status($withdrawal_request->ID))->label;
+                    $item['time'] = wc_string_to_datetime($withdrawal_request->post_date)->date_i18n(wc_date_format());
+                    $item['payment'] = $withdrawal->get_payment_method_title();
+                    $results[] = $item;
+                }
+                return $results;
+            }else {
+                return [];
+            }
+        }
+    }
+
+    private function validate_withdrawal_request($payment_method, $amount) {
+        $response = array('is_valid' => true, 'message' => '');
+        $wallet_withdrawal_amount = floatval($amount);
+            $wallet_withdrawal_method = $payment_method;
+            $transaction_charge = WOO_Wallet_Withdrawal_Payment_gateways::get_gateway_charge($wallet_withdrawal_amount, $wallet_withdrawal_method);
+            $args = array(
+                'posts_per_page' => -1,
+                'author' => get_current_user_id(),
+                'post_type' => WOO_Wallet_Withdrawal_Post_Type::$post_type,
+                'post_status' => 'ww-pending',
+                'suppress_filters' => true
+            );
+            $withdrawal_requests = get_posts($args);
+            if(!$wallet_withdrawal_amount){
+                $response = array(
+                    'is_valid' => false,
+                    'message' => __('Please enter amount.', 'woo-wallet')
+                );
+            } else if ($wallet_withdrawal_amount + $transaction_charge > woo_wallet()->wallet->get_wallet_balance(get_current_user_id(), 'edit')) {
+                $response = array(
+                    'is_valid' => false,
+                    'message' => __('You don\'t have enough balance for this request.', 'woo-wallet')
+                );
+            } else if (empty($wallet_withdrawal_method)) {
+                $response = array(
+                    'is_valid' => false,
+                    'message' => __('Invalid payment gateway.', 'woo-wallet')
+                );
+            } else if($withdrawal_requests){
+                $response = array(
+                    'is_valid' => false,
+                    'message' => __('You have a pending withdrawal.', 'woo-wallet')
+                );
+            } else {
+                $response = array(
+                    'is_valid' => true,
+                    'message' => __('Request submitted successfully.', 'woo-wallet')
+                );
+            }
+        return apply_filters('validate_wallet_withdrawal_request', $response);
+    }
+
+    private function process_withdrawal($withdrawal_id, $payment_method, $amount) {
+        $wallet_withdrawal_amount = apply_filters('woo_wallet_withdrawal_requested_amount', floatval($amount));
+        $wallet_withdrawal_method = $payment_method;
+        $transaction_charge = WOO_Wallet_Withdrawal_Payment_gateways::get_gateway_charge($wallet_withdrawal_amount, $wallet_withdrawal_method);
+        update_post_meta($withdrawal_id, '_wallet_withdrawal_amount', $wallet_withdrawal_amount);
+        update_post_meta($withdrawal_id, '_wallet_withdrawal_currency', get_woocommerce_currency());
+        update_post_meta($withdrawal_id, '_wallet_withdrawal_transaction_charge', $transaction_charge);
+        update_post_meta($withdrawal_id, '_wallet_withdrawal_method', $wallet_withdrawal_method);
+        $withdrawal_transaction_id = woo_wallet()->wallet->debit(get_current_user_id(), ($wallet_withdrawal_amount + $transaction_charge), __('Wallet withdrawal request #', 'woo-wallet-withdrawal') . $withdrawal_id);
+        update_wallet_transaction_meta($withdrawal_transaction_id, '_withdrawal_request_id', $withdrawal_id);
+        update_post_meta($withdrawal_id, '_wallet_withdrawal_transaction_id', $withdrawal_transaction_id);
+        do_action('woo_wallet_withdrawal_update_meta_data', $withdrawal_id);
+    }
+
+    public function submit_request($request)
+    {
+        if (!class_exists('WOO_WALLET_WITHDRAWAL')) {
+            return parent::sendError("invalid_plugin", "You need to install TeraWallet Withdrawal plugin to use this api", 404);
+        }
+
+        $json = file_get_contents('php://input');
+        $params = json_decode($json, TRUE);
+        $cookie = $request->get_header("User-Cookie");
+        if (isset($cookie) && $cookie != null) {
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
+                return $user_id;
+            }
+
+            $user = get_userdata($user_id);
+            wp_set_current_user($user_id, $user->user_login);
+
+            $payment_method = $params['payment_method'];
+            $amount = $params['amount'];
+
+            $response = $this->validate_withdrawal_request($payment_method, $amount);
+            if (!$response['is_valid']) {
+                return parent::sendError("invalid_data", $response['message'], 400);
+            } else {
+                $withdrawal = new Wallet_Withdrawal_Post();
+                $withdrawal_id = $withdrawal->create_withdrawal();
+                if ($withdrawal_id) {
+                    $this->process_withdrawal($withdrawal_id, $payment_method, $amount);
+                    /** code for auto withdrawal * */
+                    $payment_method_id = $withdrawal->get_payment_method_id();
+                    if (woo_wallet_withdrawal()->gateways->payment_gateways[$payment_method_id]->is_enable_auto_withdrawal()) {
+                        $withdrawal->approve_withdrawal();
+                    }
+                    return true;
+                } else {
+                    return parent::sendError("invalid_data", __('Something went wrong please try again later', 'woo-wallet-withdrawal'), 400);
+                }
+            }
+        }
+        return false;
     }
 }
 
