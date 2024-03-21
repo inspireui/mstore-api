@@ -693,6 +693,24 @@ class FlutterTeraWallet extends FlutterBaseController
             $payment_method = $params['payment_method'];
             $amount = $params['amount'];
 
+            if('bacs' === $payment_method){
+                if(!get_user_meta($user_id, '_bacs_account_name', true) || !get_user_meta($user_id, '_bacs_account_number', true)){
+                    return parent::sendError("invalid_settings",'The bank account has not been set up.', 400);
+                }
+            } else if('paypal' === $payment_method){
+                if(!get_user_meta($user_id, '_woo_wallet_withdrawal_paypal_email', true)){
+                    return parent::sendError("invalid_settings",'The paypal email has not been set up.', 400);
+                }
+            } else if('cashfree' === $payment_method){
+                if(!get_user_meta($user_id, '_cashfree_beneid', true)){
+                    return parent::sendError("invalid_settings",'The cashfree has not been set up.', 400);
+                }
+            } else if('stripe' === $payment_method){
+                if(!get_user_meta($user_id, 'stripe_user_id', true)){
+                    return parent::sendError("invalid_settings",'The stripe has not been set up.', 400);
+                }
+            }
+
             $response = $this->validate_withdrawal_request($payment_method, $amount);
             if (!$response['is_valid']) {
                 return parent::sendError("invalid_data", $response['message'], 400);
