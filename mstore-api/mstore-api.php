@@ -431,6 +431,7 @@ add_filter('woocommerce_rest_prepare_product_object', 'flutter_custom_change_pro
 add_filter('woocommerce_rest_prepare_product_review', 'custom_product_review', 20, 3);
 add_filter('woocommerce_rest_prepare_product_cat', 'custom_product_category', 20, 3);
 add_filter('woocommerce_rest_prepare_shop_order_object', 'flutter_custom_change_order_response', 20, 3);
+add_filter('woocommerce_rest_prepare_product_attribute', 'flutter_custom_change_product_attribute', 20, 3);
 
 function custom_product_category($response, $object, $request)
 {
@@ -471,6 +472,24 @@ function flutter_custom_change_product_response($response, $object, $request)
     return customProductResponse($response, $object, $request);
 }
 
+function flutter_custom_change_product_attribute($response, $item, $request)
+{
+    $taxonomy = wc_attribute_taxonomy_name($item->attribute_name);
+
+    $terms = get_filtered_term_product_counts($request, $taxonomy);
+
+    $is_visible = false;
+    foreach ($terms as $key => $term) {
+        if ($term['term_count'] > 0) {
+            $is_visible = true;
+            break;
+        }
+    }
+
+    $response->data['is_visible'] = $is_visible;
+
+    return $response;
+}
 
 function custom_get_attribute_taxonomy_name( $slug, $product ) {
 	// Format slug so it matches attributes of the product.

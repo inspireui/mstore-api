@@ -79,6 +79,7 @@ class FlutterWCFMHelper
         $on_sale = $request->get_param('on_sale');
         $include = $request->get_param('include');
         $exclude = $request->get_param('exclude');
+        $categoryIds = $request->get_param('category');
         $params['order'] = $order;
         $params['orderby'] = $orderby;
         $params['page'] = $page;
@@ -88,6 +89,9 @@ class FlutterWCFMHelper
         }
         if ($exclude && !is_array($exclude)) {
             $params['exclude'] = explode(',', $exclude);
+        }
+        if ($categoryIds && !is_array($categoryIds)) {
+            $params['category'] = explode(',', $categoryIds);
         }
         if ($featured) {
             $params['featured'] = filter_var($featured, FILTER_VALIDATE_BOOLEAN);

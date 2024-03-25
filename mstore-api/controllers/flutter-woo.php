@@ -261,9 +261,24 @@ class FlutterWoo extends FlutterBaseController
         ));
     }
 
+    private function get_post_id_from_meta($meta_key, $meta_value)
+    {
+        global $wpdb;
+
+        $sql = "SELECT post_id 
+            FROM {$wpdb->prefix}postmeta
+            WHERE meta_key = '%s' 
+            AND meta_value = '%s'";
+
+        return $wpdb->get_var($wpdb->prepare($sql, $meta_key, $meta_value));
+    }
+
     function get_data_from_scanner($request){
-		$data = sanitize_text_field($request['data']);
+        $raw_data = sanitize_text_field($request['data']);
         $token = sanitize_text_field($request['token']);
+
+        // Get post id from data via meta key
+        $data = $this->get_post_id_from_meta('_ywbc_barcode_value', $raw_data);
 		if(isset($data) && is_numeric($data)){
 			$type = get_post_type($data);
 			
