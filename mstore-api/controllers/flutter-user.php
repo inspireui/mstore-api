@@ -1249,14 +1249,14 @@ class FlutterUserController extends FlutterBaseController
             return parent::sendError("invalid_email", 'Email is required', 400);
         }
         if (!empty($params['email']) && email_exists($params['email'])) {
-            return parent::sendError("invalid_email", 'Email already in use!', 400);
+            return parent::sendError("existed_email", 'Email already in use!', 400);
         }
 
         if(empty($params['username'])){
             return parent::sendError("invalid_username", 'Username is required', 400);
         }
         if (!empty($params['username']) && username_exists($params['username'])) {
-            return parent::sendError("invalid_username", 'Username already in use!', 400);
+            return parent::sendError("existed_username", 'Username already in use!', 400);
         }
 
         if(empty($params['country_code'])){
@@ -1270,7 +1270,7 @@ class FlutterUserController extends FlutterBaseController
         $mob = $params['country_code'].$params['mobile'];
         $mobuser = getUserFromPhone($mob);
         if ($mobuser != null  || username_exists($mob)) {
-            return parent::sendError("invalid_mobile", 'Mobile Number already in use!', 400);
+            return parent::sendError("existed_mobile", 'Mobile Number already in use!', 400);
         } 
 
         return  true;
@@ -1328,7 +1328,7 @@ class FlutterUserController extends FlutterBaseController
         $mob = $params['country_code'].$params['mobile'];
         $mobuser = getUserFromPhone($mob);
         if ($mobuser == null) {
-            return parent::sendError("invalid_mobile", 'Phone number is not registered!', 400);
+            return parent::sendError("existed_mobile", 'Phone number is not registered!', 400);
         } 
 
         return  true;
