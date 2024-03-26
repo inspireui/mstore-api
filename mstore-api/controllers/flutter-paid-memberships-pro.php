@@ -447,7 +447,8 @@ class FlutterPaidMembershipsPro extends FlutterBaseController
             
             //update membership_user table.		
             if ( ! empty( $discount_code ) && ! empty( $use_discount_code ) ) {
-                $discount_code_id = $wpdb->get_var( "SELECT id FROM $wpdb->pmpro_discount_codes WHERE code = '" . esc_sql( $discount_code ) . "' LIMIT 1" );
+                $sql = $wpdb->prepare("SELECT id FROM $wpdb->pmpro_discount_codes WHERE code = %s LIMIT 1", esc_sql( $discount_code ));
+                $discount_code_id = $wpdb->get_var( $sql );
             } else {
                 $discount_code_id = "";
             }
@@ -501,7 +502,9 @@ class FlutterPaidMembershipsPro extends FlutterBaseController
                         $code_order_id = "";
                     }
     
-                    $wpdb->query( "INSERT INTO $wpdb->pmpro_discount_codes_uses (code_id, user_id, order_id, timestamp) VALUES('" . $discount_code_id . "', '" . $user_id . "', '" . intval( $code_order_id ) . "', '" . current_time( "mysql" ) . "')" );
+                    $sql = "INSERT INTO $wpdb->pmpro_discount_codes_uses (code_id, user_id, order_id, timestamp) VALUES(%s, %s, %d, %s)";
+                    $sql = $wpdb->prepare($sql,$discount_code_id, $user_id, intval( $code_order_id ), current_time( "mysql" ));
+                    $wpdb->query( $sql );
                     
                     do_action( 'pmpro_discount_code_used', $discount_code_id, $user_id, $code_order_id );
                 }
@@ -612,7 +615,8 @@ class FlutterPaidMembershipsPro extends FlutterBaseController
                     $confirmation_message = "<p>" . sprintf(__('Thank you for your membership to %s. Your %s membership is now active.', 'paid-memberships-pro' ), get_bloginfo("name"), $current_user->membership_level->name) . "</p>";
 
                 //confirmation message for this level
-                $level_message = $wpdb->get_var("SELECT l.confirmation FROM $wpdb->pmpro_membership_levels l LEFT JOIN $wpdb->pmpro_memberships_users mu ON l.id = mu.membership_id WHERE mu.status = 'active' AND mu.user_id = '" . $current_user->ID . "' LIMIT 1");
+                $sqlQuery = $wpdb->prepare("SELECT l.confirmation FROM $wpdb->pmpro_membership_levels l LEFT JOIN $wpdb->pmpro_memberships_users mu ON l.id = mu.membership_id WHERE mu.status = 'active' AND mu.user_id = %s LIMIT 1", $current_user->ID);
+                $level_message = $wpdb->get_var($sqlQuery);
                 if(!empty($level_message))
                     $confirmation_message .= "\n" . stripslashes($level_message) . "\n";
 

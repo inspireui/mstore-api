@@ -17,7 +17,8 @@ if (isset($_POST['order'])) {
     $code = sanitize_text_field(filter_input(INPUT_GET, 'code'));
     global $wpdb;
     $table_name = $wpdb->prefix . "mstore_checkout";
-    $item = $wpdb->get_row("SELECT * FROM $table_name WHERE code = '$code'");
+    $sql = $wpdb->prepare("SELECT * FROM $table_name WHERE code = %s", $code);
+    $item = $wpdb->get_row($sql);
     if ($item) {
         $data = json_decode(urldecode(base64_decode($item->order)), true);
     } else {

@@ -392,8 +392,80 @@ class FlutterTemplate extends WP_REST_Posts_Controller
             }
         ));
 
+        register_rest_route('wp/v2/dokan', '/orders', array(
+            'methods' => 'GET',
+            'callback' => array(
+                $this,
+                'get_dokan_orders'
+            ),
+            'permission_callback' => function () {
+                return true;
+            }
+        ));
+
+        register_rest_route('wp/v2', '/get-listing-types', array(
+            'methods' => 'GET',
+            'callback' => array(
+                $this,
+                'get_listing_types'
+            ),
+            'permission_callback' => function () {
+                return true;
+            }
+        ));
     }
 
+
+    function get_dokan_orders($request)
+    {
+        $cookie = $request->get_header("User-Cookie");
+        if (isset($cookie) && $cookie != null) {
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
+                return $user_id;
+            }
+            $page = isset($request["page"]) ? $request["page"] : 1;
+            $page = $page - 1;
+            $limit = isset($request["limit"]) ? $request["limit"] : 10;
+            $page = $page * $limit;
+
+            global $wpdb;
+            $postmeta_tb = $wpdb->prefix . "postmeta";
+            $posts_tb = $wpdb->prefix . "posts";
+            $dokan_orders_tb = $wpdb->prefix . "dokan_orders";
+            $sql = $wpdb->prepare("SELECT $posts_tb.ID FROM $postmeta_tb INNER JOIN $posts_tb ON $postmeta_tb.post_id=$posts_tb.ID INNER JOIN $dokan_orders_tb ON $posts_tb.ID = $dokan_orders_tb.order_id WHERE $postmeta_tb.meta_key = '_customer_user' AND $postmeta_tb.meta_value=%s LIMIT %d OFFSET %d",$user_id,$limit,$page);
+            $items = $wpdb->get_results($sql);
+            if(empty($items)){
+                return [];
+            }
+            $ids = [];
+            foreach ($items as $item) {
+                $ids[] = $item->ID;
+            }
+            add_filter( 'woocommerce_rest_check_permissions', '__return_true' );
+            $controller = new CUSTOM_WC_REST_Orders_Controller();
+            $req = new WP_REST_Request('GET');
+            $params = ['include'=>$ids,'page' => 1, 'per_page' => $limit, 'status'=>['any']];
+            $req->set_query_params($params);
+            $response = $controller->get_items($req);
+            remove_filter( 'woocommerce_rest_check_permissions', '__return_true' );
+            return $response->get_data();
+        }else{
+            return new WP_Error("no_permission",  "You need to add User-Cookie in header request", array('status' => 400));
+        }
+    }
+
+    public function get_listing_types($request){
+        if ($this->_isMyListing) {
+            $types = get_posts( [
+				'post_type' => 'case27_listing_type',
+				'posts_per_page' => -1,
+			] );
+            return  $types;
+        } else {
+            return new WP_Error("not_found",  "get_listing_types is not implemented", array('status' => 404));
+        }
+    }
 
     public function get_nearby_listings($request){
         $current_lat = $request['lat'];
@@ -418,12 +490,14 @@ class FlutterTemplate extends WP_REST_Posts_Controller
         if($this->_isListeo){
 
             $sql = "SELECT p.*, ";
-            $sql .= " (6371 * acos (cos (radians($current_lat)) * cos(radians(t.lat)) * cos(radians(t.lng) - radians($current_long)) + ";
-            $sql .= "sin (radians($current_lat)) * sin(radians(t.lat)))) AS distance FROM (SELECT b.post_id, a.post_status, sum(if(";
+            $sql .= " (6371 * acos (cos (radians(%f)) * cos(radians(t.lat)) * cos(radians(t.lng) - radians(%f)) + ";
+            $sql .= "sin (radians(%f)) * sin(radians(t.lat)))) AS distance FROM (SELECT b.post_id, a.post_status, sum(if(";
             $sql .= "meta_key = '_geolocation_lat', meta_value, 0)) AS lat, sum(if(meta_key = '_geolocation_long', ";
             $sql .= "meta_value, 0)) AS lng FROM {$wpdb->prefix}posts a, {$wpdb->prefix}postmeta b WHERE a.id = b.post_id AND (";
             $sql .= "b.meta_key='_geolocation_lat' OR b.meta_key='_geolocation_long') AND a.post_status='publish' GROUP BY b.post_id) AS t INNER ";
-            $sql .= "JOIN {$wpdb->prefix}posts as p on (p.ID=t.post_id) HAVING distance < {$radius}";
+            $sql .= "JOIN {$wpdb->prefix}posts as p on (p.ID=t.post_id) HAVING distance < %f";
+
+            $sql = $wpdb->prepare($sql, $current_lat, $current_long, $current_lat, $radius);
             $posts = $wpdb->get_results($sql);
             $items = (array)($posts);
             // return $items;
@@ -433,7 +507,8 @@ class FlutterTemplate extends WP_REST_Posts_Controller
             endforeach;
         }
         if( $this->_isMyListing){
-            $bodyReq = ['proximity_units'=>'km','listing_type'=>'place', 'form_data'=>[
+            $listing_type = $request['listing_type'] ?? 'place';
+            $bodyReq = ['proximity_units'=>'km','listing_type'=>$listing_type, 'form_data'=>[
                 'page'=>$offset / $limit,
                 'per_page'=>$limit,
                 'search_keywords'=>'',
@@ -1020,7 +1095,8 @@ class FlutterTemplate extends WP_REST_Posts_Controller
             //get the Post Id
             $listing_id = $object['id'];
             global $wpdb;
-            $sql = "SELECT * FROM {$wpdb->prefix}mylisting_locations WHERE listing_id = '$listing_id'"; //wp_it_job_details is job table
+            $sql = "SELECT * FROM {$wpdb->prefix}mylisting_locations WHERE listing_id = %s"; //wp_it_job_details is job table
+            $sql = $wpdb->prepare($sql, $listing_id);
             $results = $wpdb->get_row($sql);
                 if($results) {
                     return $results->address;
@@ -1031,7 +1107,8 @@ class FlutterTemplate extends WP_REST_Posts_Controller
             //get the Post Id
             $listing_id = $object['id'];
             global $wpdb;
-            $sql = "SELECT * FROM {$wpdb->prefix}mylisting_locations WHERE listing_id = '$listing_id'"; //wp_it_job_details is job table
+            $sql = "SELECT * FROM {$wpdb->prefix}mylisting_locations WHERE listing_id = %s"; //wp_it_job_details is job table
+            $sql = $wpdb->prepare($sql, $listing_id);
             $results = $wpdb->get_row($sql);
                 if($results) {
                     return $results->lat;
@@ -1042,7 +1119,8 @@ class FlutterTemplate extends WP_REST_Posts_Controller
             //get the Post Id
             $listing_id = $object['id'];
             global $wpdb;
-            $sql = "SELECT * FROM {$wpdb->prefix}mylisting_locations WHERE listing_id = '$listing_id'"; //wp_it_job_details is job table
+            $sql = "SELECT * FROM {$wpdb->prefix}mylisting_locations WHERE listing_id = %s"; //wp_it_job_details is job table
+            $sql = $wpdb->prepare($sql, $listing_id);
             $results = $wpdb->get_row($sql);
                 if($results) {
                     return $results->lng;
@@ -1052,7 +1130,7 @@ class FlutterTemplate extends WP_REST_Posts_Controller
         // Blog section
         public function get_blog_image_feature($object)
         {
-            $image_feature = wp_get_attachment_image_src($object['featured_media']);
+            $image_feature = wp_get_attachment_image_src($object['featured_media'], 'full');
             return is_array($image_feature) && count($image_feature) > 0 ? $image_feature[0] : null;
         }
 
@@ -1093,7 +1171,8 @@ class FlutterTemplate extends WP_REST_Posts_Controller
             //get the Post Id
             $listing_id = $object['id'];
             global $wpdb;
-            $sql = "SELECT * FROM {$wpdb->prefix}mylisting_locations WHERE listing_id = '$listing_id'"; //wp_it_job_details is job table
+            $sql = "SELECT * FROM {$wpdb->prefix}mylisting_locations WHERE listing_id = %s"; //wp_it_job_details is job table
+            $sql = $wpdb->prepare($sql, $listing_id);
             $results = $wpdb->get_row($sql);
             $data = [];
             if ($results) {
@@ -1168,7 +1247,7 @@ class FlutterTemplate extends WP_REST_Posts_Controller
             {
                 $name = '_cover';
                 $image_id =  get_term_meta($object['id'], $name, true);
-                return wp_get_attachment_image_src($image_id)[0];
+                return wp_get_original_image_url($image_id);
             }
             else
             {
@@ -1281,6 +1360,20 @@ class FlutterTemplate extends WP_REST_Posts_Controller
                 return 'Success';
             }
 
+            if ($this->_isListeo || $this->_isMyListing)
+            {
+                $cookie = $request->get_header("User-Cookie");
+                if (isset($cookie) && $cookie != null) {
+                    $user_id = validateCookieLogin($cookie);
+                    if (is_wp_error($user_id)) {
+                        return $user_id;
+                    }
+                    wp_set_current_user( $user_id );
+                }
+                $comment = wp_handle_comment_submission( wp_unslash( $_POST ) );
+                return $comment;
+            }
+
             return 'Failed';
         }
 
@@ -1298,6 +1391,9 @@ class FlutterTemplate extends WP_REST_Posts_Controller
             endforeach;
             if($this->_isMyListing){
                 $meta['_job_description'] = get_the_content($post_id);
+                $listing_type = $meta['_case27_listing_type'];
+                $listing_type = \MyListing\Src\Listing_Type::get_by_name( $listing_type );
+                $meta['_case27_listing_type_name'] = $listing_type->get_name();
             }
             
             return $meta;
@@ -2140,18 +2236,14 @@ class FlutterTemplate extends WP_REST_Posts_Controller
                 $lat = $request['lat'];
                 $long = $request['long'];
                 $sql = "SELECT p.*, ";
-                $sql .= " (6371 * acos (cos (radians($lat)) * cos(radians(t.lat)) * cos(radians(t.lng) - radians($long)) + ";
-                $sql .= "sin (radians($lat)) * sin(radians(t.lat)))) AS distance FROM (SELECT b.post_id, a.post_status, sum(if(";
+                $sql .= " (6371 * acos (cos (radians(%f)) * cos(radians(t.lat)) * cos(radians(t.lng) - radians(%f)) + ";
+                $sql .= "sin (radians(%f)) * sin(radians(t.lat)))) AS distance FROM (SELECT b.post_id, a.post_status, sum(if(";
                 $sql .= "meta_key = 'geolocation_lat', meta_value, 0)) AS lat, sum(if(meta_key = 'geolocation_long', ";
                 $sql .= "meta_value, 0)) AS lng FROM {$wpdb->prefix}posts a, {$wpdb->prefix}postmeta b WHERE a.id = b.post_id AND (";
                 $sql .= "b.meta_key='geolocation_lat' OR b.meta_key='geolocation_long') AND a.post_status='publish' GROUP BY b.post_id) AS t INNER ";
                 $sql .= "JOIN {$wpdb->prefix}posts as p on (p.ID=t.post_id)  ORDER BY distance LIMIT 30";
-                $vars = array(
-                    $lat,
-                    $long,
-                    $lat
-                );
-
+                
+                $sql = $wpdb->prepare($sql,$lat,$long,$lat);
                 $posts = $wpdb->get_results($sql, OBJECT);
                 if ($wpdb->last_error)
                 {

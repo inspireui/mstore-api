@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 3.9.3
+ * Version: 4.12.6
  * Author: InspireUI
  * Author URI: https://inspireui.com
  *
@@ -38,22 +38,39 @@ include_once plugin_dir_path(__FILE__) . "controllers/flutter-blog.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-wholesale.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-stripe.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-notification.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-thawani.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-expresspay.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-2c2p.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-cc-avenue.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-flow-flow.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-store-locator.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-composite-products.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-b2bking.php";
+
+if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
+    require __DIR__ . '/vendor/autoload.php';
+}
 
 class MstoreCheckOut
 {
-    public $version = '3.9.3';
+    public $version = '4.12.6';
 
     public function __construct()
     {
         define('MSTORE_CHECKOUT_VERSION', $this->version);
         define('MSTORE_PLUGIN_FILE', __FILE__);
-
+        
         /**
          * Prepare data before checkout by webview
          */
         add_action('template_redirect', 'flutter_prepare_checkout');
 
         include_once(ABSPATH . 'wp-admin/includes/plugin.php');
+        //include_once(ABSPATH . 'wp-includes/pluggable.php');
+
+        //migrate old versions to re-verify purchase code automatically
+        verifyPurchaseCodeAuto();
+
         if (is_plugin_active('woocommerce/woocommerce.php') == false) {
             return 0;
         }
@@ -170,19 +187,9 @@ class MstoreCheckOut
 
         register_activation_hook(__FILE__, array($this, 'create_custom_mstore_table'));
 
-
-        /**
-         * Register js file to theme
-         */
-        function mstore_frontend_script()
-        {
-            wp_enqueue_script('my_script', plugins_url('assets/js/mstore-inspireui.js', MSTORE_PLUGIN_FILE), array('jquery'), '1.0.0', true);
-            wp_localize_script('my_script', 'MyAjax', array('ajaxurl' => admin_url('admin-ajax.php')));
-        }
-
-        add_action('wp_enqueue_scripts', 'mstore_frontend_script');
         // Setup Ajax action hook
         add_action('wp_ajax_mstore_delete_json_file', array($this, 'mstore_delete_json_file'));
+        add_action('wp_ajax_mstore_delete_apple_file', array($this, 'mstore_delete_apple_file'));
         add_action('wp_ajax_mstore_update_limit_product', array($this, 'mstore_update_limit_product'));
         add_action('wp_ajax_mstore_update_firebase_server_key', array($this, 'mstore_update_firebase_server_key'));
         add_action('wp_ajax_mstore_update_new_order_title', array($this, 'mstore_update_new_order_title'));
@@ -208,47 +215,90 @@ class MstoreCheckOut
     }
 
     function mstore_delete_json_file(){
-        $id = sanitize_text_field($_REQUEST['id']);
-        $nonce = sanitize_text_field($_REQUEST['nonce']);
-        FlutterUtils::delete_config_file($id, $nonce);
+        if(checkIsAdmin(get_current_user_id())){
+            $id = sanitize_text_field($_REQUEST['id']);
+            $nonce = sanitize_text_field($_REQUEST['nonce']);
+            FlutterUtils::delete_config_file($id, $nonce);
+        }else{
+            wp_send_json_error('No Permission',401);
+        }
+    }
+
+    function mstore_delete_apple_file(){
+        if(checkIsAdmin(get_current_user_id())){
+            $nonce = sanitize_text_field($_REQUEST['nonce']);
+            FlutterAppleSignInUtils::delete_config_file($nonce);
+        }else{
+            wp_send_json_error('No Permission',401);
+        }
     }
 
     function mstore_update_limit_product()
     {
-        $limit = sanitize_text_field($_REQUEST['limit']);
-        if (is_numeric($limit)) {
-            update_option("mstore_limit_product", intval($limit));
+        $nonce = sanitize_text_field($_REQUEST['nonce']);
+        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_limit_product')){
+            $limit = sanitize_text_field($_REQUEST['limit']);
+            if (is_numeric($limit)) {
+                update_option("mstore_limit_product", intval($limit));
+            }
+        }else{
+            wp_send_json_error('No Permission',401);
         }
     }
 
     function mstore_update_firebase_server_key()
     {
-        $serverKey = sanitize_text_field($_REQUEST['serverKey']);
-        update_option("mstore_firebase_server_key", $serverKey);
+        $nonce = sanitize_text_field($_REQUEST['nonce']);
+        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_firebase_server_key')){
+            $serverKey = sanitize_text_field($_REQUEST['serverKey']);
+            update_option("mstore_firebase_server_key", $serverKey);
+        }else{
+            wp_send_json_error('No Permission',401);
+        }
     }
 
     function mstore_update_new_order_title()
     {
-        $title = sanitize_text_field($_REQUEST['title']);
-        update_option("mstore_new_order_title", $title);
+        $nonce = sanitize_text_field($_REQUEST['nonce']);
+        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_new_order_title')){
+            $title = sanitize_text_field($_REQUEST['title']);
+            update_option("mstore_new_order_title", $title);
+        }else{
+            wp_send_json_error('No Permission',401);
+        }
     }
 
     function mstore_update_new_order_message()
     {
-        $message = sanitize_text_field($_REQUEST['message']);
-        update_option("mstore_new_order_message", $message);
+        $nonce = sanitize_text_field($_REQUEST['nonce']);
+        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_new_order_message')){
+            $message = sanitize_text_field($_REQUEST['message']);
+            update_option("mstore_new_order_message", $message);
+        }else{
+            wp_send_json_error('No Permission',401);
+        }
     }
 
     function mstore_update_status_order_title()
     {
-        $title = sanitize_text_field($_REQUEST['title']);
-        update_option("mstore_status_order_title", $title);
+        $nonce = sanitize_text_field($_REQUEST['nonce']);
+        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_status_order_title')){
+            $title = sanitize_text_field($_REQUEST['title']);
+            update_option("mstore_status_order_title", $title);
+        }else{
+            wp_send_json_error('No Permission',401);
+        }
     }
 
     function mstore_update_status_order_message()
     {
-        $message = sanitize_text_field($_REQUEST['message']);
-        update_option("mstore_status_order_message", $message);
+        $nonce = sanitize_text_field($_REQUEST['nonce']);
+        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_status_order_message')){
+            $message = sanitize_text_field($_REQUEST['message']);
+            update_option("mstore_status_order_message", $message);
+        }else{
+            wp_send_json_error('No Permission',401);
+        }
     }
 
     // update order via website
@@ -381,6 +431,8 @@ add_filter('woocommerce_rest_prepare_product_variation_object', 'custom_woocomme
 add_filter('woocommerce_rest_prepare_product_object', 'flutter_custom_change_product_response', 20, 3);
 add_filter('woocommerce_rest_prepare_product_review', 'custom_product_review', 20, 3);
 add_filter('woocommerce_rest_prepare_product_cat', 'custom_product_category', 20, 3);
+add_filter('woocommerce_rest_prepare_shop_order_object', 'flutter_custom_change_order_response', 20, 3);
+add_filter('woocommerce_rest_prepare_product_attribute', 'flutter_custom_change_product_attribute', 20, 3);
 
 function custom_product_category($response, $object, $request)
 {
@@ -411,10 +463,60 @@ function custom_product_review($response, $object, $request)
     return $response;
 }
  
+function flutter_custom_change_order_response($response, $object, $request)
+{
+    return customOrderResponse($response, $object, $request);
+}
 
 function flutter_custom_change_product_response($response, $object, $request)
 {
     return customProductResponse($response, $object, $request);
+}
+
+function flutter_custom_change_product_attribute($response, $item, $request)
+{
+    $taxonomy = wc_attribute_taxonomy_name($item->attribute_name);
+
+    $terms = get_filtered_term_product_counts($request, $taxonomy);
+
+    $is_visible = false;
+    foreach ($terms as $key => $term) {
+        if ($term['term_count'] > 0) {
+            $is_visible = true;
+            break;
+        }
+    }
+
+    $response->data['is_visible'] = $is_visible;
+
+    return $response;
+}
+
+function custom_get_attribute_taxonomy_name( $slug, $product ) {
+	// Format slug so it matches attributes of the product.
+	$slug       = wc_attribute_taxonomy_slug( $slug );
+	$attributes = $product->get_attributes();
+	$attribute  = false;
+
+	// pa_ attributes.
+	if ( isset( $attributes[ wc_attribute_taxonomy_name( $slug ) ] ) ) {
+		$attribute = $attributes[ wc_attribute_taxonomy_name( $slug ) ];
+	} elseif ( isset( $attributes[ $slug ] ) ) {
+		$attribute = $attributes[ $slug ];
+	}
+
+	if ( ! $attribute ) {
+		return $slug;
+	}
+
+	// Taxonomy attribute name.
+	if ( $attribute->is_taxonomy() ) {
+		$taxonomy = $attribute->get_taxonomy_object();
+		return $taxonomy->attribute_label;
+	}
+
+	// Custom product attribute name.
+	return $attribute->get_name();
 }
 
 function custom_woocommerce_rest_prepare_product_variation_object($response, $object, $request)
@@ -422,6 +524,11 @@ function custom_woocommerce_rest_prepare_product_variation_object($response, $ob
 
     global $woocommerce_wpml;
 
+    //update correct product price with tax setting
+    $response->data['price'] = wc_get_price_to_display(  $object );
+    $response->data['regular_price'] = wc_get_price_to_display(  $object, array( 'price' => $object->get_regular_price() ) );
+    $response->data['sale_price'] = wc_get_price_to_display(  $object, array( 'price' => $object->get_sale_price() ) );
+    
     $is_purchased = false;
     if (isset($request['user_id'])) {
         $user_id = $request['user_id'];
@@ -440,6 +547,49 @@ function custom_woocommerce_rest_prepare_product_variation_object($response, $ob
         }
     }
 
+    /*Update product price for subscription product*/
+    if($object->get_type() == 'subscription_variation'){
+        $meta_data = $response->data['meta_data'];
+        $sign_up_fee = null;
+        foreach ($meta_data as $meta_data_item) {
+            if ($meta_data_item->get_data()["key"] == "_subscription_sign_up_fee") {
+                $sign_up_fee = $meta_data_item->get_data()["value"];
+            }
+        }
+        if($sign_up_fee != null){
+            $response->data['regular_price']= $sign_up_fee;
+            $response->data['price']= $sign_up_fee;
+        }
+    }
+
+    $variation_product = wc_get_product( $response->data['id'] );
+    if($variation_product) {
+        $_product = wc_get_product( $variation_product->get_parent_id() );
+        foreach ( $variation_product->get_variation_attributes() as $attribute_name => $attribute ) {
+				$name = str_replace( 'attribute_', '', $attribute_name );
+
+				if ( empty( $attribute ) && '0' !== $attribute ) {
+					continue;
+				}
+
+				// Taxonomy-based attributes are prefixed with `pa_`, otherwise simply `attribute_`.
+				if ( 0 === strpos( $attribute_name, 'attribute_pa_' ) ) {
+					$option_term  = get_term_by( 'slug', $attribute, $name );
+					$attributes[] = array(
+						'id'     => wc_attribute_taxonomy_id_by_name( $name ),
+						'name'   => custom_get_attribute_taxonomy_name( $name, $_product ),
+						'option' => $option_term && ! is_wp_error( $option_term ) ? $option_term->name : $attribute,
+					);
+				} else {
+					$attributes[] = array(
+						'id'     => 0,
+						'name'   => custom_get_attribute_taxonomy_name( $name, $_product ),
+						'option' => $attribute,
+					);
+				}
+			}
+        $response->data['attributes'] = $attributes;
+    }
     return $response;
 }
 
@@ -462,7 +612,8 @@ function flutter_prepare_checkout()
         $code = sanitize_text_field($_GET['code']);
         global $wpdb;
         $table_name = $wpdb->prefix . "mstore_checkout";
-        $item = $wpdb->get_row("SELECT * FROM $table_name WHERE code = '$code'");
+        $sql = $wpdb->prepare("SELECT * FROM $table_name WHERE code = %s", $code);
+        $item = $wpdb->get_row($sql);
         if ($item) {
             $data = json_decode(urldecode(base64_decode($item->order)), true);
         } else {
@@ -565,6 +716,7 @@ function flutter_prepare_checkout()
     
                     header("Refresh:0");
                 }
+                cleanupAppointmentCartData($userId);
             }
         } else {
             if (is_user_logged_in()) {
@@ -582,49 +734,10 @@ function flutter_prepare_checkout()
 
             $products = $data['line_items'];
 
-            foreach ($products as $product) {
-                $productId = absint($product['product_id']);
-
-                $quantity = $product['quantity'];
-                $variationId = isset($product['variation_id']) ? $product['variation_id'] : "";
-
-                $attributes = [];
-                if (isset($product["meta_data"])) {
-                    foreach ($product["meta_data"] as $item) {
-                        if($item["value"] != null){
-                            $attributes[strtolower($item["key"])] = $item["value"];
-                        }
-                    }
-                }
-
-                if (isset($product['addons'])) {
-                    $_POST = $product['addons'];
-                }
-                
-                // Check the product variation
-                if (!empty($variationId)) {
-                    $productVariable = new WC_Product_Variable($productId);
-                    $listVariations = $productVariable->get_available_variations();
-                    foreach ($listVariations as $vartiation => $value) {
-                        if ($variationId == $value['variation_id']) {
-                            $attributes = array_merge($value['attributes'], $attributes);
-                            $woocommerce->cart->add_to_cart($productId, $quantity, $variationId, $attributes);
-                        }
-                    }
-                } else {
-                    parseMetaDataForBookingProduct($product);
-                    $cart_item_data = array();
-                    if (is_plugin_active('woo-wallet/woo-wallet.php')) {
-                        $wallet_product = get_wallet_rechargeable_product();
-                        if ($wallet_product->get_id() == $productId) {
-                            $cart_item_data['recharge_amount'] = $product['total'];
-                        }
-                    }
-
-                    $woocommerce->cart->add_to_cart($productId, $quantity, 0, $attributes, $cart_item_data);
-
-                }
-            }
+            buildCartItemData($products, function($productId, $quantity, $variationId, $attributes, $cart_item_data){
+                global $woocommerce;
+                $woocommerce->cart->add_to_cart($productId, $quantity, $variationId, $attributes, $cart_item_data);
+            });
 
             if (isset($shipping)) {
                 $woocommerce->customer->set_shipping_first_name($shipping["first_name"]);
@@ -683,8 +796,30 @@ function flutter_prepare_checkout()
         if (!is_wp_error($userId)) {
             $user = get_userdata($userId);
             if ($user !== false) {
-                wp_set_current_user($userId, $user->user_login);
-                wp_set_auth_cookie($userId);
+                if (isset($_GET['order_detail']) && isset($_GET['order_id']) && is_plugin_active('dokan-lite/dokan.php')) {
+					wp_logout();
+					$cookie_elements = explode( '|', $cookie );
+					if ( count( $cookie_elements ) !== 4 ) {
+						die;
+					}
+					list( $username, $expiration, $token, $hmac ) = $cookie_elements;
+					$_COOKIE[ LOGGED_IN_COOKIE ] = $cookie;
+					wp_set_current_user($userId, $user->user_login);
+					wp_set_auth_cookie($userId, true, '', $token);
+					
+                    $url = add_query_arg(
+                        [
+                            'order_id' => $_GET['order_id'],
+                            '_wpnonce' => wp_create_nonce( 'dokan_view_order' ),
+                        ], dokan_get_navigation_url( 'orders' )
+                    );
+                    wp_safe_redirect( $url );
+                    die;
+                }else{
+					wp_set_current_user($userId, $user->user_login);
+                	wp_set_auth_cookie($userId, true);
+				}
+
                 if (isset($_GET['vendor_admin'])) {
                     global $wp;
                     $request = $wp->request;
@@ -772,3 +907,34 @@ function custom_status_bulk_edit($actions)
 }
 
 add_filter('bulk_actions-edit-shop_order', 'custom_status_bulk_edit', 20, 1);
+
+add_action('rest_api_init', 'get_promptpay_qrcode_routes');
+function get_promptpay_qrcode_routes()
+{
+    register_rest_route('promptpay', '/detail' . '/(?P<id>[\d]+)', array(
+            'methods' => 'GET',
+            'callback' => function($request){
+                $available_payment_methods = WC()->payment_gateways()->payment_gateways();
+                $paymentMethod = $available_payment_methods['thai-promptpay-easy'];
+                $order = wc_get_order($request['id'] );
+                $thank_msg = $paymentMethod->thank_msg;
+ $promptpay_id = $paymentMethod->promptpay_id;
+ $promptpay_type = $paymentMethod->promptpay_type;
+ $promptpay_name = $paymentMethod->promptpay_name;
+ $include_price = $paymentMethod->include_price;
+                $image_url = get_site_url() . "/wp-content/plugins/thai-promptpay-payment-easy-gateway-plugin/images/promptpay_qrcode/promptpay-qr-l.php?type=$promptpay_type&promptpay_id=$promptpay_id";
+ 
+ if($include_price=='yes'){
+ $price = $order->get_total();
+ $image_url .= "&price=$price&p=1";
+ }
+
+
+                return  ['thank_msg' => $thank_msg, 'qrcode_url' => $image_url, 'promptpay_id' => $promptpay_id, 'promptpay_name' => $promptpay_name, 'promptpay_type' => $paymentMethod->promptpay_type_name[$promptpay_type]];
+            },
+            'permission_callback' => function () {
+                return true;
+            },
+        )
+    );
+}

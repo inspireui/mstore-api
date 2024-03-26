@@ -55,12 +55,16 @@ class DeliveryWCFMHelper
             global $wpdb;
             $sql = "SELECT COUNT(ID) FROM `{$wpdb->prefix}wcfm_delivery_orders`";
             $sql .= " WHERE 1=1";
-            $sql .= " AND delivery_boy = {$user_id}";
+            $sql .= " AND delivery_boy = %s";
             $sql .= " AND is_trashed = 0";
-            $total = count($wpdb->get_results($sql));
+ 
+            $total = count($wpdb->get_results($wpdb->prepare($sql, $user_id)));
 
             $pending_sql = $sql . " AND delivery_status = 'pending' GROUP BY order_id";
+            $pending_sql = $wpdb->prepare($pending_sql, $user_id);
+            
             $delivered_sql = $sql . " AND delivery_status = 'delivered' GROUP BY order_id";
+            $delivered_sql = $wpdb->prepare($delivered_sql, $user_id);
 
             $pending_count = count($wpdb->get_results($pending_sql));
             $delivered_count = count($wpdb->get_results($delivered_sql));
@@ -89,14 +93,16 @@ class DeliveryWCFMHelper
             $table_name = $wpdb->prefix . "wcfm_delivery_orders";
             $sql = "SELECT * FROM `{$table_name}`";
             $sql .= " WHERE 1=1";
-            $sql .= " AND delivery_boy = {$user_id}";
+            $sql .= " AND delivery_boy = %s";
             $sql .= " AND is_trashed = 0";
             $order_id = sanitize_text_field($request['id']);
-            if(isset($order_id)){
-                if(is_numeric($order_id)){
-                    $sql .= " AND order_id = '{$order_id}'";
-                }
+            if(isset($order_id) && is_numeric($order_id)){
+                $sql .= " AND order_id = %s";
+                $sql = $wpdb->prepare($sql,$user_id,$order_id);
+            }else{
+                $sql = $wpdb->prepare($sql,$user_id );
             }
+            
             $items = $wpdb->get_results($sql);
             if (!empty($items)) {
                 $vendor = new FlutterWCFMHelper();
@@ -145,10 +151,11 @@ class DeliveryWCFMHelper
         $table_name = $wpdb->prefix . "wcfm_delivery_orders";
         $sql = "SELECT $table_name.`vendor_id` FROM `{$table_name}`";
         $sql .= " WHERE 1=1";
-        $sql .= " AND delivery_boy = {$user_id}";
+        $sql .= " AND delivery_boy = %s";
         $sql .= " AND is_trashed = 0";
         $sql .= " AND delivery_status = 'pending'";
         $sql .= " GROUP BY $table_name.`vendor_id`";
+        $sql = $wpdb->prepare($sql, $user_id);
         $items = $wpdb->get_results($sql);
 
         $vendor = new FlutterWCFMHelper();
@@ -188,17 +195,28 @@ class DeliveryWCFMHelper
             $table_name = $wpdb->prefix . "wcfm_delivery_orders";
             $sql = "SELECT * FROM `{$table_name}`";
             $sql .= " WHERE 1=1";
-            $sql .= " AND delivery_boy = {$user_id}";
+            $sql .= " AND delivery_boy = %s";
             $sql .= " AND is_trashed = 0";
             if (isset($request['status']) && !empty($request['status'])) {
                 $status = sanitize_text_field($request['status']);
-                $sql .= " AND delivery_status = '{$status}'";
+                $sql .= " AND delivery_status = %s";
             }
             if (isset($request['search'])) {
                 $order_search = sanitize_text_field($request['search']);
-                $sql .= " AND $table_name.`order_id` LIKE '%{$order_search}%'";
+                $sql .= " AND $table_name.`order_id` LIKE %s";
             }
-            $sql .= " GROUP BY $table_name.`order_id` ORDER BY $table_name.`order_id` DESC LIMIT $per_page OFFSET $page";
+            $sql .= " GROUP BY $table_name.`order_id` ORDER BY $table_name.`order_id` DESC LIMIT %d OFFSET %d";
+
+            $args = [$user_id];
+            if (isset($status)) {
+                $args[] = $status;
+            }
+            if (isset($order_search)) {
+                $args[] = '%'.$order_search.'%';
+            }
+            $args[] = $per_page;
+            $args[] = $page;
+            $sql = $wpdb->prepare($sql, $args);
             $items = $wpdb->get_results($sql);
 
 
@@ -268,13 +286,14 @@ class DeliveryWCFMHelper
             $message_to = $user_id;
 
             $sql = 'SELECT wcfm_messages.* FROM ' . $wpdb->prefix . 'wcfm_messages AS wcfm_messages';
-            $vendor_filter = " WHERE ( `author_id` = {$message_to} OR `message_to` = -1 OR `message_to` = {$message_to} ) AND message_type = 'delivery_boy_assign'";
+            $vendor_filter = " WHERE ( `author_id` = %s OR `message_to` = -1 OR `message_to` = %s ) AND message_type = 'delivery_boy_assign'";
             $sql .= $vendor_filter;
-            $message_status_filter = " AND NOT EXISTS (SELECT * FROM {$wpdb->prefix}wcfm_messages_modifier as wcfm_messages_modifier_2 WHERE wcfm_messages.ID = wcfm_messages_modifier_2.message AND wcfm_messages_modifier_2.read_by={$message_to})";
+            $message_status_filter = " AND NOT EXISTS (SELECT * FROM {$wpdb->prefix}wcfm_messages_modifier as wcfm_messages_modifier_2 WHERE wcfm_messages.ID = wcfm_messages_modifier_2.message AND wcfm_messages_modifier_2.read_by=%s)";
             $sql .= $message_status_filter;
             $sql .= " ORDER BY wcfm_messages.`ID` DESC";
-            $sql .= " LIMIT $limit";
-            $sql .= " OFFSET $offset";
+            $sql .= " LIMIT %d";
+            $sql .= " OFFSET %d";
+            $sql = $wpdb->prepare($sql, $message_to, $message_to, $message_to, $limit, $offset);
             $wcfm_messages = $wpdb->get_results($sql);
 
             foreach ($wcfm_messages as $wcfm_message) {
@@ -335,7 +354,8 @@ class DeliveryWCFMHelper
         $delivered_not_notified = false;
         $sql = "SELECT * FROM `{$wpdb->prefix}wcfm_delivery_orders`";
         $sql .= " WHERE 1=1";
-        $sql .= " AND order_id = {$order_id}";
+        $sql .= " AND order_id = %s";
+        $sql = $wpdb->prepare($sql, $order_id);
         $delivery_details = $wpdb->get_results($sql);
 
         if (!empty($delivery_details)) {

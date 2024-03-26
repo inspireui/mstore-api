@@ -229,14 +229,23 @@ class VendorAdminWooHelper
         $sql = "SELECT * FROM " . $table_name . " WHERE post_type LIKE 'shop_order'";
 
         if (isset($request['status'])) {
-            $status = sanitize_text_field($request['status']);
-            $sql .= " AND post_status = 'wc-$status'";
+            $sql .= " AND post_status = %s";
         }
         if (isset($request['search'])) {
-            $search = sanitize_text_field($request['search']);
-            $sql .= " AND ID LIKE '$search%'";
+            $sql .= " AND ID LIKE %s";
         }
-        $sql .= " GROUP BY $table_name.`ID` ORDER BY $table_name.`ID` DESC LIMIT $per_page OFFSET $page";
+        $sql .= " GROUP BY $table_name.`ID` ORDER BY $table_name.`ID` DESC LIMIT %d OFFSET %d";
+ 
+        $args = array();
+        if (isset($request['status'])) {
+            $args[] = 'wc-'.sanitize_text_field($request['status']);
+        }
+        if (isset($request['search'])) {
+            $args[] = '%'.sanitize_text_field($request['search']).'%';
+        }
+        $args[] = $per_page;
+        $args[] = $page;
+        $sql = $wpdb->prepare($sql, $args);
         $query = $wpdb->get_results($sql);
         // Loop through each order post object
         foreach ($query as $item) {
@@ -248,6 +257,7 @@ class VendorAdminWooHelper
             $order = $response->get_data();
             $count = count($order['line_items']);
             $order['product_count'] = $count;
+            $order = getCommissionOrderResponse($order, $user_id);
 
             for ($i = 0; $i < $count; $i++) {
                 $product_id = absint($order['line_items'][$i]['product_id']);

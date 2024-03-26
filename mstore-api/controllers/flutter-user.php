@@ -1,5 +1,6 @@
 <?php
 require_once(__DIR__ . '/flutter-base.php');
+require_once(__DIR__ . '/helpers/apple-sign-in-helper.php');
 
 class FlutterUserController extends FlutterBaseController
 {
@@ -43,7 +44,7 @@ class FlutterUserController extends FlutterBaseController
         register_rest_route($this->namespace, '/sign_up_2', array(
             array(
                 'methods' => 'POST',
-                'callback' => array($this, 'register_2'),
+                'callback' => array($this, 'register'),
                 'permission_callback' => function () {
                     return parent::checkApiPermission();
                 }
@@ -110,7 +111,7 @@ class FlutterUserController extends FlutterBaseController
             ),
         ));
 
-        register_rest_route($this->namespace, '/apple_login', array(
+        register_rest_route($this->namespace, '/apple_login_2', array(
             array(
                 'methods' => 'POST',
                 'callback' => array($this, 'apple_login'),
@@ -376,19 +377,42 @@ class FlutterUserController extends FlutterBaseController
         $params = json_decode($json, TRUE);
         $usernameReq = $params["username"];
         $emailReq = $params["email"];
-        $role = $params["role"];
+        $userPassReq = $params["user_pass"];
+        $userLoginReq = $params["user_login"];
+        $userEmailReq = $params["user_email"];
+
+        if(array_key_exists('role', $params)){
+            $role = $params["role"];
+        }
         if (isset($role)) {
             if (!in_array($role, ['subscriber', 'wcfm_vendor', 'seller', 'wcfm_delivery_boy', 'driver','owner'], true)) {
                 return parent::sendError("invalid_role", "Role is invalid.", 400);
             }
         }
-        $userPassReq = $params["user_pass"];
-        $userLoginReq = $params["user_login"];
-        $userEmailReq = $params["user_email"];
-
+        if( isset($params['dokan_enable_selling'])){
+			$dokan_enable_selling  =  $params['dokan_enable_selling'];
+		}
+        if(isset($params['wcfm_membership_application_status'])){
+			$wcfm_membership_application_status = $params['wcfm_membership_application_status'];
+		}
+    
         $username = sanitize_user($usernameReq);
-
         $email = sanitize_email($emailReq);
+
+        if ($username == $userEmailReq && $username == $userLoginReq) {
+            $is_email = is_email($username);
+            if ($is_email) {
+                $email = $username;
+                $user_name = explode("@", $email)[0];
+                $params["user_email"] = $email;
+                $params["user_login"] = $user_name;
+            } else {
+                $user_name = $username;
+                $params["user_login"] = $user_name;
+                $params["user_email"] = '';
+            }
+        }
+
         if (isset($params["seconds"])) {
             $seconds = (int)$params["seconds"];
         } else {
@@ -422,7 +446,8 @@ class FlutterUserController extends FlutterBaseController
                     }
                 }
 
-                $user['role'] = isset($params["role"]) ? sanitize_text_field($params["role"]) : get_option('default_role');
+                $default_role = class_exists( 'WooCommerce' ) ? 'customer' : get_option('default_role');
+                $user['role'] = isset($params["role"]) ? sanitize_text_field($params["role"]) : $default_role;
                 $_POST['user_role'] = $user['role'];//fix to register account with role in listeo
                 $user_id = wp_insert_user($user);
 
@@ -435,6 +460,23 @@ class FlutterUserController extends FlutterBaseController
             }
         }
         wp_new_user_notification($user_id, null, 'both');
+        if(isset( $wcfm_membership_application_status) &&  $wcfm_membership_application_status == 'pending'){
+            update_user_meta($user_id,'store_name', $user['display_name']);
+
+            //fix crash when approve membership in WCFM
+            $wcfmvm_static_infos = (array) get_user_meta( $member_id, 'wcfmvm_static_infos', true );
+            $wcfmvm_static_infos['phone'] = $params["phone"] ?? '';
+            update_user_meta($user_id, 'wcfmvm_static_infos', $wcfmvm_static_infos);
+            update_user_meta($user_id, 'billing_phone', $params["phone"] ?? '');
+
+            update_user_meta($user_id,'temp_wcfm_membership', true);
+            global $WCFMvm;
+            $WCFMvm->send_approval_reminder_admin( $user_id );
+        }
+
+        if(isset($dokan_enable_selling) && $dokan_enable_selling == false){
+            update_user_meta($user_id,'dokan_enable_selling',$dokan_enable_selling);
+        }
         $cookie = generateCookieByUserId($user_id,  $seconds);
 
         return array(
@@ -443,111 +485,6 @@ class FlutterUserController extends FlutterBaseController
         );
     }
 
-
-    public function register_2()
-    {
-        $json = file_get_contents('php://input');
-        $params = json_decode($json, TRUE);
-        $usernameReq = $params["username"];
-        $emailReq = $params["email"];
-        $role = $params["role"];
-        if( isset($params['dokan_enable_selling'])){
-			$dokan_enable_selling  =  $params['dokan_enable_selling'];
-		}
-        if(isset($params['wcfm_membership_application_status'])){
-			$wcfm_membership_application_status = $params['wcfm_membership_application_status'];
-		}
-        if (isset($role)) {
-            if (!in_array($role, ['subscriber', 'wcfm_vendor', 'seller', 'wcfm_delivery_boy', 'driver','owner'], true)) {
-                return parent::sendError("invalid_role", "Role is invalid.", 400);
-            }
-        }
-        $userPassReq = $params["user_pass"];
-        $userLoginReq = $params["user_login"];
-        $userEmailReq = $params["user_email"];
-        $username = sanitize_user($usernameReq);
-
-        if ($username == $userEmailReq && $username == $userLoginReq) {
-            $is_email = is_email($username);
-            if ($is_email) {
-                $email = $username;
-                $user_name = explode("@", $email)[0];
-                $params["user_email"] = $email;
-                $params["user_login"] = $user_name;
-            } else {
-                $user_name = $username;
-                $params["user_login"] = $user_name;
-                $params["user_email"] = '';
-            }
-
-            if (!validate_username($user_name)) {
-                return parent::sendError("invalid_username", "Username is invalid.", 400);
-            }
-            if (username_exists($user_name)) {
-                return parent::sendError("existed_username", "Username already exists.", 400);
-            }
-            if (isset($email)) {
-                if (!is_email($email)) {
-                    return parent::sendError("invalid_email", "E-mail address is invalid.", 400);
-                }
-
-                if (email_exists($email)) {
-                    return parent::sendError("existed_email", "E-mail address is already in use.", 400);
-                }
-            }
-            if (!$userPassReq) {
-                $params["user_pass"] = wp_generate_password();
-            }
-        }
-
-        if (isset($params["seconds"])) {
-            $seconds = (int)$params["seconds"];
-        } else {
-            $seconds = 1209600;
-        }
-        $allowed_params = array('user_login', 'user_email', 'user_pass', 'display_name', 'user_nicename', 'user_url', 'nickname', 'first_name',
-            'last_name', 'description', 'rich_editing', 'user_registered', 'role', 'jabber', 'aim', 'yim',
-            'comment_shortcuts', 'admin_color', 'use_ssl', 'show_admin_bar_front',
-        );
-
-
-        $dataRequest = $params;
-        foreach ($dataRequest as $field => $value) {
-            if (in_array($field, $allowed_params)) {
-                $user[$field] = trim(sanitize_text_field($value));
-            }
-        }
-
-        $user['role'] = isset($params["role"]) ? sanitize_text_field($params["role"]) : get_option('default_role');
-        $user_id = wp_insert_user($user);
-
-        if (is_wp_error($user_id)) {
-            return parent::sendError($user_id->get_error_code(), $user_id->get_error_message(), 400);
-        } elseif (isset($params["phone"])) {
-            update_user_meta($user_id, 'billing_phone', $params["phone"]);
-            update_user_meta($user_id, 'registered_phone_number', $params["phone"]);
-        }
-        wp_new_user_notification($user_id, null, 'both');
-
-        if(isset( $wcfm_membership_application_status) &&  $wcfm_membership_application_status == 'pending'){
-            update_user_meta($user_id,'wcfm_membership_application_status',$wcfm_membership_application_status);
-            update_user_meta($user_id,'store_name', $user['display_name']);
-            update_user_meta($user_id,'temp_wcfm_membership', -1);
-            global $WCFMvm;
-            $WCFMvm->send_approval_reminder_admin( $user_id );
-        }
-
-        if(isset($dokan_enable_selling) && $dokan_enable_selling == false){
-            update_user_meta($user_id,'dokan_enable_selling',$dokan_enable_selling);
-        }
-
-        $cookie = generateCookieByUserId($user_id, $seconds);
-
-        return array(
-            "cookie" => $cookie,
-            "user_id" => $user_id,
-        );
-    }
 
     private function get_shipping_address($userId)
     {
@@ -648,7 +585,7 @@ class FlutterUserController extends FlutterBaseController
         } else {
             $seconds = 1209600;
         }
-
+        $_POST['action'] = 'listeoajaxlogin'; //fix to return json if login error in listeo
         $user = wp_authenticate($username, $password);
 
         if (is_wp_error($user)) {
@@ -758,7 +695,7 @@ class FlutterUserController extends FlutterBaseController
         if (!isset($phone)) {
             return parent::sendError("invalid_login", "You must include a 'phone' variable.", 400);
         }
-        $domain = $_SERVER['SERVER_NAME'];
+        $domain = $_SERVER['SERVER_NAME'] == 'default_server' ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'];
         if (count(explode(".", $domain)) == 1) {
             $domain = "flutter.io";
         }
@@ -778,7 +715,7 @@ class FlutterUserController extends FlutterBaseController
             $args = array('meta_key' => 'registered_phone_number', 'meta_value' => $phone);
             $search_users = get_users($args);
             if (empty($search_users)) {
-                $domain = $_SERVER['SERVER_NAME'];
+                $domain = $_SERVER['SERVER_NAME'] == 'default_server' ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'];
                 if (count(explode(".", $domain)) == 1) {
                     $domain = "flutter.io";
                 }
@@ -822,9 +759,18 @@ class FlutterUserController extends FlutterBaseController
     {
         $json = file_get_contents('php://input');
         $params = json_decode($json, TRUE);
-        $token = $params["token"];
+        $authorization_code = $params["authorization_code"];
         $firstName = $params["first_name"];
         $lastName = $params["last_name"];
+        $teamId = $params["team_id"];
+        $bundleId = $params["bundle_id"];
+        if(!FlutterAppleSignInUtils::is_file_existed()){
+            return parent::sendError("invalid_login", "You need to upload AuthKey_XXXX.p8 file to MStore Api plugin", 400);
+        }
+        $token = AppleSignInHelper::generate_token($bundleId,$teamId,$authorization_code);
+        if($token == false || is_wp_error($token)){
+            return is_wp_error($token) ? $token : parent::sendError("invalid_login",  "Invalid authorization_code", 400);
+        }
         $decoded = $this->jwtDecode($token);
         $user_email = $decoded["email"];
         if (!isset($user_email)) {
@@ -1005,6 +951,10 @@ class FlutterUserController extends FlutterBaseController
             $user_update['last_name'] = $params->last_name;
             update_user_meta($user_id, 'shipping_last_name', $params->last_name, '');
             update_user_meta($user_id, 'billing_last_name', $params->last_name, '');
+        }
+        if (isset($params->phone)) {
+            update_user_meta($user_id, 'shipping_phone', $params->phone, '');
+            update_user_meta($user_id, 'billing_phone', $params->phone, '');
         }
         if (isset($params->shipping_company)) {
             update_user_meta($user_id, 'shipping_company', $params->shipping_company, '');
@@ -1266,7 +1216,23 @@ class FlutterUserController extends FlutterBaseController
         $_POST['dig_nounce'] = wp_create_nonce('dig_form');
         $_POST['crsf-otp'] = wp_create_nonce('crsf-otp');
 
-        $_POST['digits_reg_password'] = wp_generate_password();
+        if (isset($params['password'])) {
+            $_POST['digits_reg_password'] = $params['password'];
+        }else{
+            $_POST['digits_reg_password'] = wp_generate_password();
+        }
+
+        $reg_custom_fields = stripslashes(base64_decode(get_option("dig_reg_custom_field_data", "e30=")));
+        $reg_custom_fields = json_decode($reg_custom_fields, true);
+        foreach ($reg_custom_fields as $key => $values) {
+            $required = $values['required'];
+            if($required == 1){
+                $meta_key = cust_dig_filter_string($values['meta_key']);
+                $post_index = 'digits_reg_' . $meta_key;
+                $_POST[$post_index] = '1';
+            }
+            
+        }
         $_REQUEST['json'] = 1;
     }
 
@@ -1283,14 +1249,14 @@ class FlutterUserController extends FlutterBaseController
             return parent::sendError("invalid_email", 'Email is required', 400);
         }
         if (!empty($params['email']) && email_exists($params['email'])) {
-            return parent::sendError("invalid_email", 'Email already in use!', 400);
+            return parent::sendError("existed_email", 'Email already in use!', 400);
         }
 
         if(empty($params['username'])){
             return parent::sendError("invalid_username", 'Username is required', 400);
         }
         if (!empty($params['username']) && username_exists($params['username'])) {
-            return parent::sendError("invalid_username", 'Username already in use!', 400);
+            return parent::sendError("existed_username", 'Username already in use!', 400);
         }
 
         if(empty($params['country_code'])){
@@ -1304,7 +1270,7 @@ class FlutterUserController extends FlutterBaseController
         $mob = $params['country_code'].$params['mobile'];
         $mobuser = getUserFromPhone($mob);
         if ($mobuser != null  || username_exists($mob)) {
-            return parent::sendError("invalid_mobile", 'Mobile Number already in use!', 400);
+            return parent::sendError("existed_mobile", 'Mobile Number already in use!', 400);
         } 
 
         return  true;
@@ -1316,13 +1282,21 @@ class FlutterUserController extends FlutterBaseController
             return parent::sendError("plugin_not_found", "Please install  the  DIGITS: Wordpress Mobile Number Signup and Login  plugin", 400);
         }
 
+        define( 'REST_REQUEST', true );
         $this->mstore_digrest_set_variables();
-        
+        $userId = null;
+        add_filter('digits_user_created_response', function($data, $user_id){
+            $data['user_id'] = $user_id;
+            return $data;
+        },10, 2);
         $data = digits_create_user();
+        define( 'REST_REQUEST', false );
+        remove_filter('digits_user_created_response','__return_false', 10);
+
         if ($data['success'] === false) {
             return parent::sendError("invalid_data", explode("<br />",  $data['data']['msg'])[0], 400);
         } else {
-            $user_id = $data['data']['user_id'];
+            $user_id = $data['user_id'];
             $cookie = generateCookieByUserId($user_id);
             $user = get_userdata($user_id);
 
@@ -1354,7 +1328,7 @@ class FlutterUserController extends FlutterBaseController
         $mob = $params['country_code'].$params['mobile'];
         $mobuser = getUserFromPhone($mob);
         if ($mobuser == null) {
-            return parent::sendError("invalid_mobile", 'Phone number is not registered!', 400);
+            return parent::sendError("existed_mobile", 'Phone number is not registered!', 400);
         } 
 
         return  true;

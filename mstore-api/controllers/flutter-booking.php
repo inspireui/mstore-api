@@ -183,10 +183,12 @@ class FlutterBooking extends FlutterBaseController
             return parent::sendError("invalid_data", "product_id is required", 400);
         }
 
+        $product_id = sanitize_text_field($product_id);
         $results = [];
         global $wpdb;
         $table_name = $wpdb->prefix . "wc_appointment_relationships";
-        $items = $wpdb->get_results("SELECT * FROM $table_name WHERE product_id = '$product_id'");
+        $sql = $wpdb->prepare("SELECT * FROM $table_name WHERE product_id = %s",$product_id);
+        $items = $wpdb->get_results($sql);
         foreach ($items as $item) {
             $user = get_user_by("ID", $item->staff_id);
             $results[] = array(

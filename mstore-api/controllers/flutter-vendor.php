@@ -79,6 +79,16 @@ class FlutterVendor extends FlutterBaseController
             ),
         ));
 
+        register_rest_route($this->namespace, '/wcfm-products', array(
+            array(
+                'methods' => "GET",
+                'callback' => array($this, 'flutter_get_wcfm_products'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
+
         register_rest_route($this->namespace, '/wcfm-stores' . '/(?P<id>[\d]+)/', array(
             'args' => array(
                 'id' => array(
@@ -275,7 +285,8 @@ class FlutterVendor extends FlutterBaseController
                     $table_name = $wpdb->prefix . "users";
                     $sql = "SELECT {$table_name}.ID";
                     $sql .= " FROM {$table_name}";
-                    $sql .= " WHERE {$table_name}.user_nicename = '{$slug}' ";
+                    $sql .= " WHERE {$table_name}.user_nicename = %s ";
+                    $sql = $wpdb->prepare($sql, $slug);
                     $users = $wpdb->get_results($sql);
                     if (count($users) != 1) {
                         return parent::sendError("invalid_url", "Not Found", 404);
@@ -444,7 +455,8 @@ class FlutterVendor extends FlutterBaseController
 
         global $woocommerce, $wpdb;
         $table_name = $wpdb->prefix . "posts";
-        $sql = "SELECT count(*) as count  FROM `$table_name` WHERE `$table_name`.`post_author` = $user_id AND `$table_name`.`post_type` = 'product' AND `$table_name`.`id` = $product_id LIMIT 1";
+        $sql = "SELECT count(*) as count  FROM `$table_name` WHERE `$table_name`.`post_author` = %s AND `$table_name`.`post_type` = 'product' AND `$table_name`.`id` = %s LIMIT 1";
+        $sql = $wpdb->prepare($sql, $user_id, $product_id);
         $results = $wpdb->get_row($sql);
         if ($results->count == 1) {
             $controller = new CUSTOM_WC_REST_Products_Controller();
@@ -531,12 +543,30 @@ class FlutterVendor extends FlutterBaseController
                     ),);
             }
 
+            $theme = wp_get_theme();
+            $is_listeo = $theme->name == 'Listeo';
+            if($is_listeo){
+                $args['exclude_listing_booking'] = 'true';
+                $args['tax_query'][] = array(
+                    'taxonomy' => 'product_cat',
+                    'field' => 'slug',
+                    'terms' => array('listeo-booking'),
+                    'operator' => 'NOT IN'
+                );
+                $args['tax_query'][] = array(
+                    'taxonomy' => 'product_type',
+                    'field' => 'slug',
+                    'terms' => array('listing_package'),
+                    'operator' => 'NOT IN'
+                );
+            }
 
             $products = get_posts($args);
         } else {
             global $woocommerce, $wpdb;
             $table_name = $wpdb->prefix . "posts";
-            $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_author` = $user_id AND `$table_name`.`post_type` = 'product' LIMIT $limit OFFSET $page";
+            $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_author` = %s AND `$table_name`.`post_type` = 'product' LIMIT %d OFFSET %d";
+            $sql = $wpdb->prepare($sql,$user_id, $limit, $page);
             $products = $wpdb->get_results($sql);
         }
 
@@ -568,6 +598,12 @@ class FlutterVendor extends FlutterBaseController
         return $helper->flutter_get_wcfm_stores($request);
     }
 
+    public function flutter_get_wcfm_products($request)
+    {
+        $helper = new FlutterWCFMHelper();
+        return $helper->flutter_get_wcfm_products($request);
+    }
+
     public function flutter_get_wcfm_stores_by_id($request)
     {
         $helper = new FlutterWCFMHelper();
@@ -577,7 +613,6 @@ class FlutterVendor extends FlutterBaseController
 
     public function prepeare_product_response($response, $object, $request)
     {
-        $response = customProductResponse($response, $object, $request);
         $data = $response->get_data();
         $author_id = get_post_field('post_author', $data['id']);
         if (is_plugin_active('dokan-lite/dokan.php')) {
@@ -639,70 +674,19 @@ class FlutterVendor extends FlutterBaseController
 
         $is_admin = checkIsAdmin($user_id);
 
-        $api = new WC_REST_Orders_V1_Controller();
-        $papi = new WC_REST_Products_Controller();
-        $req = new WP_REST_Request('GET');
-
-        $page = isset($request["page"]) ? $request["page"] : 1;
-        $page = $page - 1;
-        $limit = isset($request["per_page"]) ? $request["per_page"] : 10;
-        $page = $page * $limit;
-
-        $orders = [];
-        $results = [];
         if($is_admin){
-            global $wpdb;
-            $table_name = $wpdb->prefix . "posts";
-            $sql = "SELECT * FROM " . $table_name . " WHERE post_type LIKE 'shop_order'";
-            $sql .= " GROUP BY $table_name.`ID` ORDER BY $table_name.`ID` DESC LIMIT $limit OFFSET $page";
-            $orders = $wpdb->get_results($sql);
-        }else{
-            if (is_plugin_active('dokan-lite/dokan.php')) {
-                $order_count = dokan_get_seller_orders_number( ['seller_id'=>$user_id] );      
-                $args = ['offset'=>0, 'limit'=>$order_count];
-                $orders = dokan_get_seller_orders($user_id, $args);
+            $helper = new VendorAdminWooHelper();
+        }else if (is_plugin_active('dokan-lite/dokan.php')) {
+                $helper = new VendorAdminDokanHelper();
+            }else if(is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')){
+                $helper = new VendorAdminWCFMHelper();
+            }else{
+                $helper = new VendorAdminWooHelper();
             }
-    
-            if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
-                global $wpdb;
-                $table_name = $wpdb->prefix . "wcfm_marketplace_orders";
-                $orders = $wpdb->get_results("SELECT * FROM $table_name WHERE vendor_id = '$user_id' AND is_trashed != 1 ORDER BY order_id DESC LIMIT $page,$limit");
-            }
-        }
+        
+        $res =  $helper->flutter_get_orders($request, $user_id);
 
-        foreach ($orders as $item) {
-            $order = wc_get_order(isset($item->ID) ? $item->ID : (isset($item->order_id) ? $item->order_id : $item->id));
-            if ($order != false) {
-                $response = $api->prepare_item_for_response($order, $request);
-                $line_items = [];
-                foreach ($response->data['line_items'] as $item) {
-                    $product_id = $item['product_id'];
-                    $product = get_post($product_id);
-                    $product_author = $product->post_author;
-                    if (absint($product_author) != absint($user_id)) {
-                        continue;
-                    }
-                    $req->set_query_params(["id" => $product_id]);
-                    $res = $papi->get_item($req);
-                    if (is_wp_error($res)) {
-                        $item["product_data"] = null;
-                    } else {
-                        $item["product_data"] = $res->get_data();
-                    }
-                    if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
-                        $vendor_id = wcfm_get_vendor_id_by_post($product_id);
-                        if ($vendor_id != $user_id) {
-                            continue;
-                        }
-                    }
-                    $line_items[] = $item;
-                    $response->data['line_items'] = $line_items;
-                }
-                $results[] = $response->get_data();
-            }
-        }
-
-        return $results;
+        return $res->get_data()['response'];
     }
 
     public function flutter_get_nearby_stores($request)
@@ -724,7 +708,8 @@ class FlutterVendor extends FlutterBaseController
                 global $wpdb;
                 $table_name2 = $wpdb->prefix.'usermeta';
                 if(isset($search)){
-                    $query = "SELECT $table_name2.user_id FROM $table_name2 WHERE $table_name2.meta_key = 'dokan_store_name' AND $table_name2.meta_value LIKE '%$search%'";
+                    $query = "SELECT $table_name2.user_id FROM $table_name2 WHERE $table_name2.meta_key = 'dokan_store_name' AND $table_name2.meta_value LIKE %s";
+                    $query = $wpdb->prepare($query, '%'.$search.'%');
                     $ids = $wpdb->get_results($query);
                     if(count($ids) == 0){
                         return [];
@@ -739,15 +724,22 @@ class FlutterVendor extends FlutterBaseController
 
                 $query =  "SELECT DISTINCT ";
                 $query.= "store_latitude.user_id, ";
-                $query.= "($distance_earth_center_to_surface * acos(cos( radians($lat) ) * cos( radians(store_latitude.meta_value ) ) * cos( radians(store_longitude.meta_value ) - radians($lng) ) + sin( radians($lat) ) * sin( radians( store_latitude.meta_value)))) AS distance";
+                $query.= "($distance_earth_center_to_surface * acos(cos( radians(%f) ) * cos( radians(store_latitude.meta_value ) ) * cos( radians(store_longitude.meta_value ) - radians(%f) ) + sin( radians(%f) ) * sin( radians( store_latitude.meta_value)))) AS distance";
                 $query.= " FROM $table_name2 AS store_latitude ";
                 $query.= "LEFT JOIN $table_name2 as store_longitude ON store_latitude.user_id = store_longitude.user_id ";
                 $query.= "WHERE store_latitude.meta_key = 'dokan_geo_latitude' AND store_longitude.meta_key = 'dokan_geo_longitude' ";
                 if(isset($user_ids)){
-                    $query.= "AND store_latitude.user_id IN ({$user_ids}) ";
+                    $query.= "AND store_latitude.user_id IN (%s) ";
                 }
-                $query .="HAVING distance < $distance ";
+                $query .="HAVING distance < %f ";
                 $query .="Limit 10";
+
+                if(isset($user_ids)){
+                    $query = $wpdb->prepare($query,$lat,$lng, $lat , $user_ids, $distance);
+                }else{
+                    $query = $wpdb->prepare($query,$lat,$lng, $lat, $distance );
+                }
+            
                 $users = $wpdb->get_results($query);
                 $results = [];
                 if(count($users) > 0){
@@ -792,8 +784,7 @@ class FlutterVendor extends FlutterBaseController
             global $wpdb, $WCFM;
             $table_name = $wpdb->prefix . "wcfm_marketplace_reviews";
             $offset = ($page - 1) * $per_page;
-            $sql = "SELECT * FROM $table_name WHERE vendor_id = $store_id AND approved = $status ORDER BY created DESC LIMIT $per_page OFFSET $offset";
-
+            $sql = $wpdb->prepare("SELECT * FROM $table_name WHERE vendor_id = %s AND approved = %d ORDER BY created DESC LIMIT %d OFFSET %d",$store_id, $status, $per_page, $offset);
             $reviews = $wpdb->get_results($sql);
             foreach ($reviews as $each_review) {
                 $wp_user_avatar_id = get_user_meta($each_review->author_id, 'wp_user_avatar', true);

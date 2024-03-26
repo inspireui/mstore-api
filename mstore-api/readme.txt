@@ -1,34 +1,37 @@
 === MStore API ===
 Contributors:      InspireUI Ltd
-Tags:              mstore, fluxstore, react-native, flutter, inspireui, ios, android
+Tags:              mstore, fluxstore, react-native, flutter, inspireui, ios, android, nocode, app builder, mobile app, source code
 Requires at least: 4.4
-Tested up to:      6.0.0
-Stable tag:        3.9.3
+Tested up to:      6.4.1
+Stable tag:        4.12.6
 License:           GPL-2.0
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
-The plugin is used for config the Mstore/FluxStore mobile and support RestAPI to connect to the app.
+The plugin is used to configure [Mstore/FluxStore](https://1.envato.market/mKdNe) mobile apps and supports RestAPI to connect to the app.
 
 == Description ==
 
-The plugin is used for config the Mstore/FluxStore mobile and support RestAPI to connect to the app.
+The plugin is used to configure [Mstore/FluxStore](https://1.envato.market/mKdNe) mobile apps and supports RestAPI to connect to the app.
 
 [youtube https://youtu.be/sYnHhnS5WnQ]
 
-Fluxstore is a universal e-commerce app inspired by Flutter framework, made by Google. With the mission of reducing thousands of hours of business spent on designing, developing and testing a mobile app, Fluxstore comes as a complete solution for optimizing to deliver your app to the market with high productivity and cost efficiency. It could be able to satisfy all of the business requirements including e-commerce functionalities, impressive UX design and smooth performance on both iOS and Android devices.
+[Fluxstore](https://codecanyon.net/search/fluxstore) are universal e-commerce apps inspired by Flutter framework, made by Google. With the mission of reducing thousands of hours of business spent on designing, developing, and testing a mobile app, Fluxstore comes as a complete solution for optimizing to deliver your app to the market with high productivity and cost efficiency. It could be able to satisfy all of the business requirements including e-commerce functionalities, impressive UX design, and smooth performance on both iOS and Android devices.
 
-If your business has already had the website that built based on WooCommerce, Magento or Opencart, then it is easy to integrate with Fluxstore by just a few steps, and quickly release the final app to both Appstore and Google Play store. The download package is included the full source code and many related resources (designs, documents, videos…) that help you install in the smoothest way.
+If your business already has a website built based on WooCommerce, Shopify, Opencart, Magento, Listeo, My Listing, PrestaShop, Notion, BigCommerce, Strapi, or WordPress then it is easy to integrate with Fluxstore in just a few steps, and quickly release the final app to both App Store and Google Play. The download package includes full source code and many related resources (designs, documents, videos…) that help you install in the smoothest way.
 
-Either you are business people with raising sale ambition or developers with faster mobile application creation need, Fluxstore provides you solutions.
-Faster- Smoother- Closer. 
+Either you are business people with raising sales ambition or developers with faster mobile application creation needs, Fluxstore provides you solutions.
+Faster- Smoother- Closer.
 
 ### Reference links
+
+- App demo: [iOS](https://apps.apple.com/us/app/mstore-flutter/id1469772800), [Android](https://github.com/inspireui/fluxstore/releases/download/demo/fluxstore.apk)
+- App Builder: [https://fluxbuilder.com](https://fluxbuilder.com)
+- Showcase: [https://showcase.fluxbuilder.com](https://showcase.fluxbuilder.com)
 - Company Website: [https://inspireui.com](https://inspireui.com)
-- App demo: [iOS](https://apps.apple.com/us/app/mstore-flutter/id1469772800), [Android](https://play.google.com/store/apps/details?id=com.inspireui.fluxstore)
-- Youtube Channel: [https://www.youtube.com/inspireui](https://www.youtube.com/inspireui)
-- Document: [https://docs.inspireui.com](https://docs.inspireui.com)
-- MStore website: [https://mstore.io](https://mstore.io)
-- Fluxstore website: [https://fluxstore.app](https://fluxstore.app)
+- [Youtube](https://www.youtube.com/inspireui?sub_confirmation=1) 
+- [Facebook](https://www.facebook.com/groups/1401824449973438) 
+- [Document](https://support.inspireui.com/help-center) 
+- [Products](https://1.envato.market/mKdNe)
 
 == Installation ==
 
@@ -43,6 +46,138 @@ Faster- Smoother- Closer.
 1. Click Install.
 
 == Changelog ==
+= 4.12.6 =
+  * Update error code for digits api
+
+= 4.12.5 =
+  * Fix TeraWallet Withdrawal api
+
+= 4.12.4 =
+  * Support TeraWallet Withdrawal api
+
+= 4.12.3 =
+  * Fix submit review mylisting
+
+= 4.12.2 =
+  * Add submit review api for listeo
+
+= 4.12.1 =
+  * Support min max prices api
+
+= 4.12.0 =
+  * Fix auth on webview
+
+= 4.11.9 =
+  * Add custom information table api for B2BKing
+
+= 4.11.8 =
+  * Update vendor dashboard api
+
+= 4.11.7 =
+  * Support B2BKing
+
+= 4.11.6 =
+  * Update description
+
+= 4.11.5 =
+  * Fix appointment checkout issues
+
+= 4.11.4 =
+  * Fix crash variation
+
+= 4.11.3 =
+  * Support tag/category for Product Composite
+
+= 4.11.2 =
+  * Fix home cache
+
+= 4.11.1 =
+  * Support Composite Product api
+
+= 4.11.0 =
+  * Support Store Locator api
+
+= 4.10.10 =
+  * Fix digits login with password
+
+= 4.10.9 =
+  * Fix sql injection
+
+= 4.10.8 =
+  * Fix security apple login
+  * Fix get drivers api
+  * Fix create product api
+
+= 4.10.7 =
+  * Update promptpay order detail
+
+= 4.10.6 =
+  * Fix to scan product
+
+= 4.10.5 =
+  * Fix to show product price with tax settings
+
+= 4.10.4 =
+  * Support Flow Flow api
+  
+= 4.10.3 =
+  * Fix register account for wholesale
+
+= 4.10.2 =
+  * Fix security issues when upload file
+  * Fix Product Gift Cards
+
+= 4.10.1 =
+  * Add whosale prices for product
+
+= 4.10.0 =
+  * Remove  verify purchase code
+
+= 4.0.9 =
+  * Fix to register vendor account on Manager app
+
+= 4.0.8 =
+  * Update  Apple Login
+
+= 4.0.7 =
+  * Support 2c2p payment gateway
+
+= 4.0.6 =
+  * Fix load vendor orders
+
+= 4.0.5 =
+  * Fix ExpressPay api
+
+= 4.0.4 =
+  * Support ExpressPay api
+  
+= 4.0.3 =
+  * Fix search delivery boy api
+
+= 4.0.2 =
+  * Fix security
+
+= 4.0.1 =
+  * Add api to get dokan orders for listeo
+
+= 3.9.9 =
+  * Fix security issues
+
+= 3.9.8 =
+  * Fix security issues and support Thawani api
+
+= 3.9.7 =
+  * Fix security issues
+
+= 3.9.6 =
+  * Fix security issues
+
+= 3.9.5 =
+  * Fix load categories for vendor
+
+= 3.9.4 =
+  * Fix login api for listeo theme
+
 = 3.9.3 =
   * Fix security issue for listing api
 
