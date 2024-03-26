@@ -432,6 +432,7 @@ add_filter('woocommerce_rest_prepare_product_review', 'custom_product_review', 2
 add_filter('woocommerce_rest_prepare_product_cat', 'custom_product_category', 20, 3);
 add_filter('woocommerce_rest_prepare_shop_order_object', 'flutter_custom_change_order_response', 20, 3);
 add_filter('woocommerce_rest_prepare_product_attribute', 'flutter_custom_change_product_attribute', 20, 3);
+add_filter('woocommerce_rest_prepare_product_tag', 'flutter_custom_change_product_tag', 20, 3);
 
 function custom_product_category($response, $object, $request)
 {
@@ -477,6 +478,23 @@ function flutter_custom_change_product_attribute($response, $item, $request)
     $taxonomy = wc_attribute_taxonomy_name($item->attribute_name);
 
     $terms = get_filtered_term_product_counts($request, $taxonomy);
+
+    $is_visible = false;
+    foreach ($terms as $key => $term) {
+        if ($term['term_count'] > 0) {
+            $is_visible = true;
+            break;
+        }
+    }
+
+    $response->data['is_visible'] = $is_visible;
+
+    return $response;
+}
+
+function flutter_custom_change_product_tag($response, $item, $request)
+{
+    $terms = get_filtered_term_product_counts($request, $item->taxonomy, $item->term_id);
 
     $is_visible = false;
     foreach ($terms as $key => $term) {

@@ -566,14 +566,20 @@ function customProductResponse($response, $object, $request)
 }
 
 /// Clone from wp-content/plugins/woocommerce-brands/includes/widgets/class-wc-widget-brand-nav.php
-function get_filtered_term_product_counts($request, $taxonomy)
+function get_filtered_term_product_counts($request, $taxonomy, $term_ids = [])
 {
     global $wpdb;
 
-    $term_ids = wp_list_pluck(get_terms(array(
-        'taxonomy'   => $taxonomy,
-        'hide_empty' => true,
-    )), 'term_id');
+    if (!isset($term_ids) || empty($term_ids)) {
+        $term_ids = wp_list_pluck(get_terms(array(
+            'taxonomy'   => $taxonomy,
+            'hide_empty' => true,
+        )), 'term_id');
+    }
+
+    if (!is_array($term_ids)) {
+        $term_ids = [$term_ids];
+    }
 
     $tax_query  = array();
     $meta_query = array();
