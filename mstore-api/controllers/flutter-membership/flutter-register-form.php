@@ -952,7 +952,7 @@ class FlutterRegisterForm
         //$redirectUrl = $this->standardRedirect( $uid, $postData );
         
         if(isset($redirectUrl)){
-            if ($postData['ihc_payment_gateway'] == 'bank_transfer') {
+            if ($postData['payment_selected'] == 'bank_transfer') {
                 return ["redirectUrl" => $redirectUrl, "bankInfo" => ihc_print_bank_transfer_order($uid,$postData['lid'])];
             }
             return ["redirectUrl" => $redirectUrl];
