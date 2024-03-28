@@ -53,6 +53,13 @@ class FlutterTemplate extends WP_REST_Posts_Controller
             $this,
             'register_add_more_fields_to_rest_api'
         ));
+
+        if($this->_isListeo){
+             add_filter('rest_listing_query', array(
+                    $this,
+                    'custom_rest_listing_query'
+                ), 10, 2);
+        }
     }
 
     /**
@@ -1892,6 +1899,14 @@ class FlutterTemplate extends WP_REST_Posts_Controller
 
         }
 
+        public function custom_rest_listing_query($args, $request){
+            $is_featured = $_GET['featured'] == 'true';
+            if($is_featured == true){
+             $args['meta_key'] = '_featured';   
+             $args['meta_query'] = array( 'key' => '_featured', 'value' => 'on', 'compare' => '=' );
+            }
+            return $args;
+        }
     } // end Class
     
 
