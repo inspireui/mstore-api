@@ -434,6 +434,29 @@ add_filter('woocommerce_rest_prepare_product_cat', 'custom_product_category', 20
 add_filter('woocommerce_rest_prepare_shop_order_object', 'flutter_custom_change_order_response', 20, 3);
 add_filter('woocommerce_rest_prepare_product_attribute', 'flutter_custom_change_product_attribute', 20, 3);
 add_filter('woocommerce_rest_prepare_product_tag', 'flutter_custom_change_product_tag', 20, 3);
+add_filter('woocommerce_rest_product_object_query', 'flutter_custom_rest_product_object_query', 10, 2);
+
+function flutter_custom_rest_product_object_query($args, $request)
+{
+    $attrs = $request['attributes'];
+
+    if (is_string($attrs) && !empty($attrs)) {
+        $attrs = json_decode($attrs, true);
+    }
+
+    // Attributes filter.
+    if (!empty($attrs)) {
+        foreach ($attrs as $attr_key => $attr_value) {
+            $args['tax_query'][] = [
+                'taxonomy' => $attr_key,
+                'field'    => 'term_id',
+                'terms'    => explode(',', $attr_value),
+            ];
+        }
+    }
+
+    return $args;
+}
 
 function custom_product_category($response, $object, $request)
 {
