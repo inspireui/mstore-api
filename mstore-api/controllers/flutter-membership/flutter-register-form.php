@@ -1575,9 +1575,12 @@ class FlutterRegisterForm
         }
         $paymentObject = new FlutterDoPayment($options, $paymentGateway);
         $data = $paymentObject->processing();
-        $redirectUrl = (function () {
-            return $this->redirectUrl;
-        })->call($data);
-        return $redirectUrl;
+        if($data){
+            $redirectUrl = (function () {
+                return $this->redirectUrl;
+            })->call($data);
+            return $redirectUrl;
+        }
+        
     }
 }
