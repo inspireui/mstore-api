@@ -3,7 +3,7 @@ Contributors:      InspireUI Ltd
 Tags:              mstore, fluxstore, react-native, flutter, inspireui, ios, android, nocode, app builder, mobile app, source code
 Requires at least: 4.4
 Tested up to:      6.4.1
-Stable tag:        4.12.9
+Stable tag:        4.13.0
 License:           GPL-2.0
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -46,6 +46,9 @@ Faster- Smoother- Closer.
 1. Click Install.
 
 == Changelog ==
+= 4.13.0 =
+  * Fix to get products to rate
+
 = 4.12.9 =
   * Fix list nearby vendors dokan api
 

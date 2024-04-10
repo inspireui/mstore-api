@@ -1163,6 +1163,11 @@ class FlutterWoo extends FlutterBaseController
 			'message'=>$response->get_error_message ());
 		}
 		$comment_id = $response->get_data()['id'];
+        if(isset($request['comment_meta']) && is_array($request['comment_meta']) && !empty($request['comment_meta'])){
+            foreach ($request['comment_meta'] as $key => $value) {
+                add_comment_meta($comment_id, $key, $value, true);
+            }
+        }
 		if(is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')){
 			global $WCFMmp;
 			$WCFMmp->wcfmmp_reviews->wcfmmp_add_store_review( $comment_id );
@@ -1182,6 +1187,8 @@ class FlutterWoo extends FlutterBaseController
 				update_comment_meta( $comment_id, 'reviews-images', $img_arr );
             }
         }
+        $review = get_comment( $comment_id );
+        $response = $controller->prepare_item_for_response( $review, $request );
         return $response;
     }
 

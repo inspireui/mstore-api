@@ -55,39 +55,49 @@ class FlutterReview extends FlutterBaseController
         
             // LOOP THROUGH ORDERS AND GET PRODUCT IDS
             if ( ! $customer_orders ) return [];
-            $product_ids = array();
+            $product_order_items = array();
+
             foreach ( $customer_orders as $customer_order_id ) {
                 $order = wc_get_order( $customer_order_id );
                 $items = $order->get_items();
                 foreach ( $items as $item ) {
                     $product_id = $item->get_product_id();
-                    $product_ids[] = $product_id;
+
+                    $commentArg = array(
+                        'post_id' => $product_id,
+                        'meta_query'=>[
+                            ['key' => 'order_id', 'value' => $customer_order_id]
+                        ],
+                        'count' => true
+                    );
+                    $count = get_comments( $commentArg );
+                    if($count == 0){
+                        $product_order_items[] = ['product_id' => $product_id, 'order' => $order->get_data()];
+                    }
                 }
             }
-            $product_ids = array_unique( $product_ids );
-
-            //get reviewed product ids
-            $commentArg = array(
-                'user_id' => $user_id,   
-            );
-            $reviewed_ids = [];
-            $comments = get_comments( $commentArg );
-            if($comments){
-                foreach($comments as $commentData){
-                    $reviewed_ids[] = $commentData->comment_post_ID;
+            if(count($product_order_items) > 0){
+                function get_product_id($v)
+                {
+                    return($v['product_id']);
                 }
-            }
-            $reviewed_ids = array_unique( $reviewed_ids );
-
-            $result = array_diff($product_ids, $reviewed_ids);
-
-            if(count($result) > 0){
+                $product_ids = array_unique( array_map("get_product_id",$product_order_items) );
                 $controller = new CUSTOM_WC_REST_Products_Controller();
                 $req = new WP_REST_Request('GET');
-                $params = array('status' =>'published', 'include' => $result, 'page'=>1, 'per_page'=>count($result), 'orderby' => 'id', 'order' => 'DESC');
+                $params = array('include' => $product_ids, 'page'=>1, 'per_page'=>count($product_ids), 'orderby' => 'id', 'order' => 'ASC');
                 $req->set_query_params($params);
                 $pRes = $controller->get_items($req);
-                return $pRes->get_data();
+                $products = $pRes->get_data();
+
+                return array_map(function($v) use ($products) { 
+                    foreach ( $products as $product_data ) {
+                        if($product_data['id'] == $v['product_id']){
+                            $v['product_data'] = $product_data;
+                            break;
+                        }
+                    }
+                    return $v;
+                 },$product_order_items);
             }
             return [];
         } else {
