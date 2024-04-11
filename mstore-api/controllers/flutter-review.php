@@ -21,6 +21,7 @@ class FlutterReview extends FlutterBaseController
     public function __construct()
     {
         add_action('rest_api_init', array($this, 'register_flutter_review_routes'));
+        add_filter('duplicate_comment_id', array($this, 'duplicate_comment_id_callback'), 10, 2);
     }
 
     public function register_flutter_review_routes()
@@ -34,6 +35,25 @@ class FlutterReview extends FlutterBaseController
                 }
             ),
         ));
+    }
+
+    function duplicate_comment_id_callback( $dupe_id, $commentdata ) {
+        $json = file_get_contents('php://input');
+        $body = json_decode($json, TRUE);
+        if(isset($body['comment_meta']) && is_array($body['comment_meta']) && !empty($body['comment_meta']['order_id'])){
+            $commentArg = array(
+                'post_id' => $commentdata['comment_post_ID'],
+                'meta_query'=>[
+                    ['key' => 'order_id', 'value' => $body['comment_meta']['order_id']]
+                ],
+            );
+            $comments = get_comments( $commentArg );
+            if (count($comments) > 0) {
+                return $comments[0]->comment_ID;
+            }
+            return '';
+        }
+        return $dupe_id;
     }
 
     public function get_products_to_rate($request)
