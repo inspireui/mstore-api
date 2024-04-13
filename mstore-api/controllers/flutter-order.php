@@ -216,6 +216,11 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
             $wc_wholesale_prices->wwp_order->add_order_type_meta_to_wc_orders($data['id']);
         }
         
+        //add order to wcfm_marketplace_orders table to show order on the vendor dashboard
+        if(class_exists('WCFMmp')) {
+            do_action('wcfm_manual_order_processed', $data['id'], $order, $order);
+        }
+        
         return  $response;
     }
 
