@@ -837,7 +837,6 @@ function flutter_prepare_checkout()
         if (!is_wp_error($userId)) {
             $user = get_userdata($userId);
             if ($user !== false) {
-                wp_logout();
                 $cookie_elements = explode('|', $cookie);
                 if (count($cookie_elements) !== 4) {
                     die;
