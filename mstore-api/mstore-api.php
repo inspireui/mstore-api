@@ -838,13 +838,12 @@ function flutter_prepare_checkout()
             $user = get_userdata($userId);
             if ($user !== false) {
                 $cookie_elements = explode('|', $cookie);
-                if (count($cookie_elements) !== 4) {
-                    die;
+                if (count($cookie_elements) == 4) {
+                    list($username, $expiration, $token, $hmac) = $cookie_elements;
+                    $_COOKIE[LOGGED_IN_COOKIE] = $cookie;
+                    wp_set_current_user($userId, $user->user_login);
+                    wp_set_auth_cookie($userId, true, '', $token);
                 }
-                list($username, $expiration, $token, $hmac) = $cookie_elements;
-                $_COOKIE[LOGGED_IN_COOKIE] = $cookie;
-                wp_set_current_user($userId, $user->user_login);
-                wp_set_auth_cookie($userId, true, '', $token);
 
                 if (isset($_GET['order_detail']) && isset($_GET['order_id']) && is_plugin_active('dokan-lite/dokan.php')) {
                     $url = add_query_arg(
