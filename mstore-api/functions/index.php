@@ -404,10 +404,17 @@ function addQRCodeUrlToMetaResponse($response){
 function customProductResponse($response, $object, $request)
 {
     global $woocommerce_wpml;
+
+    // Will load the product variations if this request is for a specific
+    // product by ID
     $is_detail_api = isset($request->get_params()['id']);
-    if($request['is_all_data'] == true){
+
+    // The `is_all_data` can be String, Boolean or null. So it can be wrong if
+    // check 'false' == true
+    if (filter_var($request['is_all_data'], FILTER_VALIDATE_BOOLEAN)) {
         $is_detail_api = true;
     }
+
     $is_purchased = false;
     if (isset($request['user_id'])) {
         $user_id = $request['user_id'];
