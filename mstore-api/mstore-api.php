@@ -433,7 +433,8 @@ add_filter('woocommerce_rest_prepare_product_review', 'custom_product_review', 2
 add_filter('woocommerce_rest_prepare_product_cat', 'custom_product_category', 20, 3);
 add_filter('woocommerce_rest_prepare_shop_order_object', 'flutter_custom_change_order_response', 20, 3);
 add_filter('woocommerce_rest_prepare_product_attribute', 'flutter_custom_change_product_attribute', 20, 3);
-add_filter('woocommerce_rest_prepare_product_tag', 'flutter_custom_change_product_tag', 20, 3);
+add_filter('woocommerce_rest_prepare_product_tag', 'flutter_custom_change_product_taxonomy', 20, 3);
+add_filter('woocommerce_rest_prepare_product_brand', 'flutter_custom_change_product_taxonomy', 20, 3);
 add_filter('woocommerce_rest_product_object_query', 'flutter_custom_rest_product_object_query', 10, 2);
 
 function flutter_custom_rest_product_object_query($args, $request)
@@ -460,14 +461,14 @@ function flutter_custom_rest_product_object_query($args, $request)
 
 function custom_product_category($response, $object, $request)
 {
-	 $id = $response->data['id'];
-	 $children = get_term_children($id, 'product_cat');
+    $id = $response->data['id'];
+    $children = get_term_children($id, 'product_cat');
 
-    if(empty( $children ) ) {
-    	$response->data['has_children'] = false;
-    }else{
-		$response->data['has_children'] = true;
-	}
+    if (empty($children)) {
+        $response->data['has_children'] = false;
+    } else {
+        $response->data['has_children'] = true;
+    }
     return $response;
 }
 
@@ -501,9 +502,11 @@ function flutter_custom_change_product_attribute($response, $item, $request)
 {
     $taxonomy = wc_attribute_taxonomy_name($item->attribute_name);
 
+    // Get list attribute terms based on attribute.
     $terms = get_filtered_term_product_counts($request, $taxonomy);
 
     $is_visible = false;
+    // Show this attribute if any attribute terms have product quantity > 0
     foreach ($terms as $key => $term) {
         if ($term['term_count'] > 0) {
             $is_visible = true;
@@ -516,19 +519,22 @@ function flutter_custom_change_product_attribute($response, $item, $request)
     return $response;
 }
 
-function flutter_custom_change_product_tag($response, $item, $request)
+/// Custom response for product a tag or brand
+function flutter_custom_change_product_taxonomy($response, $item, $request)
 {
+    // There is only a maximum of 1 entry because term_ids is an array of a
+    // unique id
     $terms = get_filtered_term_product_counts($request, $item->taxonomy, $item->term_id);
 
-    $is_visible = false;
-    foreach ($terms as $key => $term) {
-        if ($term['term_count'] > 0) {
-            $is_visible = true;
-            break;
-        }
+    if (!empty($terms)) {
+        $term = $terms[0];
+        $count = (int)$term['term_count'];
+        $response->data['count'] = $count;
+        $response->data['is_visible'] = $count > 0;
+    } else {
+        $response->data['count'] = 0;
+        $response->data['is_visible'] = false;
     }
-
-    $response->data['is_visible'] = $is_visible;
 
     return $response;
 }
