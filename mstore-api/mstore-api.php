@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 4.13.2
+ * Version: 4.13.3
  * Author: InspireUI
  * Author URI: https://inspireui.com
  *
@@ -53,7 +53,7 @@ if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
 
 class MstoreCheckOut
 {
-    public $version = '4.13.2';
+    public $version = '4.13.3';
 
     public function __construct()
     {
@@ -815,8 +815,22 @@ function flutter_prepare_checkout()
 
             if (!empty($data['shipping_lines'])) {
                 $shippingLines = $data['shipping_lines'];
-                $shippingMethod = $shippingLines[0]['method_id'];
-                WC()->session->set('chosen_shipping_methods', array($shippingMethod));
+                $shippingMethods = [];
+                foreach ($shippingLines as $key => $shippingLine) {
+                   if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php') && !empty($shippingLine['meta_data'])) {
+                        $seller_meta = array_filter($shippingLine['meta_data'],function($item){
+                            return $item['key'] == 'seller_id';
+                        });
+                        if(!empty($seller_meta)){
+                            $shippingMethods[$seller_meta[0]['value']] = $shippingLine['method_id'];
+                        }else{
+                            $shippingMethods[] = $shippingLine['method_id'];
+                        }
+                   } else{
+                    $shippingMethods[] = $shippingLine['method_id'];
+                   }
+                }
+                WC()->session->set('chosen_shipping_methods', $shippingMethods);
             }
             if (!empty($data['payment_method'])) {
                 WC()->session->set('chosen_payment_method', $data['payment_method']);
