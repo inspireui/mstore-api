@@ -278,7 +278,25 @@ class FlutterWoo extends FlutterBaseController
         $token = sanitize_text_field($request['token']);
 
         // Get post id from data via meta key
+
+        // YITH WooCommerce Barcodes
+        // For old requests (data has been removed 000 at the beginning and the
+        // last number at the end). For ex: 123
         $data = $this->get_post_id_from_meta('_ywbc_barcode_value', $raw_data);
+
+        // YITH WooCommerce Barcodes
+        // For new requests, get everything that can be scanned. For ex: 000000001236
+        if (!isset($data)) {
+            $data = $this->get_post_id_from_meta('_ywbc_barcode_display_value', $raw_data);
+        }
+
+        // EAN for WooCommerce plugin
+        // Scan everything. For ex: 323900045132
+        if (!isset($data)) {
+            $ean_key = get_option('alg_wc_ean_meta_key', '_alg_ean');
+            $data = $this->get_post_id_from_meta($ean_key, $raw_data);
+        }
+
 		if(isset($data) && is_numeric($data)){
 			$type = get_post_type($data);
 			
