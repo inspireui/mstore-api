@@ -180,8 +180,6 @@ class FlutterAppleSignInUtils {
             unlink($filePath);
             update_option("mstore_apple_sign_in_file_name", "");
             update_option("mstore_apple_sign_in_key_id", "");
-            echo "success";
-            die();
         }
     }
 }

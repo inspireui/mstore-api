@@ -73,7 +73,6 @@ class FlutterNotification extends FlutterBaseController
         $is_delivery = $params->is_delivery;
         $user = get_user_by('email', $email);
         $user_id = $user->ID;
-        $serverKey = get_option("mstore_firebase_server_key");
         $status = false;
         $is_onesignal = $params->is_onesignal;
         if($is_onesignal){
@@ -87,7 +86,7 @@ class FlutterNotification extends FlutterBaseController
                     $status = pushNotification("Fluxstore", "Test push notification", $deviceToken);
                 }
             }
-            return ["deviceToken" => $deviceToken, 'serverKey' => $serverKey, 'status' => $status];
+            return ["deviceToken" => $deviceToken, 'status' => $status];
         }
         if (isset($is_delivery)) {
             if ($is_delivery) {
@@ -96,13 +95,13 @@ class FlutterNotification extends FlutterBaseController
                     $status = pushNotification("Fluxstore", "Test push notification", $deviceToken);
                 }
             }
-            return ["deviceToken" => $deviceToken, 'serverKey' => $serverKey, 'status' => $status];
+            return ["deviceToken" => $deviceToken, 'status' => $status];
         }
         $deviceToken = get_user_meta($user_id, 'mstore_device_token', true);
         if ($deviceToken) {
             $status = pushNotification("Fluxstore", "Test push notification", $deviceToken);
         }
-        return ["deviceToken" => $deviceToken, 'serverKey' => $serverKey, 'status' => $status];
+        return ["deviceToken" => $deviceToken, 'status' => $status];
     }
 
     function test_push_notification_created_order(){

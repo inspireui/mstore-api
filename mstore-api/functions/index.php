@@ -100,19 +100,7 @@ function one_signal_push_notification($title = '', $message = '', $user_ids = ar
 
 function pushNotification($title, $message, $deviceToken)
 {
-    $serverKey = get_option("mstore_firebase_server_key");
-    if (isset($serverKey) && $serverKey != false) {
-        $body = ["notification" => ["title" => $title, "body" => $message, "click_action" => "FLUTTER_NOTIFICATION_CLICK", "sound"=>"default"], 
-        "data" => ["title" => $title, "body" => $message, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], 
-        "apns" => ["headers"=>["apns-priority" => "10"], "payload"=>["aps" => ["sound"=>"default"],],],
-        "to" => $deviceToken];
-        $headers = ["Authorization" => "key=" . $serverKey, 'Content-Type' => 'application/json; charset=utf-8'];
-        $response = wp_remote_post("https://fcm.googleapis.com/fcm/send", ["headers" => $headers, "body" => json_encode($body)]);
-        $statusCode = wp_remote_retrieve_response_code($response);
-        $body = wp_remote_retrieve_body($response);
-        return $statusCode == 200;
-    }
-    return false;
+    return FirebaseMessageHelper::push_notification($title, $message, $deviceToken);
 }
 
 function sendNotificationToUser($userId, $orderId, $previous_status, $next_status)

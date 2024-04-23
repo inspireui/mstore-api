@@ -2933,13 +2933,8 @@ class VendorAdminWCFMHelper
             $noti_message = 'You have assigned to order '.$order_id.' item '. get_the_title($product_id);
             $deviceToken = get_user_meta($wcfm_delivery_boy, 'mstore_delivery_device_token', true);
             $title= '';
-            $serverKey = get_option("mstore_firebase_server_key");
-            if (isset($serverKey) && $serverKey != false && isset($deviceToken) && $deviceToken != false) {
-                $body = ["notification" => ["title" => "You have new notification", "body" => $noti_message, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], "data" => ["title" => $title, "body" => $noti_message , "click_action" => "FLUTTER_NOTIFICATION_CLICK"], "to" => $deviceToken];
-                $headers = ["Authorization" => "key=" . $serverKey, 'Content-Type' => 'application/json; charset=utf-8'];
-                $response = wp_remote_post("https://fcm.googleapis.com/fcm/send", ["headers" => $headers, "body" => json_encode($body)]);
-                $statusCode = wp_remote_retrieve_response_code($response);
-                $body = wp_remote_retrieve_body($response);
+            if (isset($deviceToken) && $deviceToken != false) {
+                pushNotification("You have new notification", $noti_message, $deviceToken);
             }
             // Notification Update
 

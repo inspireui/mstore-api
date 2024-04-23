@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 4.13.3
+ * Version: 4.13.4
  * Author: InspireUI
  * Author URI: https://inspireui.com
  *
@@ -46,6 +46,7 @@ include_once plugin_dir_path(__FILE__) . "controllers/flutter-store-locator.php"
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-composite-products.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-b2bking.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-review.php";
+include_once plugin_dir_path(__FILE__) . "controllers/helpers/firebase-message-helper.php";
 
 if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
     require __DIR__ . '/vendor/autoload.php';
@@ -53,7 +54,7 @@ if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
 
 class MstoreCheckOut
 {
-    public $version = '4.13.3';
+    public $version = '4.13.4';
 
     public function __construct()
     {
@@ -190,8 +191,8 @@ class MstoreCheckOut
         // Setup Ajax action hook
         add_action('wp_ajax_mstore_delete_json_file', array($this, 'mstore_delete_json_file'));
         add_action('wp_ajax_mstore_delete_apple_file', array($this, 'mstore_delete_apple_file'));
+        add_action('wp_ajax_mstore_delete_firebase_file', array($this, 'mstore_delete_firebase_file'));
         add_action('wp_ajax_mstore_update_limit_product', array($this, 'mstore_update_limit_product'));
-        add_action('wp_ajax_mstore_update_firebase_server_key', array($this, 'mstore_update_firebase_server_key'));
         add_action('wp_ajax_mstore_update_new_order_title', array($this, 'mstore_update_new_order_title'));
         add_action('wp_ajax_mstore_update_new_order_message', array($this, 'mstore_update_new_order_message'));
         add_action('wp_ajax_mstore_update_status_order_title', array($this, 'mstore_update_status_order_title'));
@@ -228,6 +229,17 @@ class MstoreCheckOut
         if(checkIsAdmin(get_current_user_id())){
             $nonce = sanitize_text_field($_REQUEST['nonce']);
             FlutterAppleSignInUtils::delete_config_file($nonce);
+            wp_send_json('success',200);
+        }else{
+            wp_send_json_error('No Permission',401);
+        }
+    }
+
+    function mstore_delete_firebase_file(){
+        if(checkIsAdmin(get_current_user_id())){
+            $nonce = sanitize_text_field($_REQUEST['nonce']);
+            FirebaseMessageHelper::delete_config_file($nonce);
+            wp_send_json('success',200);
         }else{
             wp_send_json_error('No Permission',401);
         }
@@ -241,17 +253,6 @@ class MstoreCheckOut
             if (is_numeric($limit)) {
                 update_option("mstore_limit_product", intval($limit));
             }
-        }else{
-            wp_send_json_error('No Permission',401);
-        }
-    }
-
-    function mstore_update_firebase_server_key()
-    {
-        $nonce = sanitize_text_field($_REQUEST['nonce']);
-        if(checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_firebase_server_key')){
-            $serverKey = sanitize_text_field($_REQUEST['serverKey']);
-            update_option("mstore_firebase_server_key", $serverKey);
         }else{
             wp_send_json_error('No Permission',401);
         }

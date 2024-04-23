@@ -1,5 +1,6 @@
 
 <?php include_once(plugin_dir_path(dirname(dirname(__FILE__))) . 'functions/index.php'); ?>
+<?php include_once(plugin_dir_path(dirname(dirname(__FILE__))) . 'controllers/helpers/firebase-message-helper.php'); ?>
 
     <div class="wrap">
         <div class="thanks">
@@ -79,21 +80,49 @@ if (isset($verified) && $verified == "1") {
         </div>
     </form>
 
-    <div class="thanks">
-        <p>The server key firebase is used to push notification when order status changed.</p>
-        <p style="font-size: 12px;">(Firebase project -> Project Settings -> Cloud Messaging -> Server key)</p>
+    <div class="thanks mb-3">
+        <p>The private key firebase is used to push notification when order status changed.</p>
+        <p style="font-size: 12px;">(Firebase project -> Project Settings -> Service accounts -> Firebase Admin SDK -> Generate new private key)</p>
     </div>
-    <form action="" method="post">
-        <?php
-        $serverKey = get_option("mstore_firebase_server_key");
+    <form id="firebaseFileToUploadForm" action="" enctype="multipart/form-data" method="post">
+        <?php wp_nonce_field( 'upload_firebase_file', 'upload_firebase_file_nonce' ); ?>
+        <?php 
+        if(FirebaseMessageHelper::is_file_existed()){
+            ?>
+            <div class="flex-row items-center justify-between">
+                <a  href="<?php echo esc_url(FirebaseMessageHelper::get_config_file_url()); ?>" target="_blank" class="mr-2 text-sm text-gray-700"><?=FirebaseMessageHelper::get_file_name()?></a>
+                <button type="button" data-nonce="<?php echo wp_create_nonce('delete_config_firebase_file'); ?>" class="mstore-delete-firebase-file">
+                    <svg class="w-5 h-5 text-red-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 11.793a1 1 0 1 1-1.414 1.414L10 11.414l-2.293 2.293a1 1 0 0 1-1.414-1.414L8.586 10 6.293 7.707a1 1 0 0 1 1.414-1.414L10 8.586l2.293-2.293a1 1 0 0 1 1.414 1.414L11.414 10l2.293 2.293Z"/>
+                    </svg>
+                </button>
+            </div>
+            <?php
+        }else{
+            ?>
+            <input type="file" id="firebaseFileToUpload" accept=".json" name="firebaseFileToUpload" class="mstore-file-input-class"/>
+
+            <button type="submit" hidden="hidden" class="mstore_button" name='but_firebase_submit'>Upload</button>
+            <?php
+                if (isset($_POST['but_firebase_submit']) && wp_verify_nonce($_POST['upload_firebase_file_nonce'], 'upload_firebase_file')) {
+                    $errMsg = FirebaseMessageHelper::upload_file_by_admin($_FILES['firebaseFileToUpload']);
+                    if($errMsg != null){
+                        echo "<script type='text/javascript'>
+                        alert('You need to upload Firebase private key file');
+                        </script>";
+                    }else{
+                        echo "<script type='text/javascript'>
+                        location.reload();
+                        </script>";
+                    }
+                }
+            ?>
+            <?php
+        }
         ?>
-        <div class="form-group" style="margin-top:10px;margin-bottom:40px">
-            <textarea class="mstore-input-class mstore-update-firebase-server-key" data-nonce="<?php echo wp_create_nonce('update_firebase_server_key'); ?>"
-                      style="height: 120px"><?php echo esc_attr($serverKey) ?></textarea>
-        </div>
     </form>
 
-    <p>New Order Message</p>
+    <p class="mt-5">New Order Message</p>
     <form action="" method="post">
         <?php
         $newOrderTitle = get_option("mstore_new_order_title");
