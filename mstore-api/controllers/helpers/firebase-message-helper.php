@@ -1,4 +1,5 @@
 <?php
+use Google\Auth\Credentials\ServiceAccountCredentials;
 
 class FirebaseMessageHelper
 {
@@ -73,11 +74,12 @@ class FirebaseMessageHelper
     }
 
     public static function get_access_token($config){
-        $client = new Google\Client();
-        $client->setAuthConfig($config);
-        $client->addScope('https://www.googleapis.com/auth/firebase.messaging');
-        $client->refreshTokenWithAssertion();
-        $token = $client->getAccessToken();
+        $sa = new ServiceAccountCredentials(
+            'https://www.googleapis.com/auth/firebase.messaging',
+            $config,
+        );
+        $token = $sa->fetchAuthToken();
+    
         $access_token = $token['access_token'];
         return $access_token;
     }

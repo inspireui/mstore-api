@@ -10,7 +10,7 @@
   "require": {
     "firebase/php-jwt": "^6.8",
     "paragonie/sodium_compat": "^1.20",
-    "google/apiclient": "^2.0"
+    "google/auth": "^1.37"
   },
   "config": {
     "platform": {
