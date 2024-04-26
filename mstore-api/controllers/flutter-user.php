@@ -474,8 +474,9 @@ class FlutterUserController extends FlutterBaseController
             $WCFMvm->send_approval_reminder_admin( $user_id );
         }
 
-        if(isset($dokan_enable_selling) && $dokan_enable_selling == false){
-            update_user_meta($user_id,'dokan_enable_selling',$dokan_enable_selling);
+        // 'dokan_enable_selling' metadata should be 'yes' or 'no'
+        if (isset($dokan_enable_selling)) {
+            update_user_meta($user_id, 'dokan_enable_selling', $dokan_enable_selling);
         }
         $cookie = generateCookieByUserId($user_id,  $seconds);
 
