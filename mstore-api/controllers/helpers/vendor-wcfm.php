@@ -132,8 +132,10 @@ class FlutterWCFMHelper
                 $wcfm_vendors_json_arr = $vendorData;
             }
 
-            // Get approved vendor reviews count
-            $wcfm_vendors_json_arr['vendor_reviews_count'] = $WCFMmp->wcfmmp_reviews->get_vendor_reviews_count($wcfm_vendors_id);
+            if (apply_filters('wcfm_is_pref_vendor_reviews', true)) {
+                // Get approved vendor reviews count
+                $wcfm_vendors_json_arr['vendor_reviews_count'] = $WCFMmp->wcfmmp_reviews->get_vendor_reviews_count($wcfm_vendors_id);
+            }
         }
 
         $admin_fee_mode = apply_filters('wcfm_is_admin_fee_mode', false);

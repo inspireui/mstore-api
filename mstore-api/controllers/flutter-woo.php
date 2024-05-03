@@ -1186,7 +1186,7 @@ class FlutterWoo extends FlutterBaseController
                 add_comment_meta($comment_id, $key, $value, true);
             }
         }
-		if(is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')){
+		if(apply_filters('wcfm_is_pref_vendor_reviews', true)){
 			global $WCFMmp;
 			$WCFMmp->wcfmmp_reviews->wcfmmp_add_store_review( $comment_id );
 		}    
