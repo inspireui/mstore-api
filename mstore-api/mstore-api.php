@@ -437,6 +437,46 @@ add_filter('woocommerce_rest_prepare_product_attribute', 'flutter_custom_change_
 add_filter('woocommerce_rest_prepare_product_tag', 'flutter_custom_change_product_taxonomy', 20, 3);
 add_filter('woocommerce_rest_prepare_product_brand', 'flutter_custom_change_product_taxonomy', 20, 3);
 add_filter('woocommerce_rest_product_object_query', 'flutter_custom_rest_product_object_query', 10, 2);
+add_filter('woocommerce_rest_product_tag_query', 'flutter_custom_rest_product_tag_query', 10, 2);
+add_filter('woocommerce_rest_product_brand_query', 'flutter_custom_rest_product_brand_query', 10, 2);
+
+function flutter_custom_rest_product_tag_query($args, $request)
+{
+    return flutter_custom_rest_product_taxomomy_query($args, $request, 'product_tag');
+}
+
+function flutter_custom_rest_product_brand_query($args, $request)
+{
+    return flutter_custom_rest_product_taxomomy_query($args, $request, 'product_brand');
+}
+
+function flutter_custom_rest_product_taxomomy_query($args, $request, $taxonomy)
+{
+    $hide_empty = isset($args['hide_empty']) && $args['hide_empty'] == true;
+
+    // `include` parameter can be an array or comma separated string
+    $include = wp_parse_id_list($args['include']);
+
+    // Get product count for all tags, brands related to the requested params (based on category, brand, etc.)
+    $terms = get_filtered_term_product_counts($request, $taxonomy, [], $hide_empty);
+
+    // Trick: Use the `include` parameter to fix the API problem below
+    // The page = 1 has no visible items (count = 0), the app does not show
+    // anything (include loadmore button). If the page = 2 has visible items,
+    // cannot do anything in app because it do not show load more button
+    foreach ($terms as $key => $term) {
+        if ($hide_empty) {
+            if ($term['term_count'] > 0) {
+                $include[] = $term['term_count_id'];
+            }
+        } else {
+            $include[] = $term['term_count_id'];
+        }
+    }
+
+    $args['include'] = implode(',', wp_parse_id_list($include));
+    return $args;
+}
 
 function flutter_custom_rest_product_object_query($args, $request)
 {
