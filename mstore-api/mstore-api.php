@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 4.13.5
+ * Version: 4.13.6
  * Author: InspireUI
  * Author URI: https://inspireui.com
  *
@@ -47,6 +47,7 @@ include_once plugin_dir_path(__FILE__) . "controllers/flutter-composite-products
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-b2bking.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-review.php";
 include_once plugin_dir_path(__FILE__) . "controllers/helpers/firebase-message-helper.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-fib.php";
 
 if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
     require __DIR__ . '/vendor/autoload.php';
@@ -54,7 +55,7 @@ if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
 
 class MstoreCheckOut
 {
-    public $version = '4.13.5';
+    public $version = '4.13.6';
 
     public function __construct()
     {
@@ -71,6 +72,8 @@ class MstoreCheckOut
 
         //migrate old versions to re-verify purchase code automatically
         verifyPurchaseCodeAuto();
+
+        add_filter( 'get_avatar_url', array( $this, 'filter_avatar' ), 10, 3 );
 
         if (is_plugin_active('woocommerce/woocommerce.php') == false) {
             return 0;
@@ -214,6 +217,39 @@ class MstoreCheckOut
             }
         }
     }
+
+    public function filter_avatar( $url, $id_or_email, $args ) {
+		$finder = false;
+		$is_id  = is_numeric( $id_or_email );
+
+		if ( $is_id ) {
+			$finder = absint( $id_or_email );
+		} elseif ( is_string( $id_or_email ) ) {
+			$finder = $id_or_email;
+		} elseif ( $id_or_email instanceof \WP_User ) {
+			// User Object.
+			$finder = $id_or_email->ID;
+		} elseif ( $id_or_email instanceof \WP_Post ) {
+			// Post Object.
+			$finder = (int) $id_or_email->post_author;
+		} elseif ( $id_or_email instanceof \WP_Comment ) {
+			return $url;
+		}
+
+		if ( ! $finder ) {
+			return $url;
+		}
+
+		$user = get_user_by( $is_id ? 'ID' : 'email', $finder );
+
+		if ( $user ) {
+			$avatar = get_user_meta( $user->ID, 'user_avatar', true );
+			if (isset($avatar) && $avatar != "" && !is_bool($avatar)) {
+                $url = $avatar[0];
+            }
+		}
+		return $url;
+	}
 
     function mstore_delete_json_file(){
         if(checkIsAdmin(get_current_user_id())){
