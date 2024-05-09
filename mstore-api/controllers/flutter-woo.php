@@ -259,6 +259,22 @@ class FlutterWoo extends FlutterBaseController
                 }
             ),
         ));
+
+        register_rest_route($this->namespace, '/products/size-guide' . '/(?P<id>[\d]+)', array(
+            'args' => array(
+                'id' => array(
+                    'description' => __('Unique identifier for the resource.', 'woocommerce'),
+                    'type' => 'integer',
+                ),
+            ),
+            array(
+                'methods' => "GET",
+                'callback' => array($this, 'size_guide'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
     }
 
     private function get_post_id_from_meta($meta_key, $meta_value)
@@ -1401,6 +1417,32 @@ class FlutterWoo extends FlutterBaseController
             return $result[0];
         } else {
             return new WP_Error(400, "Unable to get product price", array('status' => 400));
+        }
+    }
+
+    function size_guide($request)
+    {
+        $params = $request->get_url_params();
+        $product_id = sanitize_text_field($params['id']);
+
+        if (function_exists('woodmart_sguide_display')) {
+            // Support WoodMart - Multipurpose WooCommerce Theme
+            ob_start();
+
+            // We can clone and customize this function if needed instead of
+            // using `ob_get_contents`
+            woodmart_sguide_display($product_id);
+
+            $result = ob_get_contents();
+            ob_end_clean();
+        }
+
+        if(!isset($result) || empty($result)){
+            return parent::sendError("invalid_data", "Not found", 400);
+        } else {
+            return array(
+                'data' => $result
+            );
         }
     }
 }
