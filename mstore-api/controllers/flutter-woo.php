@@ -259,6 +259,22 @@ class FlutterWoo extends FlutterBaseController
                 }
             ),
         ));
+
+        register_rest_route($this->namespace, '/products/size-guide' . '/(?P<id>[\d]+)', array(
+            'args' => array(
+                'id' => array(
+                    'description' => __('Unique identifier for the resource.', 'woocommerce'),
+                    'type' => 'integer',
+                ),
+            ),
+            array(
+                'methods' => "GET",
+                'callback' => array($this, 'size_guide'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
     }
 
     private function get_post_id_from_meta($meta_key, $meta_value)
@@ -1402,6 +1418,80 @@ class FlutterWoo extends FlutterBaseController
         } else {
             return new WP_Error(400, "Unable to get product price", array('status' => 400));
         }
+    }
+
+    function size_guide($request)
+    {
+        $params = $request->get_url_params();
+        $product_id = sanitize_text_field($params['id']);
+
+        if (function_exists('woodmart_sguide_display')) {
+            // Support WoodMart - Multipurpose WooCommerce Theme
+            ob_start();
+
+            // We can clone and customize this function if needed instead of
+            // using `ob_get_contents`
+            woodmart_sguide_display($product_id);
+
+            $result = ob_get_contents();
+            ob_end_clean();
+        } else if (class_exists('PSCW_PRODUCT_SIZE_CHART_F_WOO_Front_end')) {
+            // Support Product Size Chart For WooCommerce Plugin:
+            // https://wordpress.org/plugins/product-size-chart-for-woo/
+            $result = $this->custom_product_tabs_content($product_id);
+        }
+
+        if (!isset($result) || empty($result)) {
+            return parent::sendError("invalid_data", "Not found", 400);
+        } else {
+            return array(
+                'data' => $result
+            );
+        }
+    }
+
+    /// Clone from function `custom_product_tabs_content` of `PSCW_PRODUCT_SIZE_CHART_F_WOO_Front_end`
+    private function custom_product_tabs_content($post_id)
+    {
+        $html = '';
+
+        // Initialize controller manually
+        $controller = new PSCW_PRODUCT_SIZE_CHART_F_WOO_Front_end();
+        $controller->option        = get_option('woo_sc_setting');
+        $controller->option['position'] = 'product_tabs';
+
+        $product_id           = $post_id;
+        $sizechart_id         = $controller->woo_sc_function->get_posts_id();
+        $sizechart_posts_data = [];
+        if (!empty($sizechart_id) && is_array($sizechart_id)) {
+            //rsort array size chart post id by DESC
+            rsort($sizechart_id);
+            foreach ($sizechart_id as $sizechart_post_id) {
+                $sizechart_posts_data[$sizechart_post_id] = get_post_meta($sizechart_post_id, 'woo_sc_size_chart_data', true);
+            }
+            foreach ($sizechart_posts_data as $sc_id => $val) {
+
+                $assign_product               = !empty($val['search_product']) ? $val['search_product'] : [];
+                $assign_cate                  = !empty($val['categories']) ? $val['categories'] : [];
+                $all_pro_id_in_assign_cate    = $controller->woo_sc_function->get_products_in_cate($assign_cate);
+                $all_product_ids_in_sizechart = array_merge($all_pro_id_in_assign_cate, $assign_product);
+                if (!empty($all_product_ids_in_sizechart) && is_array($all_product_ids_in_sizechart)) {
+                    $unique_product_id = array_unique($all_product_ids_in_sizechart);
+                }
+                if (!empty($unique_product_id) && is_array($unique_product_id)) {
+                    if (in_array($product_id, $unique_product_id)) {
+                        $get_meta_box_data = $controller->get_meta_box_data($sc_id);
+                        if (isset($get_meta_box_data['hide']) && $get_meta_box_data['hide'] !== 'hide_all') {
+                            $html .=  wp_kses_post($controller->woo_sc_function->content_data($sc_id));
+                        }
+                        if ($controller->option['multi_sc'] == "0") {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return $html;
     }
 }
 
