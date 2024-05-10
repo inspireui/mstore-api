@@ -1441,7 +1441,7 @@ class FlutterWoo extends FlutterBaseController
             $result = $this->custom_product_tabs_content($product_id);
         }
 
-        if(!isset($result) || empty($result)){
+        if (!isset($result) || empty($result)) {
             return parent::sendError("invalid_data", "Not found", 400);
         } else {
             return array(
@@ -1458,6 +1458,7 @@ class FlutterWoo extends FlutterBaseController
         // Initialize controller manually
         $controller = new PSCW_PRODUCT_SIZE_CHART_F_WOO_Front_end();
         $controller->option        = get_option('woo_sc_setting');
+        $controller->option['position'] = 'product_tabs';
 
         $product_id           = $post_id;
         $sizechart_id         = $controller->woo_sc_function->get_posts_id();
