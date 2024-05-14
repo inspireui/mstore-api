@@ -2,10 +2,10 @@
 /**
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
- * Description: The MStore API Plugin which is used for the MStore and FluxStore Mobile App
- * Version: 4.13.6
- * Author: InspireUI
- * Author URI: https://inspireui.com
+ * Description: The MStore API Plugin which is used for the FluxBuilder and FluxStore Mobile App
+ * Version: 4.14.0
+ * Author: FluxBuilder
+ * Author URI: https://fluxbuilder.com
  *
  * Text Domain: MStore-Api
  */

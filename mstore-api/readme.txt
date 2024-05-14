@@ -1,37 +1,39 @@
-=== MStore API ===
-Contributors:      InspireUI Ltd
-Tags:              mstore, fluxstore, react-native, flutter, inspireui, ios, android, nocode, app builder, mobile app, source code
+=== MStore API - Create Native Android & iOS Apps On The Cloud ===
+Contributors:      inspireui
+Tags:              flutter, app builder, app creator, mobile app builder, woocommerce app
 Requires at least: 4.4
-Tested up to:      6.4.1
-Stable tag:        4.13.6
+Tested up to:      6.5.3
+Stable tag:        4.14.0
 License:           GPL-2.0
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
-The plugin is used to configure [Mstore/FluxStore](https://1.envato.market/mKdNe) mobile apps and supports RestAPI to connect to the app.
+Take your WordPress store mobile with MStore API!
+This plugin bridges the gap between your WordPress website and the powerful FluxBuilder app builder. 
 
 == Description ==
+Take your WordPress store mobile with MStore API!
 
-The plugin is used to configure [Mstore/FluxStore](https://1.envato.market/mKdNe) mobile apps and supports RestAPI to connect to the app.
+This plugin bridges the gap between your WordPress website and the powerful FluxBuilder app builder. By enabling the REST API, MStore API seamlessly connects your store data (products, users, orders) to [FluxBuilder App](https://www.fluxbuilder.com), allowing you to create a custom mobile app for your business  without writing any code.
 
-[youtube https://youtu.be/sYnHhnS5WnQ]
+[youtube https://youtu.be/xJ9EQmSw1XU?si=ujuFzKCeYQ5eA0xQ]
 
-[Fluxstore](https://codecanyon.net/search/fluxstore) are universal e-commerce apps inspired by Flutter framework, made by Google. With the mission of reducing thousands of hours of business spent on designing, developing, and testing a mobile app, Fluxstore comes as a complete solution for optimizing to deliver your app to the market with high productivity and cost efficiency. It could be able to satisfy all of the business requirements including e-commerce functionalities, impressive UX design, and smooth performance on both iOS and Android devices.
+### Key benefits:
 
-If your business already has a website built based on WooCommerce, Shopify, Opencart, Magento, Listeo, My Listing, PrestaShop, Notion, BigCommerce, Strapi, or WordPress then it is easy to integrate with Fluxstore in just a few steps, and quickly release the final app to both App Store and Google Play. The download package includes full source code and many related resources (designs, documents, videos…) that help you install in the smoothest way.
+- *Effortless mobile app creation*: Leverage FluxBuilder's drag-and-drop interface and pre-built templates to design your dream mobile app.
+- *Seamless data integration*: MStore API ensures smooth communication between your WordPress store and the mobile app, keeping product information, user accounts, and orders in sync.
+- *Enhanced customer experience*: Offer a convenient mobile shopping experience to your customers, boosting engagement and sales.
 
-Either you are business people with raising sales ambition or developers with faster mobile application creation needs, Fluxstore provides you solutions.
-Faster- Smoother- Closer.
+Ready to go mobile? Download the MStore API plugin and unlock the power of FluxBuilder for your WordPress store!
 
 ### Reference links
-
-- App demo: [iOS](https://apps.apple.com/us/app/mstore-flutter/id1469772800), [Android](https://github.com/inspireui/fluxstore/releases/download/demo/fluxstore.apk)
-- App Builder: [https://fluxbuilder.com](https://fluxbuilder.com)
+- FluxBuilder - Flutter App Builder: [https://www.fluxbuilder.com](https://www.fluxbuilder.com)
+- Guide to use: [docs.fluxbuilder.com](https://docs.fluxbuilder.com)
+- Download The App Builder: [fluxbuilder.com/download](https://www.fluxbuilder.com/download)
 - Showcase: [https://showcase.fluxbuilder.com](https://showcase.fluxbuilder.com)
-- Company Website: [https://inspireui.com](https://inspireui.com)
 - [Youtube](https://www.youtube.com/inspireui?sub_confirmation=1) 
 - [Facebook](https://www.facebook.com/groups/1401824449973438) 
-- [Document](https://support.inspireui.com/help-center) 
-- [Products](https://1.envato.market/mKdNe)
+- [Document](https://docs.fluxbuilder.com) 
+
 
 == Installation ==
 
@@ -46,6 +48,13 @@ Faster- Smoother- Closer.
 1. Click Install.
 
 == Changelog ==
+= 4.14.0 =
+  * Upgrade Filter function
+  * Add size guide feature
+
+= 4.13.7 =
+  * Update plugin description 
+
 = 4.13.6 =
   * Fix to avatar that is uploaded on the app to website
 

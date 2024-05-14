@@ -3,8 +3,8 @@
   "type": "wordpress-plugin",
   "authors": [
     {
-      "name": "InspireUI",
-      "email": "hi@inspireui.com"
+      "name": "FluxBuilder",
+      "email": "hi@fluxbuilder.com"
     }
   ],
   "require": {
