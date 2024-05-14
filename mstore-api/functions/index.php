@@ -561,14 +561,14 @@ function customProductResponse($response, $object, $request)
 }
 
 /// Clone from wp-content/plugins/woocommerce-brands/includes/widgets/class-wc-widget-brand-nav.php
-function get_filtered_term_product_counts($request, $taxonomy, $term_ids = [])
+function get_filtered_term_product_counts($request, $taxonomy, $term_ids = [], $hide_empty = true)
 {
     global $wpdb;
 
     if (!isset($term_ids) || empty($term_ids)) {
         $term_ids = wp_list_pluck(get_terms(array(
             'taxonomy'   => $taxonomy,
-            'hide_empty' => true,
+            'hide_empty' => $hide_empty,
         )), 'term_id');
     }
 
@@ -627,7 +627,23 @@ function get_filtered_term_product_counts($request, $taxonomy, $term_ids = [])
     $query             = apply_filters('woocommerce_get_filtered_term_product_counts_query', $query);
     $query             = implode(' ', $query);
 
-    return $wpdb->get_results($query, ARRAY_A);
+    $term_counts = $wpdb->get_results($query, ARRAY_A);
+
+    $exist_terms_ids = array_column($term_counts, 'term_count_id');
+
+    // In some cases, the `term_counts` result may be missing some terms contained in `$term_ids`.
+    $missing_term_ids = array_diff($term_ids, $exist_terms_ids);
+
+    // Add missing terms to result with term_count = 0
+    $result = $term_counts;
+    foreach ($missing_term_ids as $id) {
+        $result[] = [
+            'term_count' => 0,
+            'term_count_id' => $id
+        ];
+    }
+
+    return $result;
 }
 
 function getLangCodeFromConfigFile ($file) {
