@@ -19,9 +19,9 @@ This plugin bridges the gap between your WordPress website and the powerful Flux
 
 ### Key benefits:
 
-- *Effortless mobile app creation*: Leverage FluxBuilder's drag-and-drop interface and pre-built templates to design your dream mobile app.
-- *Seamless data integration*: MStore API ensures smooth communication between your WordPress store and the mobile app, keeping product information, user accounts, and orders in sync.
-- *Enhanced customer experience*: Offer a convenient mobile shopping experience to your customers, boosting engagement and sales.
+- **Effortless mobile app creation**: Leverage FluxBuilder's drag-and-drop interface and pre-built templates to design your dream mobile app.
+- **Seamless data integration**: MStore API ensures smooth communication between your WordPress store and the mobile app, keeping product information, user accounts, and orders in sync.
+- **Enhanced customer experience**: Offer a convenient mobile shopping experience to your customers, boosting engagement and sales.
 
 Ready to go mobile? Download the MStore API plugin and unlock the power of FluxBuilder for your WordPress store!
 
