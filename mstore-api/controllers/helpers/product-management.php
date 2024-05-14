@@ -11,14 +11,15 @@ class ProductManagementHelper
 
     protected function get_product_item($id)
     {
-        if (!wc_get_product($id)) {
+        $result = wc_get_product($id);
+        if (!$result) {
             return $this->sendError(
                 "invalid_product",
                 "This product does not exist",
                 404
             );
         }
-        return wc_get_product($id);
+        return $result;
     }
 
     protected function find_image_id($image)
