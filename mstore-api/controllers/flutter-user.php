@@ -5,9 +5,15 @@ require_once(__DIR__ . '/helpers/apple-sign-in-helper.php');
 class FlutterUserController extends FlutterBaseController
 {
 
+    /**
+     * Endpoint namespace
+     *
+     * @var string
+     */
+    protected $namespace = 'api/flutter_user';
+
     public function __construct()
     {
-        $this->namespace = 'api/flutter_user';
     }
 
     public function register_routes()
