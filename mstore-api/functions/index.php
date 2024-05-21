@@ -131,7 +131,7 @@ function trackOrderStatusChanged($id, $previous_status, $next_status)
     sendNewOrderNotificationToDelivery($id, $status);
 }
 
-function _pushNotification($user_id, $title, $message, $meta_key, ){
+function _pushNotification($user_id, $title, $message, $meta_key){
     if (is_plugin_active('onesignal-free-web-push-notifications/onesignal.php')) {
         _pushNotificationOneSignal($title,$message, $user_id);
     } else {
