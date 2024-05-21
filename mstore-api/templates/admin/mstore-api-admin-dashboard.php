@@ -76,7 +76,7 @@ if (isset($verified) && $verified == "1") {
         ?>
         <div class="form-group" style="margin-top:10px;margin-bottom:40px">
             <input type="number" data-nonce="<?php echo wp_create_nonce('update_limit_product'); ?>" value="<?php echo (!isset($limit) || $limit == false) ? 10 : esc_attr($limit) ?>"
-                   class="mstore-input-class">
+                   class="mstore-input-class mstore-update-limit-product">
         </div>
     </form>
 
@@ -134,7 +134,7 @@ if (isset($verified) && $verified == "1") {
             $newOrderMsg = "Hi {{name}}, Congratulations, you have received a new order! ";
         }
         ?>
-        <input type="text" class="mstore-input-class" placeholder="Title" data-nonce="<?php echo wp_create_nonce('update_new_order_title'); ?>" value="<?php echo esc_attr($newOrderTitle); ?>">
+        <input type="text" class="mstore-input-class mstore-update-new-order-title" placeholder="Title" data-nonce="<?php echo wp_create_nonce('update_new_order_title'); ?>" value="<?php echo esc_attr($newOrderTitle); ?>">
         <div class="form-group" style="margin-top:10px;margin-bottom:40px">
             <textarea placeholder="Message" data-nonce="<?php echo wp_create_nonce('update_new_order_message'); ?>" class="mstore-update-new-order-message mstore-input-class"
                       style="height: 120px"><?php echo esc_attr($newOrderMsg); ?></textarea>
