@@ -1153,10 +1153,10 @@ class FlutterUserController extends FlutterBaseController
 
         $message = $params['message'];
 
-        $deviceToken = get_user_meta($receiver->ID, 'mstore_device_token', true);
-        $manager_device_token = get_user_meta($receiver->ID, 'mstore_manager_device_token', true);
-        pushNotification($sender_name, $message, $deviceToken);
-        pushNotification($sender_name, $message, $manager_device_token);
+        pushNotificationForUser($receiver->ID, $sender_name, $message);
+        if (!is_plugin_active('onesignal-free-web-push-notifications/onesignal.php')) {//fix duplicate notification if onesignal
+            pushNotificationForVendor($receiver->ID, $sender_name, $message);
+        }
     }
 
     function mstore_digrest_set_variables()

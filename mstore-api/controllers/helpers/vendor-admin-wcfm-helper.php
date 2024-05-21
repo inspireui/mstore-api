@@ -2929,13 +2929,6 @@ class VendorAdminWCFMHelper
                 $delivery_meta_id = $wpdb->insert_id;
             }
 
-
-            $noti_message = 'You have assigned to order '.$order_id.' item '. get_the_title($product_id);
-            $deviceToken = get_user_meta($wcfm_delivery_boy, 'mstore_delivery_device_token', true);
-            $title= '';
-            if (isset($deviceToken) && $deviceToken != false) {
-                pushNotification("You have new notification", $noti_message, $deviceToken);
-            }
             // Notification Update
 
             if (apply_filters("wcfm_is_allow_itemwise_notification", true)) {

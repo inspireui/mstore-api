@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the FluxBuilder and FluxStore Mobile App
- * Version: 4.14.0
+ * Version: 4.14.1
  * Author: FluxBuilder
  * Author URI: https://fluxbuilder.com
  *
@@ -206,6 +206,10 @@ class MstoreCheckOut
         add_action('woocommerce_checkout_update_order_meta', array($this, 'track_new_order'));
         add_action('woocommerce_rest_insert_shop_order_object', array($this, 'track_api_new_order'), 10, 4);
 
+        //WCFM - WooCommerce Frontend Manager - Delivery
+        //Handle listen to assign delivery boy on the website
+        add_action( 'wcfmd_after_delivery_boy_assigned', array($this, 'track_delivery_boy_assigned'), 400, 6 );
+
         $path = get_template_directory() . "/templates";
         if (!file_exists($path)) {
             mkdir($path, 0777, true);
@@ -361,6 +365,12 @@ class MstoreCheckOut
                 sendNotificationForOrderStatusUpdated($object->id, $body['status']);
             }
         }
+    }
+
+    function track_delivery_boy_assigned( $order_id, $order_item_id, $wcfm_tracking_data, $product_id, $wcfm_delivery_boy, $wcfm_messages ) {
+        $notification_message = strip_tags($wcfm_messages);
+        $title = "You have new notification";
+        pushNotificationForDeliveryBoy($wcfm_delivery_boy, $title, $notification_message);
     }
 
     public function handle_received_order_page()

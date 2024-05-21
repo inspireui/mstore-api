@@ -73,35 +73,19 @@ class FlutterNotification extends FlutterBaseController
         $is_delivery = $params->is_delivery;
         $user = get_user_by('email', $email);
         $user_id = $user->ID;
-        $status = false;
         $is_onesignal = $params->is_onesignal;
         if($is_onesignal){
             $status = one_signal_push_notification("Fluxstore", "Test push notification", array($user_id));
             return ['status' => $status];
         }
         if (isset($is_manager)) {
-            if ($is_manager) {
-                $deviceToken = get_user_meta($user_id, 'mstore_manager_device_token', true);
-                if ($deviceToken) {
-                    $status = pushNotification("Fluxstore", "Test push notification", $deviceToken);
-                }
-            }
-            return ["deviceToken" => $deviceToken, 'status' => $status];
+            pushNotificationForVendor($user_id, "Fluxstore", "Test push notification");
+        }else if (isset($is_delivery)) {
+             pushNotificationForDeliveryBoy($user_id, "Fluxstore", "Test push notification");
+        }else {
+            pushNotificationForUser($user_id, "Fluxstore", "Test push notification");
         }
-        if (isset($is_delivery)) {
-            if ($is_delivery) {
-                $deviceToken = get_user_meta($user_id, 'mstore_delivery_device_token', true);
-                if ($deviceToken) {
-                    $status = pushNotification("Fluxstore", "Test push notification", $deviceToken);
-                }
-            }
-            return ["deviceToken" => $deviceToken, 'status' => $status];
-        }
-        $deviceToken = get_user_meta($user_id, 'mstore_device_token', true);
-        if ($deviceToken) {
-            $status = pushNotification("Fluxstore", "Test push notification", $deviceToken);
-        }
-        return ["deviceToken" => $deviceToken, 'status' => $status];
+        return [];
     }
 
     function test_push_notification_created_order(){

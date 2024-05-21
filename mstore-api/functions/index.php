@@ -98,15 +98,9 @@ function one_signal_push_notification($title = '', $message = '', $user_ids = ar
     return wp_remote_retrieve_response_code($response) == 200;
 }
 
-function pushNotification($title, $message, $deviceToken)
-{
-    return FirebaseMessageHelper::push_notification($title, $message, $deviceToken);
-}
-
 function sendNotificationToUser($userId, $orderId, $previous_status, $next_status)
 {
     $user = get_userdata($userId);
-    $deviceToken = get_user_meta($userId, 'mstore_device_token', true);
     $title = get_option("mstore_status_order_title");
     if (!isset($title) || $title == false) {
         $title = "Order Status Changed";
@@ -125,13 +119,7 @@ function sendNotificationToUser($userId, $orderId, $previous_status, $next_statu
     $message = str_replace("{{prevStatus}}", $previous_status_label, $message);
     $message = str_replace("{{nextStatus}}", $next_status_label, $message);
 
-    if (is_plugin_active('onesignal-free-web-push-notifications/onesignal.php')) {
-        _pushNotificationOneSignal($userId, $title, $message);
-    } else {
-        if (isset($deviceToken) && $deviceToken != false) {
-            _pushNotificationFirebase($userId,$title, $message, $deviceToken);
-        }
-    }
+    pushNotificationForUser($userId,$title, $message);
 }
 
 function trackOrderStatusChanged($id, $previous_status, $next_status)
@@ -141,6 +129,29 @@ function trackOrderStatusChanged($id, $previous_status, $next_status)
     sendNotificationToUser($userId, $id, $previous_status, $next_status);
     $status = $order->get_status();
     sendNewOrderNotificationToDelivery($id, $status);
+}
+
+function _pushNotification($user_id, $title, $message, $meta_key, ){
+    if (is_plugin_active('onesignal-free-web-push-notifications/onesignal.php')) {
+        _pushNotificationOneSignal($title,$message, $user_id);
+    } else {
+        $deviceToken = get_user_meta($user_id, $meta_key, true);
+        if (isset($deviceToken) && $deviceToken != false) {
+            _pushNotificationFirebase($user_id,$title, $message, $deviceToken);
+        }
+    }
+}
+
+function pushNotificationForDeliveryBoy($user_id, $title, $message){
+    _pushNotification($user_id, $title, $message, 'mstore_delivery_device_token');
+}
+
+function pushNotificationForVendor($user_id, $title, $message){
+    _pushNotification($user_id, $title, $message, 'mstore_manager_device_token');
+}
+
+function pushNotificationForUser($user_id, $title, $message){
+     _pushNotification($user_id, $title, $message, 'mstore_device_token');
 }
 
 function sendNewOrderNotificationToDelivery($order_id, $status)
@@ -160,11 +171,7 @@ function sendNewOrderNotificationToDelivery($order_id, $status)
             $result = $wpdb->get_results($sql);
 
             foreach ($result as $item) {
-                $deviceToken = get_user_meta($item->delivery_boy, 'mstore_delivery_device_token', true);
-                if (isset($deviceToken) && $deviceToken != false) {
-                    _pushNotificationFirebase($item->delivery_boy,$title, $message, $deviceToken);
-                }
-                _pushNotificationOneSignal($title,$message, $item->delivery_boy);
+                pushNotificationForDeliveryBoy($item->delivery_boy, $title, $message);
             }
         }
 
@@ -189,16 +196,13 @@ function sendNewOrderNotificationToDelivery($order_id, $status)
             UNIQUE KEY id (id)
             );";
             maybe_create_table($table_name, $sql);
-            $deviceToken = get_user_meta($driver_id, 'mstore_delivery_device_token', true);
-            if (isset($deviceToken) && $deviceToken != false) {
-                _pushNotificationFirebase($driver_id,$title, $message, $deviceToken);
-                $wpdb->insert($table_name, array(
-                    'message' => $message,
-                    'order_id' => $order_id,
-                    'delivery_boy' => $driver_id,
-                    'created' => current_time('mysql')
-                ));
-            }
+            pushNotificationForDeliveryBoy($driver_id, $title, $message);
+            $wpdb->insert($table_name, array(
+                'message' => $message,
+                'order_id' => $order_id,
+                'delivery_boy' => $driver_id,
+                'created' => current_time('mysql')
+            ));
         }
     }
 }
@@ -215,18 +219,13 @@ function sendNewOrderNotificationToVendor($order_seller_id, $order_id)
         $message = "Hi {{name}}, Congratulations, you have received a new order! ";
     }
     $message = str_replace("{{name}}", $user->display_name, $message);
-    $deviceToken = get_user_meta($order_seller_id, 'mstore_device_token', true);
-    if (isset($deviceToken) && $deviceToken != false) {
-        _pushNotificationFirebase($order_seller_id,$title, $message, $deviceToken);
+    pushNotificationForUser($order_seller_id, $title, $message);
+    if (!is_plugin_active('onesignal-free-web-push-notifications/onesignal.php')) {//fix duplicate notification if onesignal
+        pushNotificationForVendor($order_seller_id, $title, $message);
     }
-    $managerDeviceToken = get_user_meta($order_seller_id, 'mstore_manager_device_token', true);
-    if (isset($managerDeviceToken) && $managerDeviceToken != false) {
-        _pushNotificationFirebase($order_seller_id,$title, $message, $managerDeviceToken);
-        if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
-            wcfm_message_on_new_order($order_id);
-        }
+    if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
+        wcfm_message_on_new_order($order_id);
     }
-    _pushNotificationOneSignal($order_seller_id,$title, $message);
 }
 
 function wcfm_message_on_new_order($order_id)
@@ -782,18 +781,14 @@ function sendNotificationForOrderStatusUpdated($order_id, $status)
         $message = str_replace("{{name}}", $user->display_name, $message);
         $message = str_replace("{{order}}", $order_id, $message);
     
-        $managerDeviceToken = get_user_meta($seller_id, 'mstore_manager_device_token', true);
-        if (isset($managerDeviceToken) && $managerDeviceToken != false) {
-            _pushNotificationFirebase($seller_id, $title, $message, $managerDeviceToken);
-        }
-        _pushNotificationOneSignal($seller_id,$title, $message);
+        pushNotificationForVendor($seller_id, $title, $message);
     }
 }
 
 function _pushNotificationFirebase($user_id, $title, $message, $deviceToken){
     $is_on = isNotificationEnabled($user_id);
     if($is_on){
-        pushNotification($title, $message, $deviceToken);
+        FirebaseMessageHelper::push_notification($title, $message, $deviceToken);
     }
 }
 
@@ -876,6 +871,11 @@ function customOrderResponse($response, $object, $request)
     /* YITH WooCommerce Barcodes and QR Codes Premium */
     $response = addQRCodeUrlToMetaResponse($response);
 
+    if(function_exists( 'wcfm_is_order_delivered' ) ) {
+        $is_order_delivered = wcfm_is_order_delivered( $response->data['id'] );
+        $response->data['delivery_status'] = $is_order_delivered ? 'delivered' : 'pending';
+    }
+    
     return $response;
 }
 
