@@ -89,68 +89,8 @@ class ProductManagementHelper
         return [];
     }
 
-    public function get_products($request, $user_id)
-    {
-        global $wpdb;
-        $page = isset($request["page"]) ? sanitize_text_field($request["page"])  : 1;
-        $limit = isset($request["per_page"]) ? sanitize_text_field($request["per_page"]) : 10;
-        if(!is_numeric($page)){
-            $page = 1;
-        }
-        if(!is_numeric($limit)){
-            $limit = 10;
-        }
-        if ($page >= 1) {
-            $page = ($page - 1) * $limit;
-        }
-
-        if ($user_id) {
-            $user = get_userdata($user_id);
-            $is_admin = $user != false ? in_array('administrator', (array)$user->roles) : false;
-            $vendor_id = absint($user_id);
-        }
-
-        $table_name = $wpdb->prefix . "posts";
-        $postmeta_table = $wpdb->prefix . "postmeta";
-        $is_admin = isset($is_admin) && $is_admin == true;
-        if($is_admin){
-            $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
-        }else{
-            $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_author` = %s AND `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
-        }
-
-        if (isset($request["search"])) {
-            $search =  sanitize_text_field($request["search"]);
-            $search = "%$search%";
-
-            if ($is_admin) {
-                $sql = "SELECT DISTINCT `$table_name`.ID, `$table_name`.* FROM `$table_name` LEFT JOIN `$postmeta_table` ON {$table_name}.ID = {$postmeta_table}.post_id WHERE `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
-            } else {
-                $sql = "SELECT DISTINCT `$table_name`.ID, `$table_name`.* FROM `$table_name` LEFT JOIN `$postmeta_table` ON {$table_name}.ID = {$postmeta_table}.post_id WHERE `$table_name`.`post_author` = %s AND `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
-            }
-
-            $sql .= " AND (`$table_name`.`post_content` LIKE %s OR `$table_name`.`post_title` LIKE %s OR `$table_name`.`post_excerpt` LIKE %s OR (`$postmeta_table`.`meta_key` = '_sku' AND `$postmeta_table`.`meta_value` LIKE %s))";
-        }
-        $sql .= " ORDER BY `ID` DESC LIMIT %d OFFSET %d";
-
-        $args = array();
-        if(!$is_admin){
-            $args[] = $vendor_id;
-        }
-        if (isset($search)) {
-            $args[] = $search;
-            $args[] = $search;
-            $args[] = $search;
-            $args[] = $search;
-        }
-        $args[] = $limit;
-        $args[] = $page;
-        $sql = $wpdb->prepare($sql, $args);
-        $item = $wpdb->get_results($sql);
-
-        $products_arr = [];
-        foreach ($item as $pro) {
-            $product = wc_get_product($pro->ID);
+    private function get_product_info_by_id($id){
+        $product = wc_get_product($id);
             $p = $product->get_data();
             $image_arr = [];
             foreach (array_filter($p["gallery_image_ids"]) as $img) {
@@ -266,7 +206,71 @@ class ProductManagementHelper
                     $p["variation_products"][] = $variation_data;
                 }
             }
-            $products_arr[] = $p;
+            return $p;
+    }
+
+    public function get_products($request, $user_id)
+    {
+        global $wpdb;
+        $page = isset($request["page"]) ? sanitize_text_field($request["page"])  : 1;
+        $limit = isset($request["per_page"]) ? sanitize_text_field($request["per_page"]) : 10;
+        if(!is_numeric($page)){
+            $page = 1;
+        }
+        if(!is_numeric($limit)){
+            $limit = 10;
+        }
+        if ($page >= 1) {
+            $page = ($page - 1) * $limit;
+        }
+
+        if ($user_id) {
+            $user = get_userdata($user_id);
+            $is_admin = $user != false ? in_array('administrator', (array)$user->roles) : false;
+            $vendor_id = absint($user_id);
+        }
+
+        $table_name = $wpdb->prefix . "posts";
+        $postmeta_table = $wpdb->prefix . "postmeta";
+        $is_admin = isset($is_admin) && $is_admin == true;
+        if($is_admin){
+            $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
+        }else{
+            $sql = "SELECT * FROM `$table_name` WHERE `$table_name`.`post_author` = %s AND `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
+        }
+
+        if (isset($request["search"])) {
+            $search =  sanitize_text_field($request["search"]);
+            $search = "%$search%";
+
+            if ($is_admin) {
+                $sql = "SELECT DISTINCT `$table_name`.ID, `$table_name`.* FROM `$table_name` LEFT JOIN `$postmeta_table` ON {$table_name}.ID = {$postmeta_table}.post_id WHERE `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
+            } else {
+                $sql = "SELECT DISTINCT `$table_name`.ID, `$table_name`.* FROM `$table_name` LEFT JOIN `$postmeta_table` ON {$table_name}.ID = {$postmeta_table}.post_id WHERE `$table_name`.`post_author` = %s AND `$table_name`.`post_type` = 'product' AND `$table_name`.`post_status` != 'trash'";
+            }
+
+            $sql .= " AND (`$table_name`.`post_content` LIKE %s OR `$table_name`.`post_title` LIKE %s OR `$table_name`.`post_excerpt` LIKE %s OR (`$postmeta_table`.`meta_key` = '_sku' AND `$postmeta_table`.`meta_value` LIKE %s))";
+        }
+        $sql .= " ORDER BY `ID` DESC LIMIT %d OFFSET %d";
+
+        $args = array();
+        if(!$is_admin){
+            $args[] = $vendor_id;
+        }
+        if (isset($search)) {
+            $args[] = $search;
+            $args[] = $search;
+            $args[] = $search;
+            $args[] = $search;
+        }
+        $args[] = $limit;
+        $args[] = $page;
+        $sql = $wpdb->prepare($sql, $args);
+        $item = $wpdb->get_results($sql);
+
+        $products_arr = [];
+        foreach ($item as $pro) {
+            $products_arr[] = $this->get_product_info_by_id($pro->ID);
         }
 
         return apply_filters(
@@ -524,11 +528,7 @@ class ProductManagementHelper
 
                 if ($product->get_type() == "variable") {
                     $variations_arr = json_decode($variations,true);
-					$available_variations = $product->get_available_variations();
-					$available_variations_arr = array();
-					foreach($available_variations as $value){
-						$available_variations_arr[]=intval($value['variation_id']);
-					}
+					$available_variations_arr = $product->get_children();
                     foreach ($variations_arr as $variation) {
                         if(isset($variation['id'])){
 							$variation_id = $variation['id'];
@@ -634,48 +634,10 @@ class ProductManagementHelper
                     $featured_image = $image[0];
                 }
                 /*********************/
-
-                $controller = new CUSTOM_WC_REST_Products_Controller();
-                $req = new WP_REST_Request('GET');
-                $params = array('id' => $p['id']);
-                $req->set_query_params($params);
-
-                $response = $controller->get_item($req);
-                $pData = $response->get_data();
-
-                $attributes = [];
-                foreach ($product->get_attributes() as $attribute) {
-                    $attributes[] = [
-                        "id" => $attribute["is_taxonomy"]
-                            ? wc_attribute_taxonomy_id_by_name($attribute["name"])
-                            : 0,
-                        "name" =>
-                            0 === strpos($attribute["name"], "pa_")
-                                ? get_taxonomy($attribute["name"])->labels
-                                ->singular_name
-                                : $attribute["name"],
-                        "position" => (int)$attribute["position"],
-                        "visible" => (bool)$attribute["is_visible"],
-                        "variation" => (bool)$attribute["is_variation"],
-                        "options" => $this->get_attribute_options(
-                            $product->get_id(),
-                            $attribute
-                        ),
-                        "slugs" => $this->get_attribute_slugs(
-                            $product->get_id(),
-                            $attribute
-                        ),
-                        "default" => 0 === strpos($attribute["name"], "pa_"),
-                        "slug" => str_replace(' ','-',$attribute["name"]),
-                    ];
-                }
-                $pData["attributesData"] = $attributes;
-                $pData["featured_image"] = isset($featured_image) ? $featured_image : null;
-                $pData["images"] = $image_arr;
                 return new WP_REST_Response(
                         [
                             "status" => "success",
-                            "response" => $pData,
+                            "response" => $this->get_product_info_by_id($p['id']),
                         ],
                         200
                     );
