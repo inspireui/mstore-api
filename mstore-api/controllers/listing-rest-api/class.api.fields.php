@@ -994,7 +994,7 @@ class FlutterTemplate extends WP_REST_Posts_Controller
                     $free_places = Listeo_Core_Bookings_Calendar::count_free_places($listing_id, $date_start, $date_end, json_encode($slot));
                     if ($free_places > 0)
                     {
-                        $slot = json_encode($slot);
+                        $slot = is_array($slot) ?  $slot : json_encode($slot);
                         $hours = explode(' - ', $slot[0]);
                         $hour_start = date("H:i:s", strtotime($hours[0]));
                         $hour_end = date("H:i:s", strtotime($hours[1]));

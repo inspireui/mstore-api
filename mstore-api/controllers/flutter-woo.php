@@ -1202,8 +1202,8 @@ class FlutterWoo extends FlutterBaseController
                 add_comment_meta($comment_id, $key, $value, true);
             }
         }
-		if(apply_filters('wcfm_is_pref_vendor_reviews', true)){
-			global $WCFMmp;
+		global $WCFMmp;
+		if(apply_filters('wcfm_is_pref_vendor_reviews', true) && $WCFMmp){
 			$WCFMmp->wcfmmp_reviews->wcfmmp_add_store_review( $comment_id );
 		}    
 		if(is_plugin_active('woo-photo-reviews/woo-photo-reviews.php') || is_plugin_active('woocommerce-photo-reviews/woocommerce-photo-reviews.php')){

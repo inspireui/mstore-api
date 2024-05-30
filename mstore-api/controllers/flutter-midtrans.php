@@ -60,12 +60,25 @@ class FlutterMidtrans extends FlutterBaseController
         $json = file_get_contents('php://input');
         $body = json_decode($json, TRUE);
 
-        $params = array(
-            'transaction_details' => array(
-                'order_id' => sanitize_text_field($body['order_id']),
-                'gross_amount' => sanitize_text_field($body['amount']),
-            )
-        );
+        if($body['currency'] != 'IDR'){
+             $options  =  get_option( 'woocommerce_midtrans_settings');
+             if ($options && $options['to_idr_rate']) {
+                $params = array(
+                    'transaction_details' => array(
+                        'order_id' => sanitize_text_field($body['order_id']),
+                        'gross_amount' => floatval(sanitize_text_field($body['amount']))*intval($options['to_idr_rate']),
+                    )
+                );
+             }
+        }
+        if (!isset($params)) {
+            $params = array(
+                'transaction_details' => array(
+                    'order_id' => sanitize_text_field($body['order_id']),
+                    'gross_amount' => sanitize_text_field($body['amount']),
+                )
+            );
+        }
         require_once ABSPATH . 'wp-content/plugins/midtrans-woocommerce/midtrans-gateway.php';
         $order = wc_get_order( sanitize_text_field($body['order_id']) );
         $snapResponse = WC_Midtrans_API::createSnapTransactionHandleDuplicate( $order, $params, 'midtrans' );
