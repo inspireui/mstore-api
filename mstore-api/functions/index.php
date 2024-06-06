@@ -132,12 +132,13 @@ function trackOrderStatusChanged($id, $previous_status, $next_status)
 }
 
 function _pushNotification($user_id, $title, $message, $meta_key){
+    $is_notification_on = $meta_key == 'mstore_manager_device_token' || $meta_key == 'mstore_delivery_device_token';
     if (is_plugin_active('onesignal-free-web-push-notifications/onesignal.php')) {
-        _pushNotificationOneSignal($title,$message, $user_id);
+        _pushNotificationOneSignal($title,$message, $user_id, $is_notification_on);
     } else {
         $deviceToken = get_user_meta($user_id, $meta_key, true);
         if (isset($deviceToken) && $deviceToken != false) {
-            _pushNotificationFirebase($user_id,$title, $message, $deviceToken);
+            _pushNotificationFirebase($user_id,$title, $message, $deviceToken, $is_notification_on);
         }
     }
 }
@@ -219,9 +220,9 @@ function sendNewOrderNotificationToVendor($order_seller_id, $order_id)
         $message = "Hi {{name}}, Congratulations, you have received a new order! ";
     }
     $message = str_replace("{{name}}", $user->display_name, $message);
-    pushNotificationForUser($order_seller_id, $title, $message);
+    pushNotificationForUser($order_seller_id, $title, $message);//push notification to vendor who logged in on FluxStore MV
     if (!is_plugin_active('onesignal-free-web-push-notifications/onesignal.php')) {//fix duplicate notification if onesignal
-        pushNotificationForVendor($order_seller_id, $title, $message);
+        pushNotificationForVendor($order_seller_id, $title, $message);//push notification to vendor who logged in on FluxStore Manager
     }
     if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
         wcfm_message_on_new_order($order_id);
@@ -732,9 +733,7 @@ function getSellerIdsByOrderId($order_id){
         if (isset($order_seller_id) && $order_seller_id != false) {
             $seller_ids[] = $order_seller_id;
         }
-    }
-
-    if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
+    }else if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
         if (function_exists('wcfm_get_vendor_store_by_post')) {
             $order = wc_get_order($order_id);
             if (is_a($order, 'WC_Order')) {
@@ -756,6 +755,12 @@ function getSellerIdsByOrderId($order_id){
                 }
             }
         }
+    }else{
+        $users_query = new WP_User_Query( array( 
+                    'role' => 'Administrator', 
+                    'fields' => 'ID'
+                    ));
+        $seller_ids = $users_query->get_results();
     }
     return $seller_ids;
 }
@@ -785,15 +790,15 @@ function sendNotificationForOrderStatusUpdated($order_id, $status)
     }
 }
 
-function _pushNotificationFirebase($user_id, $title, $message, $deviceToken){
-    $is_on = isNotificationEnabled($user_id);
+function _pushNotificationFirebase($user_id, $title, $message, $deviceToken, $is_notification_on){
+    $is_on = $is_notification_on == true || isNotificationEnabled($user_id);
     if($is_on){
         FirebaseMessageHelper::push_notification($title, $message, $deviceToken);
     }
 }
 
-function _pushNotificationOneSignal($user_id, $title, $message){
-    $is_on = isNotificationEnabled($user_id);
+function _pushNotificationOneSignal($user_id, $title, $message, $is_notification_on){
+    $is_on = $is_notification_on == true || isNotificationEnabled($user_id);
     if($is_on){
         one_signal_push_notification($title,$message,array($user_id));
     }
