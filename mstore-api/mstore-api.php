@@ -485,6 +485,12 @@ add_filter('woocommerce_rest_prepare_product_brand', 'flutter_custom_change_prod
 add_filter('woocommerce_rest_product_object_query', 'flutter_custom_rest_product_object_query', 10, 2);
 add_filter('woocommerce_rest_product_tag_query', 'flutter_custom_rest_product_tag_query', 10, 2);
 add_filter('woocommerce_rest_product_brand_query', 'flutter_custom_rest_product_brand_query', 10, 2);
+add_filter('rest_prepare_post', 'flutter_custom_rest_blog_author_avatar', 10, 3);
+
+function flutter_custom_rest_blog_author_avatar($response, $post, $request) {
+    $response->data['author_avatar'] = get_avatar_url($post->post_author);
+    return $response;
+}
 
 function flutter_custom_rest_product_tag_query($args, $request)
 {
