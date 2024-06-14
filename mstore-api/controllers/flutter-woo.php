@@ -662,6 +662,13 @@ class FlutterWoo extends FlutterBaseController
         }
     }
 
+    private function remove_item_in_cart() {
+        $items = WC()->cart->get_cart();
+        foreach ( $items as $item_key => $item ) {
+            WC()->cart->remove_cart_item($item_key);
+        }
+    }
+
     public function shipping_methods($request)
     {
         $json = file_get_contents('php://input');
@@ -720,6 +727,7 @@ class FlutterWoo extends FlutterBaseController
 
         $shipping_methods = WC()->shipping->calculate_shipping(WC()->cart->get_shipping_packages());
         $required_shipping = WC()->cart->needs_shipping() && WC()->cart->show_shipping();
+        $this->remove_item_in_cart();
 
         if(count( $shipping_methods) == 0){
             return new WP_Error(400, 'No Shipping', array('required_shipping' => $required_shipping));
@@ -789,6 +797,7 @@ class FlutterWoo extends FlutterBaseController
             WC()->session->set('chosen_shipping_methods', $shippings);
         }
         $payment_methods = WC()->payment_gateways->get_available_payment_gateways();
+        $this->remove_item_in_cart();
         $results = [];
         foreach ($payment_methods as $key => $value) {
             $results[] = ["id" => $value->id, "title" => $value->title, "method_title" => $value->method_title, "description" => $value->description];
