@@ -157,6 +157,36 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
             }
         }
 
+        /*** Fix: can not save all meta_data if they have same key ***/
+        $has_change = false;
+        if (isset($params['line_items']) && count($params['line_items']) > 0) {
+            $line_items = array();
+            foreach ($params['line_items'] as $key => $value) {
+               if (isset($value['meta_data']) && count($value['meta_data']) > 0){
+                $meta_data = array();
+                $keys = array();
+                foreach ($value['meta_data'] as $k => $v) {
+                    $keys[] = $v['key'];
+                    $count = array_count_values($keys)[$v['key']];
+                    if ($count > 1) {
+                        $has_change = true;
+                        $meta_data[] = ['key'=>$v['key'].' '.$count, 'value'=>$v['value']];
+                    }else{
+                        $meta_data[] = $v;
+                    }
+                }
+                $value['meta_data'] = $meta_data;
+                $line_items[] = $value;
+               }
+            }
+            $params['line_items'] = $line_items;
+        }
+        if($has_change){
+            $request = new WP_REST_Request( $request->get_method() );
+		    $request->set_body_params( $params );
+        }
+        /************************/
+
         $response = $this->create_item($request);
         if(is_wp_error($response)){
             return $response;
@@ -184,6 +214,11 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
         if (class_exists('WooCommerceWholeSalePrices')) {
             global $wc_wholesale_prices;
             $wc_wholesale_prices->wwp_order->add_order_type_meta_to_wc_orders($data['id']);
+        }
+        
+        //add order to wcfm_marketplace_orders table to show order on the vendor dashboard
+        if(class_exists('WCFMmp')) {
+            do_action('wcfm_manual_order_processed', $data['id'], $order, $order);
         }
         
         return  $response;

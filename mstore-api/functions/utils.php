@@ -68,8 +68,9 @@ class FlutterUtils {
         $file_name = $file_to_upload['name'];
         //validate file name
         $isZH = $file_name == 'config_zh_CN.json' || $file_name == 'config_zh_TW.json';
+        $isPT = $file_name == 'config_pt_PT.json' || $file_name == 'config_pt_BR.json';
         preg_match('/config_[a-z]{2}.json/',$file_name, $output_array);
-        if (!$isZH && (count($output_array) == 0 || strlen($file_name) != 14)) {
+        if (!($isZH || $isPT) && (count($output_array) == 0 || strlen($file_name) != 14)) {
             return 'You need to upload config_xx.json file';
         }else{
           $source      = $file_to_upload['tmp_name'];
@@ -180,8 +181,6 @@ class FlutterAppleSignInUtils {
             unlink($filePath);
             update_option("mstore_apple_sign_in_file_name", "");
             update_option("mstore_apple_sign_in_key_id", "");
-            echo "success";
-            die();
         }
     }
 }

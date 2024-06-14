@@ -5,11 +5,11 @@ function myListingExploreListings($request)
     global $wpdb;
 
     if ( empty( $request['form_data'] ) || ! is_array( $request['form_data'] ) || empty( $request['listing_type'] ) ) {
-        return false;
+        return [];
     }
 
     if ( ! ( $listing_type_obj = ( get_page_by_path( $request['listing_type'], OBJECT, 'case27_listing_type' ) ) ) ) {
-        return false;
+        return [];
     }
 
     $type = new \MyListing\Src\Listing_Type( $listing_type_obj );
@@ -41,13 +41,13 @@ function myListingExploreListings($request)
             'compare' => '='
         ];
     }
-
+	
     if ( $context === 'term-search' ) {
         $taxonomy = ! empty( $form_data['taxonomy'] ) ? sanitize_text_field( $form_data['taxonomy'] ) : false;
         $term = ! empty( $form_data['term'] ) ? sanitize_text_field( $form_data['term'] ) : false;
 
         if ( ! $taxonomy || ! $term || ! taxonomy_exists( $taxonomy ) ) {
-            return false;
+            return [];
         }
 
         $tax_query_operator = apply_filters( 'mylisting/explore/match-all-terms', false ) === true ? 'AND' : 'IN';
@@ -91,16 +91,20 @@ function myListingExploreListings($request)
      * @since 1.7.0
      */
     do_action_ref_array( 'mylisting/get-listings/before-query', [ &$args, $type, $result ] );
-
+	
     $listings = \MyListing\Src\Queries\Explore_Listings::instance()->query( $args );
 
-    $values = implode(',',$listings->posts);
-    $table_name = $wpdb->prefix . "posts";
-    $sql = "SELECT * FROM {$table_name}";
-    $sql .= " WHERE {$table_name}.ID in (%s) ";
-    $sql = $wpdb->prepare($sql, $values);
-    $results = $wpdb->get_results($sql);
+    if(count($listings->posts) > 0){
+        $in = '(' . implode(',', $listings->posts) .')';
+        $table_name = $wpdb->prefix . "posts";
+        $sql = "SELECT * FROM {$table_name}";
+        $sql .= " WHERE {$table_name}.ID in ".$in;
+        $sql = $wpdb->prepare($sql);
+        $results = $wpdb->get_results($sql);
 
-    return $results;
+        return $results;
+    }else{
+        return [];
+    }
 }
 ?>

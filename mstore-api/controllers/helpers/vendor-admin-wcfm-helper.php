@@ -474,7 +474,7 @@ class VendorAdminWCFMHelper
                         $user_str[] = $user->ID;
                     }
                     $user_strr = implode(',', $user_str);
-                    $sql .= " AND `{$table_name}`.customer_id IN (%s)";
+                    $sql .= " AND `{$table_name}`.customer_id IN ({$user_strr})";
                 } else {
                     return new WP_REST_Response(
                         [
@@ -489,13 +489,10 @@ class VendorAdminWCFMHelper
             
             $args = [$user_id];
             if (isset($request["status"])) {
-                $args[] = 'wc-'.sanitize_text_field($request["status"]);
+                $args[] = sanitize_text_field($request["status"]);
             }
             if (isset($request["search"])) {
                 $args[] = '%'.sanitize_text_field($request["search"]).'%';
-            }
-            if(isset($user_strr)){
-                $args[] = $user_strr;
             }
             $args[] = $per_page;
             $args[] = $page;
@@ -2932,18 +2929,6 @@ class VendorAdminWCFMHelper
                 $delivery_meta_id = $wpdb->insert_id;
             }
 
-
-            $noti_message = 'You have assigned to order '.$order_id.' item '. get_the_title($product_id);
-            $deviceToken = get_user_meta($wcfm_delivery_boy, 'mstore_delivery_device_token', true);
-            $title= '';
-            $serverKey = get_option("mstore_firebase_server_key");
-            if (isset($serverKey) && $serverKey != false && isset($deviceToken) && $deviceToken != false) {
-                $body = ["notification" => ["title" => "You have new notification", "body" => $noti_message, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], "data" => ["title" => $title, "body" => $noti_message , "click_action" => "FLUTTER_NOTIFICATION_CLICK"], "to" => $deviceToken];
-                $headers = ["Authorization" => "key=" . $serverKey, 'Content-Type' => 'application/json; charset=utf-8'];
-                $response = wp_remote_post("https://fcm.googleapis.com/fcm/send", ["headers" => $headers, "body" => json_encode($body)]);
-                $statusCode = wp_remote_retrieve_response_code($response);
-                $body = wp_remote_retrieve_body($response);
-            }
             // Notification Update
 
             if (apply_filters("wcfm_is_allow_itemwise_notification", true)) {

@@ -56,6 +56,10 @@ include_once plugin_dir_path(__FILE__) . "controllers/flutter-cc-avenue.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-flow-flow.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-store-locator.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-composite-products.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-b2bking.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-review.php";
+include_once plugin_dir_path(__FILE__) . "controllers/helpers/firebase-message-helper.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-fib.php";
 
 if (is_readable(__DIR__ . '/vendor/autoload.php')) {
     require __DIR__ . '/vendor/autoload.php';
@@ -63,7 +67,7 @@ if (is_readable(__DIR__ . '/vendor/autoload.php')) {
 
 class MstoreCheckOut
 {
-    public $version = '4.11.2';
+    public $version = '4.14.4';
 
     public function __construct()
     {
@@ -82,6 +86,8 @@ class MstoreCheckOut
         register_activation_hook(__FILE__, array($this, 'activate_mobile_app_builder'));
         register_deactivation_hook( __FILE__, array($this, 'deactivate_mobile_app_builder'));
 
+
+        add_filter( 'get_avatar_url', array( $this, 'filter_avatar' ), 10, 3 );
 
         if (is_plugin_active('woocommerce/woocommerce.php') == false) {
             return 0;
@@ -198,8 +204,10 @@ class MstoreCheckOut
         }
 
         // Setup Ajax action hook
+        add_action('wp_ajax_mstore_delete_json_file', array($this, 'mstore_delete_json_file'));
+        add_action('wp_ajax_mstore_delete_apple_file', array($this, 'mstore_delete_apple_file'));
+        add_action('wp_ajax_mstore_delete_firebase_file', array($this, 'mstore_delete_firebase_file'));
         add_action('wp_ajax_mstore_update_limit_product', array($this, 'mstore_update_limit_product'));
-        add_action('wp_ajax_mstore_update_firebase_server_key', array($this, 'mstore_update_firebase_server_key'));
         add_action('wp_ajax_mstore_update_new_order_title', array($this, 'mstore_update_new_order_title'));
         add_action('wp_ajax_mstore_update_new_order_message', array($this, 'mstore_update_new_order_message'));
         add_action('wp_ajax_mstore_update_status_order_title', array($this, 'mstore_update_status_order_title'));
@@ -209,6 +217,10 @@ class MstoreCheckOut
         add_action('woocommerce_order_status_changed', array($this, 'track_order_status_changed'), 9, 4);
         add_action('woocommerce_checkout_update_order_meta', array($this, 'track_new_order'));
         add_action('woocommerce_rest_insert_shop_order_object', array($this, 'track_api_new_order'), 10, 4);
+
+        //WCFM - WooCommerce Frontend Manager - Delivery
+        //Handle listen to assign delivery boy on the website
+        add_action( 'wcfmd_after_delivery_boy_assigned', array($this, 'track_delivery_boy_assigned'), 400, 6 );
 
         $path = get_template_directory() . "/templates";
         if (!file_exists($path)) {
@@ -222,9 +234,41 @@ class MstoreCheckOut
         }
     }
 
-    function mstore_delete_json_file()
-    {
-        if (checkIsAdmin(get_current_user_id())) {
+    public function filter_avatar( $url, $id_or_email, $args ) {
+		$finder = false;
+		$is_id  = is_numeric( $id_or_email );
+
+		if ( $is_id ) {
+			$finder = absint( $id_or_email );
+		} elseif ( is_string( $id_or_email ) ) {
+			$finder = $id_or_email;
+		} elseif ( $id_or_email instanceof \WP_User ) {
+			// User Object.
+			$finder = $id_or_email->ID;
+		} elseif ( $id_or_email instanceof \WP_Post ) {
+			// Post Object.
+			$finder = (int) $id_or_email->post_author;
+		} elseif ( $id_or_email instanceof \WP_Comment ) {
+			return $url;
+		}
+
+		if ( ! $finder ) {
+			return $url;
+		}
+
+		$user = get_user_by( $is_id ? 'ID' : 'email', $finder );
+
+		if ( $user ) {
+			$avatar = get_user_meta( $user->ID, 'user_avatar', true );
+			if (isset($avatar) && $avatar != "" && !is_bool($avatar)) {
+                $url = $avatar[0];
+            }
+		}
+		return $url;
+	}
+
+    function mstore_delete_json_file(){
+        if(checkIsAdmin(get_current_user_id())){
             $id = sanitize_text_field($_REQUEST['id']);
             $nonce = sanitize_text_field($_REQUEST['nonce']);
             FlutterUtils::delete_config_file($id, $nonce);
@@ -238,8 +282,19 @@ class MstoreCheckOut
         if (checkIsAdmin(get_current_user_id())) {
             $nonce = sanitize_text_field($_REQUEST['nonce']);
             FlutterAppleSignInUtils::delete_config_file($nonce);
-        } else {
-            wp_send_json_error('No Permission', 401);
+            wp_send_json('success',200);
+        }else{
+            wp_send_json_error('No Permission',401);
+        }
+    }
+
+    function mstore_delete_firebase_file(){
+        if(checkIsAdmin(get_current_user_id())){
+            $nonce = sanitize_text_field($_REQUEST['nonce']);
+            FirebaseMessageHelper::delete_config_file($nonce);
+            wp_send_json('success',200);
+        }else{
+            wp_send_json_error('No Permission',401);
         }
     }
 
@@ -251,17 +306,6 @@ class MstoreCheckOut
             if (is_numeric($limit)) {
                 update_option("mstore_limit_product", intval($limit));
             }
-        } else {
-            wp_send_json_error('No Permission', 401);
-        }
-    }
-
-    function mstore_update_firebase_server_key()
-    {
-        $nonce = sanitize_text_field($_REQUEST['nonce']);
-        if (checkIsAdmin(get_current_user_id()) && wp_verify_nonce($nonce, 'update_firebase_server_key')) {
-            $serverKey = sanitize_text_field($_REQUEST['serverKey']);
-            update_option("mstore_firebase_server_key", $serverKey);
         } else {
             wp_send_json_error('No Permission', 401);
         }
@@ -334,6 +378,12 @@ class MstoreCheckOut
                 sendNotificationForOrderStatusUpdated($object->id, $body['status']);
             }
         }
+    }
+
+    function track_delivery_boy_assigned( $order_id, $order_item_id, $wcfm_tracking_data, $product_id, $wcfm_delivery_boy, $wcfm_messages ) {
+        $notification_message = strip_tags($wcfm_messages);
+        $title = "You have new notification";
+        pushNotificationForDeliveryBoy($wcfm_delivery_boy, $title, $notification_message);
     }
 
     public function handle_received_order_page()
@@ -468,6 +518,72 @@ add_filter('woocommerce_rest_prepare_product_object', 'flutter_custom_change_pro
 add_filter('woocommerce_rest_prepare_product_review', 'custom_product_review', 20, 3);
 add_filter('woocommerce_rest_prepare_product_cat', 'custom_product_category', 20, 3);
 add_filter('woocommerce_rest_prepare_shop_order_object', 'flutter_custom_change_order_response', 20, 3);
+add_filter('woocommerce_rest_prepare_product_attribute', 'flutter_custom_change_product_attribute', 20, 3);
+add_filter('woocommerce_rest_prepare_product_tag', 'flutter_custom_change_product_taxonomy', 20, 3);
+add_filter('woocommerce_rest_prepare_product_brand', 'flutter_custom_change_product_taxonomy', 20, 3);
+add_filter('woocommerce_rest_product_object_query', 'flutter_custom_rest_product_object_query', 10, 2);
+add_filter('woocommerce_rest_product_tag_query', 'flutter_custom_rest_product_tag_query', 10, 2);
+add_filter('woocommerce_rest_product_brand_query', 'flutter_custom_rest_product_brand_query', 10, 2);
+
+function flutter_custom_rest_product_tag_query($args, $request)
+{
+    return flutter_custom_rest_product_taxomomy_query($args, $request, 'product_tag');
+}
+
+function flutter_custom_rest_product_brand_query($args, $request)
+{
+    return flutter_custom_rest_product_taxomomy_query($args, $request, 'product_brand');
+}
+
+function flutter_custom_rest_product_taxomomy_query($args, $request, $taxonomy)
+{
+    $hide_empty = isset($args['hide_empty']) && $args['hide_empty'] == true;
+
+    // `include` parameter can be an array or comma separated string
+    $include = wp_parse_id_list($args['include']);
+
+    // Get product count for all tags, brands related to the requested params (based on category, brand, etc.)
+    $terms = get_filtered_term_product_counts($request, $taxonomy, [], $hide_empty);
+
+    // Trick: Use the `include` parameter to fix the API problem below
+    // The page = 1 has no visible items (count = 0), the app does not show
+    // anything (include loadmore button). If the page = 2 has visible items,
+    // cannot do anything in app because it do not show load more button
+    foreach ($terms as $key => $term) {
+        if ($hide_empty) {
+            if ($term['term_count'] > 0) {
+                $include[] = $term['term_count_id'];
+            }
+        } else {
+            $include[] = $term['term_count_id'];
+        }
+    }
+
+    $args['include'] = implode(',', wp_parse_id_list($include));
+    return $args;
+}
+
+function flutter_custom_rest_product_object_query($args, $request)
+{
+    $attrs = $request['attributes'];
+
+    if (is_string($attrs) && !empty($attrs)) {
+        $attrs = json_decode($attrs, true);
+    }
+
+    // Attributes filter.
+    if (!empty($attrs)) {
+        foreach ($attrs as $attr_key => $attr_value) {
+            $args['tax_query'][] = [
+                'taxonomy' => $attr_key,
+                'field'    => 'term_id',
+                'terms'    => explode(',', $attr_value),
+            ];
+        }
+    }
+
+    return $args;
+}
 
 function custom_product_category($response, $object, $request)
 {
@@ -506,6 +622,74 @@ function flutter_custom_change_order_response($response, $object, $request)
 function flutter_custom_change_product_response($response, $object, $request)
 {
     return customProductResponse($response, $object, $request);
+}
+
+function flutter_custom_change_product_attribute($response, $item, $request)
+{
+    $taxonomy = wc_attribute_taxonomy_name($item->attribute_name);
+
+    // Get list attribute terms based on attribute.
+    $terms = get_filtered_term_product_counts($request, $taxonomy);
+
+    $is_visible = false;
+    // Show this attribute if any attribute terms have product quantity > 0
+    foreach ($terms as $key => $term) {
+        if ($term['term_count'] > 0) {
+            $is_visible = true;
+            break;
+        }
+    }
+
+    $response->data['is_visible'] = $is_visible;
+
+    return $response;
+}
+
+/// Custom response for product a tag or brand
+function flutter_custom_change_product_taxonomy($response, $item, $request)
+{
+    // There is only a maximum of 1 entry because term_ids is an array of a
+    // unique id
+    $terms = get_filtered_term_product_counts($request, $item->taxonomy, $item->term_id);
+
+    if (!empty($terms)) {
+        $term = $terms[0];
+        $count = (int)$term['term_count'];
+        $response->data['count'] = $count;
+        $response->data['is_visible'] = $count > 0;
+    } else {
+        $response->data['count'] = 0;
+        $response->data['is_visible'] = false;
+    }
+
+    return $response;
+}
+
+function custom_get_attribute_taxonomy_name( $slug, $product ) {
+	// Format slug so it matches attributes of the product.
+	$slug       = wc_attribute_taxonomy_slug( $slug );
+	$attributes = $product->get_attributes();
+	$attribute  = false;
+
+	// pa_ attributes.
+	if ( isset( $attributes[ wc_attribute_taxonomy_name( $slug ) ] ) ) {
+		$attribute = $attributes[ wc_attribute_taxonomy_name( $slug ) ];
+	} elseif ( isset( $attributes[ $slug ] ) ) {
+		$attribute = $attributes[ $slug ];
+	}
+
+	if ( ! $attribute ) {
+		return $slug;
+	}
+
+	// Taxonomy attribute name.
+	if ( $attribute->is_taxonomy() ) {
+		$taxonomy = $attribute->get_taxonomy_object();
+		return $taxonomy->attribute_label;
+	}
+
+	// Custom product attribute name.
+	return $attribute->get_name();
 }
 
 function custom_woocommerce_rest_prepare_product_variation_object($response, $object, $request)
@@ -551,6 +735,34 @@ function custom_woocommerce_rest_prepare_product_variation_object($response, $ob
         }
     }
 
+    $variation_product = wc_get_product( $response->data['id'] );
+    if($variation_product) {
+        $_product = wc_get_product( $variation_product->get_parent_id() );
+        foreach ( $variation_product->get_variation_attributes() as $attribute_name => $attribute ) {
+				$name = str_replace( 'attribute_', '', $attribute_name );
+
+				if ( empty( $attribute ) && '0' !== $attribute ) {
+					continue;
+				}
+
+				// Taxonomy-based attributes are prefixed with `pa_`, otherwise simply `attribute_`.
+				if ( 0 === strpos( $attribute_name, 'attribute_pa_' ) ) {
+					$option_term  = get_term_by( 'slug', $attribute, $name );
+					$attributes[] = array(
+						'id'     => wc_attribute_taxonomy_id_by_name( $name ),
+						'name'   => custom_get_attribute_taxonomy_name( $name, $_product ),
+						'option' => $option_term && ! is_wp_error( $option_term ) ? $option_term->name : $attribute,
+					);
+				} else {
+					$attributes[] = array(
+						'id'     => 0,
+						'name'   => custom_get_attribute_taxonomy_name( $name, $_product ),
+						'option' => $attribute,
+					);
+				}
+			}
+        $response->data['attributes'] = $attributes;
+    }
     return $response;
 }
 
@@ -677,6 +889,7 @@ function flutter_prepare_checkout()
 
                     header("Refresh:0");
                 }
+                cleanupAppointmentCartData($userId);
             }
         } else {
             if (is_user_logged_in()) {
@@ -694,51 +907,10 @@ function flutter_prepare_checkout()
 
             $products = $data['line_items'];
 
-            foreach ($products as $product) {
-                $productId = absint($product['product_id']);
-
-                $quantity = $product['quantity'];
-                $variationId = isset($product['variation_id']) ? $product['variation_id'] : "";
-
-                $attributes = [];
-                if (isset($product["meta_data"])) {
-                    foreach ($product["meta_data"] as $item) {
-                        if ($item["value"] != null) {
-                            $attributes[strtolower($item["key"])] = $item["value"];
-                        }
-                    }
-                }
-
-                if (isset($product['addons'])) {
-                    $_POST = $product['addons'];
-                }
-
-                // Check the product variation
-                if (!empty($variationId)) {
-                    $productVariable = new WC_Product_Variable($productId);
-                    $listVariations = $productVariable->get_available_variations();
-                    foreach ($listVariations as $vartiation => $value) {
-                        if ($variationId == $value['variation_id']) {
-                            $attributes = array_merge($value['attributes'], $attributes);
-                            $woocommerce->cart->add_to_cart($productId, $quantity, $variationId, $attributes);
-                        }
-                    }
-                } else {
-                    parseMetaDataForBookingProduct($product);
-                    $cart_item_data = array();
-                    if (is_plugin_active('woo-wallet/woo-wallet.php')) {
-                        $wallet_product = get_wallet_rechargeable_product();
-                        if ($wallet_product->get_id() == $productId) {
-                            $cart_item_data['recharge_amount'] = $product['total'];
-                        }
-                    }
-                    if(isset($product['ywgc_amount'])){
-                        $cart_item_data['ywgc_amount'] = $product['ywgc_amount'];
-                        $cart_item_data['ywgc_product_id'] = $productId;
-                    }
-                    $woocommerce->cart->add_to_cart($productId, $quantity, 0, $attributes, $cart_item_data);
-                }
-            }
+            buildCartItemData($products, function($productId, $quantity, $variationId, $attributes, $cart_item_data){
+                global $woocommerce;
+                $woocommerce->cart->add_to_cart($productId, $quantity, $variationId, $attributes, $cart_item_data);
+            });
 
             if (isset($shipping)) {
                 $woocommerce->customer->set_shipping_first_name($shipping["first_name"]);
@@ -775,8 +947,22 @@ function flutter_prepare_checkout()
 
             if (!empty($data['shipping_lines'])) {
                 $shippingLines = $data['shipping_lines'];
-                $shippingMethod = $shippingLines[0]['method_id'];
-                WC()->session->set('chosen_shipping_methods', array($shippingMethod));
+                $shippingMethods = [];
+                foreach ($shippingLines as $key => $shippingLine) {
+                   if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php') && !empty($shippingLine['meta_data'])) {
+                        $seller_meta = array_filter($shippingLine['meta_data'],function($item){
+                            return $item['key'] == 'seller_id';
+                        });
+                        if(!empty($seller_meta)){
+                            $shippingMethods[$seller_meta[0]['value']] = $shippingLine['method_id'];
+                        }else{
+                            $shippingMethods[] = $shippingLine['method_id'];
+                        }
+                   } else{
+                    $shippingMethods[] = $shippingLine['method_id'];
+                   }
+                }
+                WC()->session->set('chosen_shipping_methods', $shippingMethods);
             }
             if (!empty($data['payment_method'])) {
                 WC()->session->set('chosen_payment_method', $data['payment_method']);
@@ -797,8 +983,26 @@ function flutter_prepare_checkout()
         if (!is_wp_error($userId)) {
             $user = get_userdata($userId);
             if ($user !== false) {
-                wp_set_current_user($userId, $user->user_login);
-                wp_set_auth_cookie($userId);
+                $cookie_elements = explode('|', $cookie);
+                if (count($cookie_elements) == 4) {
+                    list($username, $expiration, $token, $hmac) = $cookie_elements;
+                    $_COOKIE[LOGGED_IN_COOKIE] = $cookie;
+                    wp_set_current_user($userId, $user->user_login);
+                    wp_set_auth_cookie($userId, true, '', $token);
+                }
+
+                if (isset($_GET['order_detail']) && isset($_GET['order_id']) && is_plugin_active('dokan-lite/dokan.php')) {
+                    $url = add_query_arg(
+                        [
+                            'order_id' => $_GET['order_id'],
+                            '_wpnonce' => wp_create_nonce('dokan_view_order'),
+                        ],
+                        dokan_get_navigation_url('orders')
+                    );
+                    wp_safe_redirect($url);
+                    die;
+                }
+
                 if (isset($_GET['vendor_admin'])) {
                     global $wp;
                     $request = $wp->request;

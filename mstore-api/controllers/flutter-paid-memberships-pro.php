@@ -231,7 +231,14 @@ class FlutterPaidMembershipsPro extends FlutterBaseController
         $pmpro_level = pmpro_getLevelAtCheckout($planId);
         if($gateway == 'stripe' && !pmpro_isLevelFree( $pmpro_level )){
             $card = $params['card'];
-            $key = PMProGateway_stripe::get_secretkey();
+            $key = '';
+            if (PMProGateway_stripe::using_legacy_keys()) {
+                $key = get_option('pmpro_stripe_secretkey');
+            } else {
+                $key = get_option('pmpro_gateway_environment') === 'live'
+                ? get_option('pmpro_live_stripe_connect_secretkey')
+                : get_option('pmpro_sandbox_stripe_connect_secretkey');
+            }
             $s = new FlutterStripeHelper($key);
             $s->url .= 'payment_methods';
             $s->method = "POST";

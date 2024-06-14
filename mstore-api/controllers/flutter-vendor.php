@@ -79,6 +79,16 @@ class FlutterVendor extends FlutterBaseController
             ),
         ));
 
+        register_rest_route($this->namespace, '/wcfm-products', array(
+            array(
+                'methods' => "GET",
+                'callback' => array($this, 'flutter_get_wcfm_products'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
+
         register_rest_route($this->namespace, '/wcfm-stores' . '/(?P<id>[\d]+)/', array(
             'args' => array(
                 'id' => array(
@@ -588,6 +598,12 @@ class FlutterVendor extends FlutterBaseController
         return $helper->flutter_get_wcfm_stores($request);
     }
 
+    public function flutter_get_wcfm_products($request)
+    {
+        $helper = new FlutterWCFMHelper();
+        return $helper->flutter_get_wcfm_products($request);
+    }
+
     public function flutter_get_wcfm_stores_by_id($request)
     {
         $helper = new FlutterWCFMHelper();
@@ -676,65 +692,56 @@ class FlutterVendor extends FlutterBaseController
     public function flutter_get_nearby_stores($request)
     {
         if (is_plugin_active('dokan-lite/dokan.php') && is_plugin_active('dokan-pro/dokan-pro.php')){
-            $lat = sanitize_text_field($request['latitude']);
-            $lng = sanitize_text_field($request['longitude']);
             $distance = 10;
-            if(isset($request['distance'])){
-                $distance = sanitize_text_field($request['distance']);   
+            if (isset($request['distance'])) {
+                $distance = sanitize_text_field($request['distance']);
+                if(!is_numeric($distance)){
+                    $distance = 10;
+                }
             }
-            if(isset($request['search'])){
-                $search = sanitize_text_field($request['search']);  
-            }
-
-            if(isset($lat) && isset($lng)){
-                $distance_unit = dokan_get_option( 'distance_unit', 'dokan_geolocation', 'km' );
-                $distance_earth_center_to_surface = ( 'km' === $distance_unit ) ? 6371 : 3959;
-                global $wpdb;
-                $table_name2 = $wpdb->prefix.'usermeta';
-                if(isset($search)){
-                    $query = "SELECT $table_name2.user_id FROM $table_name2 WHERE $table_name2.meta_key = 'dokan_store_name' AND $table_name2.meta_value LIKE %s";
-                    $query = $wpdb->prepare($query, '%'.$search.'%');
-                    $ids = $wpdb->get_results($query);
-                    if(count($ids) == 0){
-                        return [];
-                    }
-                    if(count($ids) > 0){
-                        foreach($ids as $id){
-                            $user_ids[] = $id->user_id;
-                        }
-                        $user_ids = implode(',', $user_ids);
-                    }
-                }
-
-                $query =  "SELECT DISTINCT ";
-                $query.= "store_latitude.user_id, ";
-                $query.= "($distance_earth_center_to_surface * acos(cos( radians(%f) ) * cos( radians(store_latitude.meta_value ) ) * cos( radians(store_longitude.meta_value ) - radians(%f) ) + sin( radians(%f) ) * sin( radians( store_latitude.meta_value)))) AS distance";
-                $query.= " FROM $table_name2 AS store_latitude ";
-                $query.= "LEFT JOIN $table_name2 as store_longitude ON store_latitude.user_id = store_longitude.user_id ";
-                $query.= "WHERE store_latitude.meta_key = 'dokan_geo_latitude' AND store_longitude.meta_key = 'dokan_geo_longitude' ";
-                if(isset($user_ids)){
-                    $query.= "AND store_latitude.user_id IN (%s) ";
-                }
-                $query .="HAVING distance < %f ";
-                $query .="Limit 10";
-
-                if(isset($user_ids)){
-                    $query = $wpdb->prepare($query,$lat,$lng, $lat , $user_ids, $distance);
-                }else{
-                    $query = $wpdb->prepare($query,$lat,$lng, $lat, $distance );
-                }
             
-                $users = $wpdb->get_results($query);
-                $results = [];
-                if(count($users) > 0){
-                    foreach($users as $user){
-						$vendor = new Dokan_Vendor( $user->user_id );
-						$vendor_data = $vendor->to_array();
-                        $results[] =$vendor_data;
-                    }
+            $page = 1;
+            $limit = 10;
+            if (isset($request['page'])) {
+                $page = sanitize_text_field($request['page']);
+                if(!is_numeric($page)){
+                    $page = 1;
                 }
-                return $results;
             }
+            if (isset($request['per_page'])) {
+                $limit = sanitize_text_field($request['per_page']);
+                if(!is_numeric($limit)){
+                    $limit = 10;
+                }
+            }
+            $offset = ( $page - 1 ) * $limit;
+            $seller_args = array(
+                'number' => $limit,
+                'offset' => $offset,
+                'order'  => 'DESC',
+            );
+            $requested_data = array(
+                'distance' => $distance,
+                '_store_filter_nonce'  => wp_create_nonce('_store_filter_nonce'),
+            );
+            if(isset($request['search'])){
+                $requested_data['address'] = sanitize_text_field($request['search']);  
+            }
+            if(isset($request['latitude']) && isset($request['longitude'])){
+                $requested_data['latitude'] = sanitize_text_field($request['latitude']);
+                $requested_data['longitude'] = sanitize_text_field($request['longitude']);
+            }
+            $sellers = dokan_get_sellers( apply_filters( 'dokan_seller_listing_args', $seller_args, $requested_data ) );
+            $users = $sellers['users'];
+            $results = [];
+            if(count($users) > 0){
+                foreach($users as $user){
+					$vendor = new Dokan_Vendor( $user->ID );
+					$vendor_data = $vendor->to_array();
+                    $results[] =$vendor_data;
+                }
+            }
+            return $results;
         }
         return [];
     }

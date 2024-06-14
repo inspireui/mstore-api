@@ -77,6 +77,18 @@ class FlutterStoreLocator extends FlutterBaseController
 		delete_transient( 'yith_sl_stores' );
         $stores = yith_sl_get_stores($params);
 	
+        //customize for YITH WooCommerce Checkout Manager
+        $fields = get_option( 'ywccp_fields_shipping_options', array() );
+        function find_field($slug, $fields){
+            foreach ($fields as $key => $value) {
+                if($value['condition_value'] == $slug.'|pick-up'){
+                    return $value['label'];
+                }
+            }
+            return "";
+        }
+        //
+        
         for ( $i = 0; $i < count($stores); $i++ ){
             $store = YITH_Store_Locator_Store( $stores[ $i ]['id'] );
 			if($store->get_image()){
@@ -85,9 +97,12 @@ class FlutterStoreLocator extends FlutterBaseController
 			}else{
 				$src = null;
 			}
+            $shipping_address = find_field($stores[ $i ]['slug'], $fields);
             $results[] = [
                 'id' => $store->get_id(),
                 'name' => $store->get_name(),
+                'slug' => $stores[ $i ]['slug'],
+                'shipping_address' => $shipping_address,
                 'description' => $store->get_description(),
                 'image' => $src,
                 'address' => trim(preg_replace("/^(<br \/>)/", "", trim($store->get_full_address()), 1)),

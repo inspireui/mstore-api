@@ -249,11 +249,70 @@ class FlutterWoo extends FlutterBaseController
                 }
             ),
         ));
+
+        register_rest_route($this->namespace, '/products/min-max-prices', array(
+            array(
+                'methods' => "GET",
+                'callback' => array($this, 'get_min_max_prices'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
+
+        register_rest_route($this->namespace, '/products/size-guide' . '/(?P<id>[\d]+)', array(
+            'args' => array(
+                'id' => array(
+                    'description' => __('Unique identifier for the resource.', 'woocommerce'),
+                    'type' => 'integer',
+                ),
+            ),
+            array(
+                'methods' => "GET",
+                'callback' => array($this, 'size_guide'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
+    }
+
+    private function get_post_id_from_meta($meta_key, $meta_value)
+    {
+        global $wpdb;
+
+        $sql = "SELECT post_id 
+            FROM {$wpdb->prefix}postmeta
+            WHERE meta_key = '%s' 
+            AND meta_value = '%s'";
+
+        return $wpdb->get_var($wpdb->prepare($sql, $meta_key, $meta_value));
     }
 
     function get_data_from_scanner($request){
-		$data = sanitize_text_field($request['data']);
+        $raw_data = sanitize_text_field($request['data']);
         $token = sanitize_text_field($request['token']);
+
+        // Get post id from data via meta key
+
+        // YITH WooCommerce Barcodes
+        // For old requests (data has been removed 000 at the beginning and the
+        // last number at the end). For ex: 123
+        $data = $this->get_post_id_from_meta('_ywbc_barcode_value', $raw_data);
+
+        // YITH WooCommerce Barcodes
+        // For new requests, get everything that can be scanned. For ex: 000000001236
+        if (!isset($data)) {
+            $data = $this->get_post_id_from_meta('_ywbc_barcode_display_value', $raw_data);
+        }
+
+        // EAN for WooCommerce plugin
+        // Scan everything. For ex: 323900045132
+        if (!isset($data)) {
+            $ean_key = get_option('alg_wc_ean_meta_key', '_alg_ean');
+            $data = $this->get_post_id_from_meta($ean_key, $raw_data);
+        }
+
 		if(isset($data) && is_numeric($data)){
 			$type = get_post_type($data);
 			
@@ -354,8 +413,19 @@ class FlutterWoo extends FlutterBaseController
     /**
      * Check any prerequisites for our REST request.
      */
-    private function check_prerequisites()
+    private function check_prerequisites($request)
     {
+        $cookie = $request->get_header("User-Cookie");
+        if (isset($cookie) && $cookie != null) {
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
+                return $user_id;
+            }
+            wp_set_current_user($user_id);
+        } elseif (isset($body['customer_id']) && $body['customer_id'] != null) {
+            wp_set_current_user($body['customer_id']);
+        }
+
         if (defined('WC_ABSPATH')) {
             // WC 3.6+ - Cart and other frontend functions are not included for REST requests.
             include_once WC_ABSPATH . 'includes/wc-cart-functions.php';
@@ -374,10 +444,14 @@ class FlutterWoo extends FlutterBaseController
             WC()->customer = new WC_Customer(get_current_user_id(), true);
         }
 
+        if(get_current_user_id() != 0){
+            cleanupAppointmentCartData(get_current_user_id());
+        }
         if (null === WC()->cart) {
             WC()->cart = new WC_Cart();
         }
         WC()->cart->empty_cart(true);
+        return true;
     }
 
     function get_product_from_dynamic_link($request)
@@ -571,47 +645,28 @@ class FlutterWoo extends FlutterBaseController
     private function add_items_to_cart($products, $isValidate = true)
     {
         try {
-            foreach ($products as $product) {
-                $productId = absint($product['product_id']);
-
-                $quantity = $product['quantity'];
-                $variationId = isset($product['variation_id']) ? $product['variation_id'] : "";
-
-                $attributes = [];
-                if (isset($product["meta_data"])) {
-                    foreach ($product["meta_data"] as $item) {
-                        if($item['value'] != null){
-                            $attributes[strtolower($item["key"])] = $item["value"];
-                        }
-                    }
+            buildCartItemData($products, function($productId, $quantity, $variationId, $attributes, $cart_item_data){
+                $error = $this->add_to_cart($productId, $quantity, $variationId, $attributes, $cart_item_data);
+                 if (is_string($error) || $error == false) {
+                    throw new Exception($error);
                 }
-
-                // Check the product variation
-                if (!empty($variationId)) {
-                    $productVariable = new WC_Product_Variable($productId);
-                    $listVariations = $productVariable->get_available_variations();
-                    foreach ($listVariations as $vartiation => $value) {
-                        if ($variationId == $value['variation_id']) {
-                            $attributes = array_merge($value['attributes'], $attributes);
-                            $error = $this->add_to_cart($productId, $quantity, $variationId, $attributes);
-                            if ((is_string($error) || $error == false) && $isValidate) {
-                                throw new Exception($error);
-                            }
-                        }
-                    }
-                } else {
-                    parseMetaDataForBookingProduct($product);
-                    $error = $this->add_to_cart($productId, $quantity, 0, $attributes);
-                    if ((is_string($error) || $error == false) && $isValidate) {
-                        throw new Exception($error);
-                    }
-                }
-            }
+            });
             return true;
         } catch (Exception $e) {
-            return $e->getMessage();
+            if($isValidate){
+                return $e->getMessage();
+            }else{
+                return true;
+            }
+            
         }
+    }
 
+    private function remove_item_in_cart() {
+        $items = WC()->cart->get_cart();
+        foreach ( $items as $item_key => $item ) {
+            WC()->cart->remove_cart_item($item_key);
+        }
     }
 
     public function shipping_methods($request)
@@ -619,7 +674,10 @@ class FlutterWoo extends FlutterBaseController
         $json = file_get_contents('php://input');
         $body = json_decode($json, TRUE);
 
-        $this->check_prerequisites();
+        $check = $this->check_prerequisites($request);
+        if(is_wp_error($check)){
+            return $check;
+        }
 
         $shipping = $body["shipping"];
         WC()->customer->set_shipping_first_name($shipping["first_name"]);
@@ -669,6 +727,7 @@ class FlutterWoo extends FlutterBaseController
 
         $shipping_methods = WC()->shipping->calculate_shipping(WC()->cart->get_shipping_packages());
         $required_shipping = WC()->cart->needs_shipping() && WC()->cart->show_shipping();
+        $this->remove_item_in_cart();
 
         if(count( $shipping_methods) == 0){
             return new WP_Error(400, 'No Shipping', array('required_shipping' => $required_shipping));
@@ -700,20 +759,12 @@ class FlutterWoo extends FlutterBaseController
         $json = file_get_contents('php://input');
         $body = json_decode($json, TRUE);
 
-        $cookie = $request->get_header("User-Cookie");
-        if (isset($cookie) && $cookie != null) {
-            $user_id = validateCookieLogin($cookie);
-            if (is_wp_error($user_id)) {
-                return $user_id;
-            }
-            wp_set_current_user($user_id);
-        } elseif (isset($body['customer_id']) && $body['customer_id'] != null) {
-            wp_set_current_user($body['customer_id']);
+        $check = $this->check_prerequisites($request);
+        if(is_wp_error($check)){
+            return $check;
         }
 
-        $this->check_prerequisites();
-
-        $shipping = array_key_exists('shipping', $body) ? $body["shipping"] : null;
+        $shipping = $body["shipping"];
         if (isset($shipping)) {
             WC()->customer->set_shipping_first_name($shipping["first_name"]);
             WC()->customer->set_shipping_last_name($shipping["last_name"]);
@@ -746,6 +797,7 @@ class FlutterWoo extends FlutterBaseController
             WC()->session->set('chosen_shipping_methods', $shippings);
         }
         $payment_methods = WC()->payment_gateways->get_available_payment_gateways();
+        $this->remove_item_in_cart();
         $results = [];
         foreach ($payment_methods as $key => $value) {
             $results[] = ["id" => $value->id, "title" => $value->title, "method_title" => $value->method_title, "description" => $value->description];
@@ -758,7 +810,11 @@ class FlutterWoo extends FlutterBaseController
         $json = file_get_contents('php://input');
         $body = json_decode($json, TRUE);
 
-        $this->check_prerequisites();
+        $check = $this->check_prerequisites($request);
+        if(is_wp_error($check)){
+            return $check;
+        }
+
         $error = $this->add_items_to_cart($body['line_items']);
         if (is_string($error)) {
             return parent::sendError("invalid_item", $error, 400);
@@ -776,11 +832,6 @@ class FlutterWoo extends FlutterBaseController
         }
 
         $coupon_code = $body["coupon_code"];
-
-        // Coupons are globally disabled.
-        if (!wc_coupons_enabled()) {
-            return parent::sendError("invalid_coupon", "Coupon is disabled", 400);
-        }
 
         // Sanitize coupon code.
         $coupon_code = wc_format_coupon_code($coupon_code);
@@ -970,31 +1021,9 @@ class FlutterWoo extends FlutterBaseController
         WC()->cart = new WC_Cart();
         WC()->cart->empty_cart();
 
-        $products = $body['line_items'];
-        foreach ($products as $product) {
-            $productId = absint($product['product_id']);
-
-            $quantity = $product['quantity'];
-            $variationId = isset($product['variation_id']) ? $product['variation_id'] : "";
-
-            $attributes = [];
-            foreach ($product["meta_data"] as $item) {
-                $attributes[$item["key"]] = $item["value"];
-            }
-            // Check the product variation
-            if (!empty($variationId)) {
-                $productVariable = new WC_Product_Variable($productId);
-                $listVariations = $productVariable->get_available_variations();
-                foreach ($listVariations as $vartiation => $value) {
-                    if ($variationId == $value['variation_id']) {
-                        $attributes = array_merge($value['attributes'], $attributes);
-                        WC()->cart->add_to_cart($productId, $quantity, $variationId, $attributes);
-                    }
-                }
-            } else {
-                WC()->cart->add_to_cart($productId, $quantity, 0, $attributes);
-            }
-        }
+        buildCartItemData($body['line_items'], function($productId, $quantity, $variationId, $attributes, $cart_item_data){
+            WC()->cart->add_to_cart($productId, $quantity, $variationId, $attributes, $cart_item_data);
+        });
 
         return WC()->cart->get_totals();
     }
@@ -1024,7 +1053,10 @@ class FlutterWoo extends FlutterBaseController
         $json = file_get_contents('php://input');
         $body = json_decode($json, TRUE);
 
-        $this->check_prerequisites();
+        $check = $this->check_prerequisites($request);
+        if(is_wp_error($check)){
+            return $check;
+        }
 
         $shipping = $body["shipping"];
         if (isset($shipping)) {
@@ -1174,8 +1206,13 @@ class FlutterWoo extends FlutterBaseController
 			'message'=>$response->get_error_message ());
 		}
 		$comment_id = $response->get_data()['id'];
-		if(is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')){
-			global $WCFMmp;
+        if(isset($request['comment_meta']) && is_array($request['comment_meta']) && !empty($request['comment_meta'])){
+            foreach ($request['comment_meta'] as $key => $value) {
+                add_comment_meta($comment_id, $key, $value, true);
+            }
+        }
+		global $WCFMmp;
+		if(apply_filters('wcfm_is_pref_vendor_reviews', true) && $WCFMmp){
 			$WCFMmp->wcfmmp_reviews->wcfmmp_add_store_review( $comment_id );
 		}    
 		if(is_plugin_active('woo-photo-reviews/woo-photo-reviews.php') || is_plugin_active('woocommerce-photo-reviews/woocommerce-photo-reviews.php')){
@@ -1193,6 +1230,8 @@ class FlutterWoo extends FlutterBaseController
 				update_comment_meta( $comment_id, 'reviews-images', $img_arr );
             }
         }
+        $review = get_comment( $comment_id );
+        $response = $controller->prepare_item_for_response( $review, $request );
         return $response;
     }
 
@@ -1358,7 +1397,7 @@ class FlutterWoo extends FlutterBaseController
             $req = new WP_REST_Request('GET');
             $params = array('include' => array_map(function($item){
                 return $item->post_id;
-            }, $items), 'page' => $page, 'per_page' => $per_page, 'orderby' => 'modified', 'order' => 'DESC');
+            }, $items), 'page' => 1, 'per_page' => count($items), 'orderby' => 'modified', 'order' => 'DESC');
             if($lang != null){
                 $params['lang'] = $lang;
             }
@@ -1369,6 +1408,100 @@ class FlutterWoo extends FlutterBaseController
             return [];
         }
 	}
+
+    function get_min_max_prices($request)
+    {
+        global $wpdb;
+
+        $sql = "SELECT MAX( CAST(meta_value AS UNSIGNED )) max_price, MIN( CAST(meta_value AS UNSIGNED )) min_price FROM {$wpdb->prefix}postmeta WHERE meta_key = '_price' AND post_id IN (
+            SELECT ID
+            FROM {$wpdb->prefix}posts
+            WHERE post_type = 'product'
+            AND post_status = 'publish'
+        )";
+
+        $result = $wpdb->get_results($sql);
+
+        if (count($result) > 0) {
+            return $result[0];
+        } else {
+            return new WP_Error(400, "Unable to get product price", array('status' => 400));
+        }
+    }
+
+    function size_guide($request)
+    {
+        $params = $request->get_url_params();
+        $product_id = sanitize_text_field($params['id']);
+
+        if (function_exists('woodmart_sguide_display')) {
+            // Support WoodMart - Multipurpose WooCommerce Theme
+            ob_start();
+
+            // We can clone and customize this function if needed instead of
+            // using `ob_get_contents`
+            woodmart_sguide_display($product_id);
+
+            $result = ob_get_contents();
+            ob_end_clean();
+        } else if (class_exists('PSCW_PRODUCT_SIZE_CHART_F_WOO_Front_end')) {
+            // Support Product Size Chart For WooCommerce Plugin:
+            // https://wordpress.org/plugins/product-size-chart-for-woo/
+            $result = $this->custom_product_tabs_content($product_id);
+        }
+
+        if (!isset($result) || empty($result)) {
+            return parent::sendError("invalid_data", "Not found", 400);
+        } else {
+            return array(
+                'data' => $result
+            );
+        }
+    }
+
+    /// Clone from function `custom_product_tabs_content` of `PSCW_PRODUCT_SIZE_CHART_F_WOO_Front_end`
+    private function custom_product_tabs_content($post_id)
+    {
+        $html = '';
+
+        // Initialize controller manually
+        $controller = new PSCW_PRODUCT_SIZE_CHART_F_WOO_Front_end();
+        $controller->option        = get_option('woo_sc_setting');
+        $controller->option['position'] = 'product_tabs';
+
+        $product_id           = $post_id;
+        $sizechart_id         = $controller->woo_sc_function->get_posts_id();
+        $sizechart_posts_data = [];
+        if (!empty($sizechart_id) && is_array($sizechart_id)) {
+            //rsort array size chart post id by DESC
+            rsort($sizechart_id);
+            foreach ($sizechart_id as $sizechart_post_id) {
+                $sizechart_posts_data[$sizechart_post_id] = get_post_meta($sizechart_post_id, 'woo_sc_size_chart_data', true);
+            }
+            foreach ($sizechart_posts_data as $sc_id => $val) {
+
+                $assign_product               = !empty($val['search_product']) ? $val['search_product'] : [];
+                $assign_cate                  = !empty($val['categories']) ? $val['categories'] : [];
+                $all_pro_id_in_assign_cate    = $controller->woo_sc_function->get_products_in_cate($assign_cate);
+                $all_product_ids_in_sizechart = array_merge($all_pro_id_in_assign_cate, $assign_product);
+                if (!empty($all_product_ids_in_sizechart) && is_array($all_product_ids_in_sizechart)) {
+                    $unique_product_id = array_unique($all_product_ids_in_sizechart);
+                }
+                if (!empty($unique_product_id) && is_array($unique_product_id)) {
+                    if (in_array($product_id, $unique_product_id)) {
+                        $get_meta_box_data = $controller->get_meta_box_data($sc_id);
+                        if (isset($get_meta_box_data['hide']) && $get_meta_box_data['hide'] !== 'hide_all') {
+                            $html .=  wp_kses_post($controller->woo_sc_function->content_data($sc_id));
+                        }
+                        if ($controller->option['multi_sc'] == "0") {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return $html;
+    }
 }
 
 new FlutterWoo;

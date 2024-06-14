@@ -95,27 +95,9 @@ function one_signal_push_notification($title = '', $message = '', $user_ids = ar
     return wp_remote_retrieve_response_code($response) == 200;
 }
 
-function pushNotification($title, $message, $deviceToken)
-{
-    $serverKey = get_option("mstore_firebase_server_key");
-    if (isset($serverKey) && $serverKey != false) {
-        $body = ["notification" => ["title" => $title, "body" => $message, "click_action" => "FLUTTER_NOTIFICATION_CLICK", "sound"=>"default"], 
-        "data" => ["title" => $title, "body" => $message, "click_action" => "FLUTTER_NOTIFICATION_CLICK"], 
-        "apns" => ["headers"=>["apns-priority" => "10"], "payload"=>["aps" => ["sound"=>"default"],],],
-        "to" => $deviceToken];
-        $headers = ["Authorization" => "key=" . $serverKey, 'Content-Type' => 'application/json; charset=utf-8'];
-        $response = wp_remote_post("https://fcm.googleapis.com/fcm/send", ["headers" => $headers, "body" => json_encode($body)]);
-        $statusCode = wp_remote_retrieve_response_code($response);
-        $body = wp_remote_retrieve_body($response);
-        return $statusCode == 200;
-    }
-    return false;
-}
-
 function sendNotificationToUser($userId, $orderId, $previous_status, $next_status)
 {
     $user = get_userdata($userId);
-    $deviceToken = get_user_meta($userId, 'mstore_device_token', true);
     $title = get_option("mstore_status_order_title");
     if (!isset($title) || $title == false) {
         $title = "Order Status Changed";
@@ -134,13 +116,7 @@ function sendNotificationToUser($userId, $orderId, $previous_status, $next_statu
     $message = str_replace("{{prevStatus}}", $previous_status_label, $message);
     $message = str_replace("{{nextStatus}}", $next_status_label, $message);
 
-    if (is_plugin_active('onesignal-free-web-push-notifications/onesignal.php')) {
-        _pushNotificationOneSignal($userId, $title, $message);
-    } else {
-        if (isset($deviceToken) && $deviceToken != false) {
-            _pushNotificationFirebase($userId,$title, $message, $deviceToken);
-        }
-    }
+    pushNotificationForUser($userId,$title, $message);
 }
 
 function trackOrderStatusChanged($id, $previous_status, $next_status)
@@ -150,6 +126,30 @@ function trackOrderStatusChanged($id, $previous_status, $next_status)
     sendNotificationToUser($userId, $id, $previous_status, $next_status);
     $status = $order->get_status();
     sendNewOrderNotificationToDelivery($id, $status);
+}
+
+function _pushNotification($user_id, $title, $message, $meta_key){
+    $is_notification_on = $meta_key == 'mstore_manager_device_token' || $meta_key == 'mstore_delivery_device_token';
+    if (is_plugin_active('onesignal-free-web-push-notifications/onesignal.php')) {
+        _pushNotificationOneSignal($title,$message, $user_id, $is_notification_on);
+    } else {
+        $deviceToken = get_user_meta($user_id, $meta_key, true);
+        if (isset($deviceToken) && $deviceToken != false) {
+            _pushNotificationFirebase($user_id,$title, $message, $deviceToken, $is_notification_on);
+        }
+    }
+}
+
+function pushNotificationForDeliveryBoy($user_id, $title, $message){
+    _pushNotification($user_id, $title, $message, 'mstore_delivery_device_token');
+}
+
+function pushNotificationForVendor($user_id, $title, $message){
+    _pushNotification($user_id, $title, $message, 'mstore_manager_device_token');
+}
+
+function pushNotificationForUser($user_id, $title, $message){
+     _pushNotification($user_id, $title, $message, 'mstore_device_token');
 }
 
 function sendNewOrderNotificationToDelivery($order_id, $status)
@@ -169,11 +169,7 @@ function sendNewOrderNotificationToDelivery($order_id, $status)
             $result = $wpdb->get_results($sql);
 
             foreach ($result as $item) {
-                $deviceToken = get_user_meta($item->delivery_boy, 'mstore_delivery_device_token', true);
-                if (isset($deviceToken) && $deviceToken != false) {
-                    _pushNotificationFirebase($item->delivery_boy,$title, $message, $deviceToken);
-                }
-                _pushNotificationOneSignal($title,$message, $item->delivery_boy);
+                pushNotificationForDeliveryBoy($item->delivery_boy, $title, $message);
             }
         }
 
@@ -198,16 +194,13 @@ function sendNewOrderNotificationToDelivery($order_id, $status)
             UNIQUE KEY id (id)
             );";
             maybe_create_table($table_name, $sql);
-            $deviceToken = get_user_meta($driver_id, 'mstore_delivery_device_token', true);
-            if (isset($deviceToken) && $deviceToken != false) {
-                _pushNotificationFirebase($driver_id,$title, $message, $deviceToken);
-                $wpdb->insert($table_name, array(
-                    'message' => $message,
-                    'order_id' => $order_id,
-                    'delivery_boy' => $driver_id,
-                    'created' => current_time('mysql')
-                ));
-            }
+            pushNotificationForDeliveryBoy($driver_id, $title, $message);
+            $wpdb->insert($table_name, array(
+                'message' => $message,
+                'order_id' => $order_id,
+                'delivery_boy' => $driver_id,
+                'created' => current_time('mysql')
+            ));
         }
     }
 }
@@ -224,18 +217,13 @@ function sendNewOrderNotificationToVendor($order_seller_id, $order_id)
         $message = "Hi {{name}}, Congratulations, you have received a new order! ";
     }
     $message = str_replace("{{name}}", $user->display_name, $message);
-    $deviceToken = get_user_meta($order_seller_id, 'mstore_device_token', true);
-    if (isset($deviceToken) && $deviceToken != false) {
-        _pushNotificationFirebase($order_seller_id,$title, $message, $deviceToken);
+    pushNotificationForUser($order_seller_id, $title, $message);//push notification to vendor who logged in on FluxStore MV
+    if (!is_plugin_active('onesignal-free-web-push-notifications/onesignal.php')) {//fix duplicate notification if onesignal
+        pushNotificationForVendor($order_seller_id, $title, $message);//push notification to vendor who logged in on FluxStore Manager
     }
-    $managerDeviceToken = get_user_meta($order_seller_id, 'mstore_manager_device_token', true);
-    if (isset($managerDeviceToken) && $managerDeviceToken != false) {
-        _pushNotificationFirebase($order_seller_id,$title, $message, $managerDeviceToken);
-        if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
-            wcfm_message_on_new_order($order_id);
-        }
+    if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
+        wcfm_message_on_new_order($order_id);
     }
-    _pushNotificationOneSignal($order_seller_id,$title, $message);
 }
 
 function wcfm_message_on_new_order($order_id)
@@ -401,10 +389,17 @@ function addQRCodeUrlToMetaResponse($response){
 function customProductResponse($response, $object, $request)
 {
     global $woocommerce_wpml;
+
+    // Will load the product variations if this request is for a specific
+    // product by ID
     $is_detail_api = isset($request->get_params()['id']);
-    if($request['is_all_data'] == true){
+
+    // The `is_all_data` can be String, Boolean or null. So it can be wrong if
+    // check 'false' == true
+    if (filter_var($request['is_all_data'], FILTER_VALIDATE_BOOLEAN)) {
         $is_detail_api = true;
     }
+
     $is_purchased = false;
     if (isset($request['user_id'])) {
         $user_id = $request['user_id'];
@@ -562,6 +557,92 @@ function customProductResponse($response, $object, $request)
     return $response;
 }
 
+/// Clone from wp-content/plugins/woocommerce-brands/includes/widgets/class-wc-widget-brand-nav.php
+function get_filtered_term_product_counts($request, $taxonomy, $term_ids = [], $hide_empty = true)
+{
+    global $wpdb;
+
+    if (!isset($term_ids) || empty($term_ids)) {
+        $term_ids = wp_list_pluck(get_terms(array(
+            'taxonomy'   => $taxonomy,
+            'hide_empty' => $hide_empty,
+        )), 'term_id');
+    }
+
+    if (!is_array($term_ids)) {
+        $term_ids = [$term_ids];
+    }
+
+    $tax_query  = array();
+    $meta_query = array();
+
+    $category = sanitize_text_field($request['category']);
+    if (isset($category) && $category) {
+        $tax_query[] = array(
+            'taxonomy' => 'product_cat',
+            'terms' => explode(',', $category),
+        );
+    }
+
+    $brand = sanitize_text_field($request['brand']);
+    if (isset($brand) && $brand) {
+        $tax_query[] = array(
+            'taxonomy' => 'product_brand',
+            'terms' => explode(',', $brand),
+        );
+    }
+
+    $tag = sanitize_text_field($request['tag']);
+    if (isset($tag) && $tag) {
+        $tax_query[] = array(
+            'taxonomy' => 'product_tag',
+            'terms' => explode(',', $tag),
+        );
+    }
+
+    $meta_query      = new WP_Meta_Query($meta_query);
+    $tax_query       = new WP_Tax_Query($tax_query);
+    $meta_query_sql  = $meta_query->get_sql('post', $wpdb->posts, 'ID');
+    $tax_query_sql   = $tax_query->get_sql($wpdb->posts, 'ID');
+
+    // Generate query
+    $query           = array();
+    $query['select'] = "SELECT COUNT( DISTINCT {$wpdb->posts}.ID ) as term_count, terms.term_id as term_count_id";
+    $query['from']   = "FROM {$wpdb->posts}";
+    $query['join']   = "
+			INNER JOIN {$wpdb->term_relationships} AS term_relationships ON {$wpdb->posts}.ID = term_relationships.object_id
+			INNER JOIN {$wpdb->term_taxonomy} AS term_taxonomy USING( term_taxonomy_id )
+			INNER JOIN {$wpdb->terms} AS terms USING( term_id )
+			" . $tax_query_sql['join'] . $meta_query_sql['join'];
+    $query['where']   = "
+			WHERE {$wpdb->posts}.post_type IN ( 'product' )
+			AND {$wpdb->posts}.post_status = 'publish'
+			" . $tax_query_sql['where'] . $meta_query_sql['where'] . "
+			AND terms.term_id IN (" . implode(',', array_map('absint', $term_ids)) . ")
+		";
+    $query['group_by'] = "GROUP BY terms.term_id";
+    $query             = apply_filters('woocommerce_get_filtered_term_product_counts_query', $query);
+    $query             = implode(' ', $query);
+
+    $term_counts = $wpdb->get_results($query, ARRAY_A);
+
+    $exist_terms_ids = array_column($term_counts, 'term_count_id');
+
+    // In some cases, the `term_counts` result may be missing some terms contained in `$term_ids`.
+    $missing_term_ids = array_diff($term_ids, $exist_terms_ids);
+
+    // Add missing terms to result with term_count = 0
+    $result = $term_counts;
+    foreach ($missing_term_ids as $id) {
+        $result[] = [
+            'term_count' => 0,
+            'term_count_id' => $id
+        ];
+    }
+
+    return $result;
+}
+
 function getLangCodeFromConfigFile ($file) {
     return str_replace('config_', '', str_replace('.json', '',$file));
 }
@@ -649,9 +730,7 @@ function getSellerIdsByOrderId($order_id){
         if (isset($order_seller_id) && $order_seller_id != false) {
             $seller_ids[] = $order_seller_id;
         }
-    }
-
-    if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
+    }else if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
         if (function_exists('wcfm_get_vendor_store_by_post')) {
             $order = wc_get_order($order_id);
             if (is_a($order, 'WC_Order')) {
@@ -673,6 +752,12 @@ function getSellerIdsByOrderId($order_id){
                 }
             }
         }
+    }else{
+        $users_query = new WP_User_Query( array( 
+                    'role' => 'Administrator', 
+                    'fields' => 'ID'
+                    ));
+        $seller_ids = $users_query->get_results();
     }
     return $seller_ids;
 }
@@ -698,23 +783,19 @@ function sendNotificationForOrderStatusUpdated($order_id, $status)
         $message = str_replace("{{name}}", $user->display_name, $message);
         $message = str_replace("{{order}}", $order_id, $message);
     
-        $managerDeviceToken = get_user_meta($seller_id, 'mstore_manager_device_token', true);
-        if (isset($managerDeviceToken) && $managerDeviceToken != false) {
-            _pushNotificationFirebase($seller_id, $title, $message, $managerDeviceToken);
-        }
-        _pushNotificationOneSignal($seller_id,$title, $message);
+        pushNotificationForVendor($seller_id, $title, $message);
     }
 }
 
-function _pushNotificationFirebase($user_id, $title, $message, $deviceToken){
-    $is_on = isNotificationEnabled($user_id);
+function _pushNotificationFirebase($user_id, $title, $message, $deviceToken, $is_notification_on){
+    $is_on = $is_notification_on == true || isNotificationEnabled($user_id);
     if($is_on){
-        pushNotification($title, $message, $deviceToken);
+        FirebaseMessageHelper::push_notification($title, $message, $deviceToken);
     }
 }
 
-function _pushNotificationOneSignal($user_id, $title, $message){
-    $is_on = isNotificationEnabled($user_id);
+function _pushNotificationOneSignal($user_id, $title, $message, $is_notification_on){
+    $is_on = $is_notification_on == true || isNotificationEnabled($user_id);
     if($is_on){
         one_signal_push_notification($title,$message,array($user_id));
     }
@@ -792,6 +873,89 @@ function customOrderResponse($response, $object, $request)
     /* YITH WooCommerce Barcodes and QR Codes Premium */
     $response = addQRCodeUrlToMetaResponse($response);
 
+    if(function_exists( 'wcfm_is_order_delivered' ) ) {
+        $is_order_delivered = wcfm_is_order_delivered( $response->data['id'] );
+        $response->data['delivery_status'] = $is_order_delivered ? 'delivered' : 'pending';
+    }
+    
     return $response;
+}
+
+function cleanupAppointmentCartData($customer_id) {
+    if(class_exists( 'WC_Appointments' )){
+        $appointment_ids = WC_Appointment_Data_Store::get_appointment_ids_by(
+			[
+				'status'           => [ 'in-cart', 'was-in-cart' ],
+				'object_id'   => $customer_id,
+				'object_type' => 'customer',
+			]
+		);
+
+		if ( $appointment_ids ) {
+			foreach ( $appointment_ids as $appointment_id ) {
+				wp_trash_post( $appointment_id );
+			}
+		}
+    }	
+}
+
+function buildCartItemData($products, $callback){
+    foreach ($products as $product) {
+                $productId = absint($product['product_id']);
+
+                $quantity = $product['quantity'];
+                $variationId = isset($product['variation_id']) ? $product['variation_id'] : "";
+
+                $attributes = [];
+                if (isset($product["meta_data"])) {
+                    foreach ($product["meta_data"] as $item) {
+                        if($item["value"] != null){
+                            $attributes[strtolower($item["key"])] = $item["value"];
+                        }
+                    }
+                }
+
+                if (isset($product['addons'])) {
+                    $addons = array();
+                    foreach ($product['addons'] as $key => $value) {
+                        if(is_array($value)){
+                            $addons[$key] = array_map(function($val){
+                                return sanitize_title($val);
+                            },$value);
+                        }else if (is_string($value)) {
+                            $addons[$key] = sanitize_title($value);
+                        }else{
+                            $addons[$key] = $value;
+                        }
+                    }
+                    $_POST = $addons;
+                }
+                
+                // Check the product variation
+                if (!empty($variationId)) {
+                    $productVariable = new WC_Product_Variable($productId);
+                    $listVariations = $productVariable->get_available_variations();
+                    foreach ($listVariations as $vartiation => $value) {
+                        if ($variationId == $value['variation_id']) {
+                            $attributes = array_merge($value['attributes'], $attributes);
+                            $callback($productId, $quantity, $variationId, $attributes, array());
+                        }
+                    }
+                } else {
+                    parseMetaDataForBookingProduct($product);
+                    $cart_item_data = array();
+                    if (is_plugin_active('woo-wallet/woo-wallet.php')) {
+                        $wallet_product = get_wallet_rechargeable_product();
+                        if ($wallet_product->get_id() == $productId) {
+                            $cart_item_data['recharge_amount'] = $product['total'];
+                        }
+                    }
+                    if(isset($product['ywgc_amount'])){
+                        $cart_item_data['ywgc_amount'] = $product['ywgc_amount'];
+                        $cart_item_data['ywgc_product_id'] = $productId;
+                    }
+                    $callback($productId, $quantity, 0, $attributes, $cart_item_data);
+                }
+            }
 }
 ?>

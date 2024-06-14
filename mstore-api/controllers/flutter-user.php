@@ -5,9 +5,15 @@ require_once(__DIR__ . '/helpers/apple-sign-in-helper.php');
 class FlutterUserController extends FlutterBaseController
 {
 
+    /**
+     * Endpoint namespace
+     *
+     * @var string
+     */
+    protected $namespace = 'api/flutter_user';
+
     public function __construct()
     {
-        $this->namespace = 'api/flutter_user';
     }
 
     public function register_routes()
@@ -446,7 +452,8 @@ class FlutterUserController extends FlutterBaseController
                     }
                 }
 
-                $user['role'] = isset($params["role"]) ? sanitize_text_field($params["role"]) : get_option('default_role');
+                $default_role = class_exists( 'WooCommerce' ) ? 'customer' : get_option('default_role');
+                $user['role'] = isset($params["role"]) ? sanitize_text_field($params["role"]) : $default_role;
                 $_POST['user_role'] = $user['role'];//fix to register account with role in listeo
                 $user_id = wp_insert_user($user);
 
@@ -473,8 +480,9 @@ class FlutterUserController extends FlutterBaseController
             $WCFMvm->send_approval_reminder_admin( $user_id );
         }
 
-        if(isset($dokan_enable_selling) && $dokan_enable_selling == false){
-            update_user_meta($user_id,'dokan_enable_selling',$dokan_enable_selling);
+        // 'dokan_enable_selling' metadata should be 'yes' or 'no'
+        if (isset($dokan_enable_selling)) {
+            update_user_meta($user_id, 'dokan_enable_selling', $dokan_enable_selling);
         }
         $cookie = generateCookieByUserId($user_id,  $seconds);
 
@@ -1151,10 +1159,10 @@ class FlutterUserController extends FlutterBaseController
 
         $message = $params['message'];
 
-        $deviceToken = get_user_meta($receiver->ID, 'mstore_device_token', true);
-        $manager_device_token = get_user_meta($receiver->ID, 'mstore_manager_device_token', true);
-        pushNotification($sender_name, $message, $deviceToken);
-        pushNotification($sender_name, $message, $manager_device_token);
+        pushNotificationForUser($receiver->ID, $sender_name, $message);
+        if (!is_plugin_active('onesignal-free-web-push-notifications/onesignal.php')) {//fix duplicate notification if onesignal
+            pushNotificationForVendor($receiver->ID, $sender_name, $message);
+        }
     }
 
     function mstore_digrest_set_variables()
@@ -1248,14 +1256,14 @@ class FlutterUserController extends FlutterBaseController
             return parent::sendError("invalid_email", 'Email is required', 400);
         }
         if (!empty($params['email']) && email_exists($params['email'])) {
-            return parent::sendError("invalid_email", 'Email already in use!', 400);
+            return parent::sendError("existed_email", 'Email already in use!', 400);
         }
 
         if(empty($params['username'])){
             return parent::sendError("invalid_username", 'Username is required', 400);
         }
         if (!empty($params['username']) && username_exists($params['username'])) {
-            return parent::sendError("invalid_username", 'Username already in use!', 400);
+            return parent::sendError("existed_username", 'Username already in use!', 400);
         }
 
         if(empty($params['country_code'])){
@@ -1269,7 +1277,7 @@ class FlutterUserController extends FlutterBaseController
         $mob = $params['country_code'].$params['mobile'];
         $mobuser = getUserFromPhone($mob);
         if ($mobuser != null  || username_exists($mob)) {
-            return parent::sendError("invalid_mobile", 'Mobile Number already in use!', 400);
+            return parent::sendError("existed_mobile", 'Mobile Number already in use!', 400);
         } 
 
         return  true;
@@ -1327,7 +1335,7 @@ class FlutterUserController extends FlutterBaseController
         $mob = $params['country_code'].$params['mobile'];
         $mobuser = getUserFromPhone($mob);
         if ($mobuser == null) {
-            return parent::sendError("invalid_mobile", 'Phone number is not registered!', 400);
+            return parent::sendError("existed_mobile", 'Phone number is not registered!', 400);
         } 
 
         return  true;
