@@ -534,6 +534,8 @@ function customProductResponse($response, $object, $request)
         $terms = wp_get_post_terms($response->data['id'], 'product_type');
         if ($terms != false && count($terms) > 0 && $terms[0]->name == 'appointment') {
             $response->data['type'] = 'appointment';
+            $response->data['appointment_duration'] = $product->get_duration();
+            $response->data['appointment_duration_unit'] = $product->get_duration_unit();
         }
     }
 
