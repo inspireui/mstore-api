@@ -176,6 +176,14 @@ class FlutterBooking extends FlutterBaseController
         return $new_appointment;
     }
 
+    private function findStaffValue($array, $staff_id) {
+        foreach ( $array as $element ) {
+            if ($element[$staff_id] != null) {
+                return $element[$staff_id];
+            }
+        }
+    }
+
     public function get_staffs($request)
     {
         $product_id = $request["product_id"];
@@ -189,8 +197,18 @@ class FlutterBooking extends FlutterBaseController
         $table_name = $wpdb->prefix . "wc_appointment_relationships";
         $sql = $wpdb->prepare("SELECT * FROM $table_name WHERE product_id = %s",$product_id);
         $items = $wpdb->get_results($sql);
+        $qtys = get_post_meta($product_id, '_staff_qtys');
+        $costs = get_post_meta($product_id, '_staff_base_costs');
         foreach ($items as $item) {
             $user = get_user_by("ID", $item->staff_id);
+            $quantity = null;
+            $cost = null;
+            if (is_array($qtys)) {
+                $quantity = $this->findStaffValue($qtys, $item->staff_id);
+            }
+            if (is_array($costs)) {
+                $cost = $this->findStaffValue($costs, $item->staff_id);
+            }
             $results[] = array(
                 "id" => $user->ID,
                 "username" => $user->user_login,
@@ -206,6 +224,8 @@ class FlutterBooking extends FlutterBaseController
                 "capabilities" => $user->wp_capabilities,
                 "role" => $user->roles,
                 "avatar" => get_avatar_url($user->ID),
+                "quantity" => $quantity,
+                "cost" => $cost,
             );
         }
 
