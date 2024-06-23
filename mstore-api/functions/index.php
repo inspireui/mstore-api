@@ -424,9 +424,8 @@ function addYITHBadgeToMetaResponse($response, $product){
         );
 
         $response->data['meta_data'] = $meta_data;
-
-        return $response;
     }
+    return $response;
 }
 
 function customProductResponse($response, $object, $request)
