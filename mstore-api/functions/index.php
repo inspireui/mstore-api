@@ -389,6 +389,46 @@ function addQRCodeUrlToMetaResponse($response){
     return $response;
 }
 
+function addYITHBadgeToMetaResponse($response, $product){
+    if (function_exists( 'yith_wcbm_get_product_badges' )) {
+       // Add badge to product.
+        $badges_to_show = yith_wcbm_get_product_badges( $product );
+        $badges_to_show = apply_filters( 'yith_wcbm_badges_to_show_on_product', $badges_to_show, $product );
+
+        $badges = array();
+
+        foreach ( $badges_to_show as $badge_id ) {
+            $badge_id = yith_wcbm_wpml_translate_badge_id( $badge_id );
+            $badge    = yith_wcbm_get_badge_object( $badge_id );
+
+            if ( $badge && $badge->is_enabled() ) {
+                $data = $badge->get_data();
+                // If badge is image, get image url.
+                if ( $badge->get_type() === 'image' ) {
+                    $image_url = $badge->get_image_url();
+                    if (strpos($image_url, 'http') == false) {
+                        $is_https = strpos(home_url(), 'https') == true ;
+                        $image_url = ($is_https ? 'https:' : 'http:').$image_url;
+                     }
+                    $data['image_url'] = $image_url;
+                }
+                $badges[] = $data;
+            }
+        }
+
+        $meta_data = $response->data['meta_data'];
+        $meta_data[] = array(
+                'id'    => '_yith_wcbm_badges',
+                'key'   => '_yith_wcbm_badges',
+                'value' => $badges,
+        );
+
+        $response->data['meta_data'] = $meta_data;
+
+        return $response;
+    }
+}
+
 function customProductResponse($response, $object, $request)
 {
     global $woocommerce_wpml;
@@ -556,6 +596,9 @@ function customProductResponse($response, $object, $request)
     
     /* YITH WooCommerce Barcodes and QR Codes Premium */
     $response = addQRCodeUrlToMetaResponse($response);
+
+    /* YITH WooCommerce Badge Management Premium */
+    $response = addYITHBadgeToMetaResponse($response, $product);
 
     $blackListKeys = ['yoast_head','yoast_head_json','_links'];
     $response->data = array_diff_key($response->data,array_flip($blackListKeys));

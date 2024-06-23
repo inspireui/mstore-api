@@ -227,7 +227,7 @@ class ProductManagementHelper
 
         if ($user_id) {
             $user = get_userdata($user_id);
-            $is_admin = $user != false ? in_array('administrator', (array)$user->roles) : false;
+            $is_admin = $user != false ? (in_array('administrator', (array)$user->roles) || in_array('shop_manager', (array)$user->roles)) : false;
             $vendor_id = absint($user_id);
         }
 
