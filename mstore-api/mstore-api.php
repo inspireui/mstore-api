@@ -714,6 +714,8 @@ function custom_woocommerce_rest_prepare_product_variation_object($response, $ob
     $variation_product = wc_get_product( $response->data['id'] );
     if($variation_product) {
         $_product = wc_get_product( $variation_product->get_parent_id() );
+        $attributes = array();
+
         foreach ( $variation_product->get_variation_attributes() as $attribute_name => $attribute ) {
 				$name = str_replace( 'attribute_', '', $attribute_name );
 
