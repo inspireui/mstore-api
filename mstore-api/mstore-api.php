@@ -485,6 +485,21 @@ add_filter('woocommerce_rest_prepare_product_brand', 'flutter_custom_change_prod
 add_filter('woocommerce_rest_product_object_query', 'flutter_custom_rest_product_object_query', 10, 2);
 add_filter('woocommerce_rest_product_tag_query', 'flutter_custom_rest_product_tag_query', 10, 2);
 add_filter('woocommerce_rest_product_brand_query', 'flutter_custom_rest_product_brand_query', 10, 2);
+add_filter('rest_product_collection_params', 'flutter_custom_rest_product_collection_params', 10, 1);
+
+/**
+ * WooCommerce REST API: Random sorting for products.
+ * 
+ * rest_{post_type}_collection_params
+ *
+ * @param array $params
+ * @return array
+ */
+function flutter_custom_rest_product_collection_params($params)
+{
+    $params['orderby']['enum'][] = 'rand';
+    return $params;
+}
 
 function flutter_custom_rest_product_tag_query($args, $request)
 {
