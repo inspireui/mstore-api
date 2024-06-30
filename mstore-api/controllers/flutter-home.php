@@ -113,7 +113,8 @@ class FlutterHome extends WP_REST_Controller
     private function arrayMetaDataWhitelist($array) {
         return array_values(array_filter($array, function($v, $k) {
             foreach ($this->metaDataWhilelist as $whilelist) {
-                if (strpos($v->__get('key'), $whilelist) !== false) {
+                $key = is_array($v) ? $v['key'] : $v->__get('key');
+                if (strpos($key, $whilelist) !== false) {
                     return true;
                 }
             }

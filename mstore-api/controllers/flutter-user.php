@@ -100,7 +100,10 @@ class FlutterUserController extends FlutterBaseController
         register_rest_route($this->namespace, '/firebase_sms_login', array(
             array(
                 'methods' => 'GET',
-                'callback' => array($this, 'firebase_sms_login'),
+                'callback' => function ($request) {
+                    $phone = $request['phone'];
+                    return $this->firebase_sms_login($phone);
+                },
                 'permission_callback' => function () {
                     return parent::checkApiPermission();
                 }
@@ -110,7 +113,42 @@ class FlutterUserController extends FlutterBaseController
         register_rest_route($this->namespace, '/firebase_sms_login_v2', array(
             array(
                 'methods' => 'GET',
-                'callback' => array($this, 'firebase_sms_login_v2'),
+                'callback' => function ($request) {
+                    $phone = $request['phone'];
+                    return $this->firebase_sms_login_v2($phone);
+                },
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
+
+        register_rest_route($this->namespace, '/firebase_sms', array(
+            array(
+                'methods' => 'POST',
+                'callback' => function ($request) {
+                    $phone = $this->firebase_sms_verify_id_token($request);
+                    if (is_wp_error($phone)) {
+                        return $phone;
+                    }
+                    return $this->firebase_sms_login($phone);
+                },
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
+
+        register_rest_route($this->namespace, '/firebase_sms_v2', array(
+            array(
+                'methods' => 'POST',
+                'callback' => function ($request) {
+                    $phone = $this->firebase_sms_verify_id_token($request);
+                    if (is_wp_error($phone)) {
+                        return $phone;
+                    }
+                    return $this->firebase_sms_login_v2($phone);
+                },
                 'permission_callback' => function () {
                     return parent::checkApiPermission();
                 }
@@ -696,9 +734,30 @@ class FlutterUserController extends FlutterBaseController
 
     }
 
-    public function firebase_sms_login($request)
+    private function firebase_sms_verify_id_token($request)
     {
-        $phone = $request["phone"];
+        $json = file_get_contents('php://input');
+        $params = json_decode($json, TRUE);
+
+        $id_token = $params["id_token"];
+        if (!isset($id_token)) {
+            return parent::sendError("invalid_login", "id_token is required", 400);
+        }
+
+        $helper = new FirebasePhoneAuthHelper();
+        $result = $helper->verify_id_token($id_token);
+
+        if (is_wp_error($result)) {
+            return $result;
+        }
+        if ($result == false) {
+            return parent::sendError("invalid_login", "id_token is invalid.", 400);
+        }
+        return $result;
+    }
+
+    private function firebase_sms_login($phone)
+    {
         if (!isset($phone)) {
             return parent::sendError("invalid_login", "You must include a 'phone' variable.", 400);
         }
@@ -711,9 +770,8 @@ class FlutterUserController extends FlutterBaseController
         return $this->createSocialAccount($user_email, $user_name, $user_name, "", $user_name);
     }
 
-    public function firebase_sms_login_v2($request)
+    private function firebase_sms_login_v2($phone)
     {
-        $phone = $request["phone"];
         if (!isset($phone)) {
             return parent::sendError("invalid_login", "You must include a 'phone' variable.", 400);
         }
