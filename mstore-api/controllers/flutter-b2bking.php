@@ -126,7 +126,8 @@ class FlutterB2BKing extends FlutterBaseController
 
         $results = array();
         foreach ($roles as $role){
-            $results[] = ['ID' => $role->ID, 'name' => $role->post_title, 'role' => 'role_'.$role->ID];
+            $approval_required = get_post_meta($role->ID,'b2bking_custom_role_approval',true);
+            $results[] = ['ID' => $role->ID, 'name' => $role->post_title, 'role' => 'role_'.$role->ID, 'approval_required' => $approval_required != 'automatic'];
         }
         return $results;
     }
