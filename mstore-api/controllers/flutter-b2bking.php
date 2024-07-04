@@ -180,6 +180,11 @@ class FlutterB2BKing extends FlutterBaseController
         }
         return $result;
     }
+
+    public function is_rest_api_request_custom($is_rest_api_request){
+        return false;
+    }
+
     public function register()
     {
         $json = file_get_contents('php://input');
@@ -267,16 +272,21 @@ class FlutterB2BKing extends FlutterBaseController
             return parent::sendError('required', $err_msg, 400);
         }
 
+        add_filter('is_rest_api_request', array($this, 'is_rest_api_request_custom'), 10);
+        
         $user_params = array();
         $user_params["user_email"] = sanitize_email($email);
         $user_params["user_login"] = sanitize_email($email);
         $user_params["user_pass"] = $password;
 
         $user_id = wp_insert_user($user_params);
+
+        remove_filter('is_rest_api_request', array($this, 'is_rest_api_request_custom'), 10);
+
         if (is_wp_error($user_id)) {
             return parent::sendError($user_id->get_error_code(), $user_id->get_error_message(), 400);
         }
-       
+
         return true;
     }
 
