@@ -1444,7 +1444,11 @@ class FlutterWoo extends FlutterBaseController
 
             $result = ob_get_contents();
             ob_end_clean();
-        } else if (class_exists('PSCW_PRODUCT_SIZE_CHART_F_WOO_Front_end')) {
+        }
+
+        if ((!isset($result) || empty($result)) &&
+            class_exists('PSCW_PRODUCT_SIZE_CHART_F_WOO_Front_end')
+        ) {
             // Support Product Size Chart For WooCommerce Plugin:
             // https://wordpress.org/plugins/product-size-chart-for-woo/
             $result = $this->custom_product_tabs_content($product_id);
