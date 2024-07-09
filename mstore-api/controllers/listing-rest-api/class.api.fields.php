@@ -1077,6 +1077,7 @@ class FlutterTemplate extends WP_REST_Posts_Controller
 
         public function get_post_gallery_images_listeo($object)
         {
+            $results = [];
             $gallery = get_post_meta($object['id'], '_gallery', true);
             if ($gallery)
             {
@@ -1900,7 +1901,7 @@ class FlutterTemplate extends WP_REST_Posts_Controller
         }
 
         public function custom_rest_listing_query($args, $request){
-            $is_featured = $_GET['featured'] == 'true';
+            $is_featured = $request['featured'] == 'true';
             if($is_featured == true){
              $args['meta_key'] = '_featured';   
              $args['meta_query'] = array( 'key' => '_featured', 'value' => 'on', 'compare' => '=' );
