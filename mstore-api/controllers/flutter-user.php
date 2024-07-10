@@ -97,32 +97,6 @@ class FlutterUserController extends FlutterBaseController
             ),
         ));
 
-        register_rest_route($this->namespace, '/firebase_sms_login', array(
-            array(
-                'methods' => 'GET',
-                'callback' => function ($request) {
-                    $phone = $request['phone'];
-                    return $this->firebase_sms_login($phone);
-                },
-                'permission_callback' => function () {
-                    return parent::checkApiPermission();
-                }
-            ),
-        ));
-
-        register_rest_route($this->namespace, '/firebase_sms_login_v2', array(
-            array(
-                'methods' => 'GET',
-                'callback' => function ($request) {
-                    $phone = $request['phone'];
-                    return $this->firebase_sms_login_v2($phone);
-                },
-                'permission_callback' => function () {
-                    return parent::checkApiPermission();
-                }
-            ),
-        ));
-
         register_rest_route($this->namespace, '/firebase_sms', array(
             array(
                 'methods' => 'POST',
