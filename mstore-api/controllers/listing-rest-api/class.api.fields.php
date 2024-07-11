@@ -1404,6 +1404,23 @@ class FlutterTemplate extends WP_REST_Posts_Controller
                 $meta['_case27_listing_type_name'] = $listing_type->get_name();
             }
             
+            if (array_key_exists('_menu', $meta)) {
+                $meta['_menu'] = array_map(function($item){
+                    if (isset($item['menu_elements']) && !empty($item['menu_elements'])) {
+                        $item['menu_elements'] = array_map(function($element){
+                            if (isset($element['cover']) && !empty($element['cover'])) {
+                                $image = wp_get_attachment_image_src($element['cover'], 'listeo-gallery');
+								$thumb = wp_get_attachment_image_src($element['cover'], 'thumbnail');
+                                $element['image'] = !empty($image) ? $image[0] : null;
+                                $element['thumb'] = !empty($thumb) ? $thumb[0] : null;
+                            }
+                            return $element;
+                        }, $item['menu_elements']);
+                    }
+                    return $item;
+                }, $meta['_menu']);
+            }
+            
             return $meta;
         }
 
