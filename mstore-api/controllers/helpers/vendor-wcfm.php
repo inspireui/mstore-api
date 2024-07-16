@@ -1100,6 +1100,10 @@ class FlutterWCFMHelper
         if (isset($request['hide_empty'])) {
             $params['hide_empty'] = $request['hide_empty'];
         }
+        $exclude = $request['exclude'];
+        if (isset($exclude) && is_string($exclude)) {
+            $params['exclude'] = explode(',', $exclude);
+        }
 
         if (isset($store_id)) {
             global $woocommerce, $wpdb;
