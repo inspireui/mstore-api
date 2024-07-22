@@ -313,6 +313,16 @@ class FlutterWoo extends FlutterBaseController
             $data = $this->get_post_id_from_meta($ean_key, $raw_data);
         }
 
+        // Get id from sku
+        if (!isset($data)) {
+            $data = $this->get_post_id_from_meta('_sku', $raw_data);
+        }
+
+        // Try to get id directly
+        if (!isset($data)) {
+            $data = $raw_data;
+        }
+
 		if(isset($data) && is_numeric($data)){
 			$type = get_post_type($data);
 			
