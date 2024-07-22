@@ -593,6 +593,11 @@ function customProductResponse($response, $object, $request)
         }
     }
     
+    /* TeraWallet */
+    if ( class_exists( 'WooWallet' ) ) {
+        $response->data['is_wallet_product'] =  get_option( '_woo_wallet_recharge_product' ) == (string) $response->data['id'];
+    }
+    
     /* YITH WooCommerce Barcodes and QR Codes Premium */
     $response = addQRCodeUrlToMetaResponse($response);
 

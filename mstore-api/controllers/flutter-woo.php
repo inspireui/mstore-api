@@ -952,6 +952,10 @@ class FlutterWoo extends FlutterBaseController
         // Get the user session from its user ID:
         $session = $session_handler->get_session($user_id);
 
+        if($session == false){
+			return [];
+		}
+        
         // Get cart items array
         $cart_items = maybe_unserialize($session['cart']);
 

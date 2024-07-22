@@ -166,6 +166,16 @@ class FlutterTeraWallet extends FlutterBaseController
                 }
             ),
         ));
+
+        register_rest_route($this->namespace, '/referrals', array(
+            array(
+                'methods' => "GET",
+                'callback' => array($this, 'get_referrals'),
+                'permission_callback' => function () {
+                    return parent::checkApiPermission();
+                }
+            ),
+        ));
     }
 
     private function getUserInfo($user_id, &$cachedUsers = [])
@@ -731,6 +741,44 @@ class FlutterTeraWallet extends FlutterBaseController
             }
         }
         return false;
+    }
+
+    function get_referrals($request){
+        if (!is_plugin_active('woo-wallet/woo-wallet.php')) {
+            return parent::sendError("invalid_plugin", "You need to install TeraWallet plugin to use this api", 404);
+        }
+
+        $cookie = $request->get_header("User-Cookie");
+        if (isset($cookie) && $cookie != null) {
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
+                return $user_id;
+            }
+
+            $actionReferrals = new Action_Referrals();
+            $settings = $actionReferrals->settings;
+            $referral_handel = apply_filters( 'woo_wallet_referral_handel', 'wwref' );
+
+            $user                   = new WP_User( $user_id );
+            $referral_url_by_userid = 'id' === $settings['referal_link'] ? true : false;
+            $referral_url           = add_query_arg( $referral_handel, $user->user_login, wc_get_page_permalink( 'myaccount' ) );
+            if ( $referral_url_by_userid ) {
+                $referral_url = add_query_arg( $referral_handel, $user->ID, wc_get_page_permalink( 'myaccount' ) );
+            }
+            $referring_visitor = get_user_meta( $user_id, '_woo_wallet_referring_visitor', true ) ? get_user_meta( $user_id, '_woo_wallet_referring_visitor', true ) : 0;
+            $referring_signup  = get_user_meta( $user_id, '_woo_wallet_referring_signup', true ) ? get_user_meta( $user_id, '_woo_wallet_referring_signup', true ) : 0;
+            $referring_earning = get_user_meta( $user_id, '_woo_wallet_referring_earning', true ) ? get_user_meta( $user_id, '_woo_wallet_referring_earning', true ) : 0;
+
+            return [
+                'referral_url' => $referral_url,
+                'referral_code' => $referral_url_by_userid ? $user->ID : $user->user_login,
+                'referring_visitor' => $referring_visitor,
+                'referring_signup' => $referring_signup,
+                'referring_earning' => $referring_earning
+            ];
+        } else {
+            return parent::sendError("no_permission", "You need to add User-Cookie in header request", 400);
+        }
     }
 }
 

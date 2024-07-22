@@ -3,7 +3,7 @@ Contributors:      inspireui
 Tags:              flutter, app builder, app creator, mobile app builder, woocommerce app
 Requires at least: 4.4
 Tested up to:      6.5.3
-Stable tag:        4.15.0
+Stable tag:        4.15.1
 License:           GPL-2.0
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -48,6 +48,9 @@ Ready to go mobile? Download the MStore API plugin and unlock the power of FluxB
 1. Click Install.
 
 == Changelog ==
+= 4.15.1 =
+  * Support Tera Wallet Referrals
+  
 = 4.15.0 =
   * Remove api/flutter_user/firebase_sms_login and api/flutter_user/firebase_sms_login_v2 endpoint. They're replaced by api/flutter_user/firebase_sms and api/flutter_user/firebase_sms_login_v2
   * Note: this version works on FluxStore v4.1.1 or later. If you're using the old FluxStore version, please doesn't upgrade MStore Api plugin v4.15.0 or later. 

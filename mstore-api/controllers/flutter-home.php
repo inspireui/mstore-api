@@ -230,7 +230,7 @@ class FlutterHome extends WP_REST_Controller
         $limit = isset($layout['limit']) && is_int($layout['limit']) ? $layout['limit'] : $limit;
         $params['per_page'] = $limit;
         $params['page'] = 0;
-        $params['is_all_data'] = true;
+        $params['is_all_data'] = $request->get_param('is_all_data') ?? false;
 	
         if (is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php')) {
             $wcfmmp_radius_lat = $request->get_param('wcfmmp_radius_lat');

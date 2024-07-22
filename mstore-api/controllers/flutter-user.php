@@ -1273,6 +1273,10 @@ class FlutterUserController extends FlutterBaseController
             
         }
         $_REQUEST['json'] = 1;
+
+        if (isset($params['referral_code'])) {
+            $_COOKIE['woo_wallet_referral'] = sanitize_text_field( wp_unslash( $params['referral_code'] ) );
+        }
     }
 
     function digits_register_check()
