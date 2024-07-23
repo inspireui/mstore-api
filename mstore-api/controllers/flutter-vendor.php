@@ -561,6 +561,27 @@ class FlutterVendor extends FlutterBaseController
                 );
             }
 
+            if (isset($request['stock_status'])) {
+                if (isset($args['meta_query'])) {
+                    $args['meta_query'] = array(
+                        'relation' => 'AND',
+                        $args['meta_query'],
+                        array(
+                            'key' => '_stock_status',
+                            'value' => $request['stock_status'],
+                            'compare' => '=',
+                        )
+                    );
+                }else{
+                    $args['meta_query'] = array(
+                        array(
+                            'key' => '_stock_status',
+                            'value' => $request['stock_status'],
+                            'compare' => '=',
+                        )
+                    );
+                }
+            }
             $products = get_posts($args);
         } else {
             global $woocommerce, $wpdb;
