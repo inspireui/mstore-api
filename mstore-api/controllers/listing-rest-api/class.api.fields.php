@@ -763,10 +763,11 @@ class FlutterTemplate extends WP_REST_Posts_Controller
     {
         $_user_id = $object['user_id'];
         $user_info = get_user_meta($_user_id);
+        $u_data = get_user_by( 'id', $_user_id );
 
-        $first_name = $user_info['billing_first_name'][0];
-        $last_name = $user_info['billing_last_name'][0];
-        $email = $user_info['billing_email'][0];
+        $first_name = isset($user_info['billing_first_name']) ? $user_info['billing_first_name'][0] : $user_info['first_name'][0];
+        $last_name = isset($user_info['billing_last_name']) ? $user_info['billing_last_name'][0] : $user_info['last_name'][0];
+        $email = isset($user_info['billing_email']) ? $user_info['billing_email'][0] : $u_data->user_email;
         $billing_address_1 = (isset($user_info['billing_address_1'][0])) ? $user_info['billing_address_1'][0] : false;
         $billing_postcode = (isset($user_info['billing_postcode'][0])) ? $user_info['billing_postcode'][0] : false;
         $billing_city = (isset($user_info['billing_city'][0])) ? $user_info['billing_city'][0] : false;
