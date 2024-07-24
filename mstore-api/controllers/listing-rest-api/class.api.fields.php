@@ -1342,7 +1342,7 @@ class FlutterTemplate extends WP_REST_Posts_Controller
             {
                 $status = wp_get_comment_status($item->comment_ID);
                 $countRating = get_comment_meta($item->comment_ID, $commentKey, true);
-                $current_rating = get_comment_meta($comment->comment_ID, $commentKey, true);
+                $current_rating = get_comment_meta($item->comment_ID, $commentKey, true);
                 $results[] = ["id" => $item->comment_ID, "rating" => $countRating, "status" => $status, "author_name" => $item->comment_author, "date" => $item->comment_date, "content" => $item->comment_content, "author_email" => $item->comment_author_email];
             }
             return $results;
