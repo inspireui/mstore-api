@@ -1143,9 +1143,9 @@ class FlutterWCFMHelper
             }
 
             $categoryIds = array();
+            $excludes = isset($params['exclude']) ? $params['exclude'] : array();
             foreach ($products as $object) {
                 $terms = get_the_terms($object->ID ?? $object->get_id(), 'product_cat');
-                $excludes = isset($params['exclude']) ? $params['exclude'] : array();
                 foreach ((array)$terms as $term) {
                     $cat_id = $term->term_id;
                     if (!in_array($cat_id, $categoryIds) && !in_array($cat_id, $excludes)) {
