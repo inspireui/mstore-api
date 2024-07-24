@@ -61,7 +61,7 @@ class FlutterStoreLocator extends FlutterBaseController
     public function get_stores($request)
     {
         if (!is_plugin_active('yith-store-locator-for-wordpress/init.php')) {
-            return parent::sendError("invalid_plugin", "You need to install YITH Store Locator for WordPress & WooCommerce plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install YITH Store Locator for WordPress & WooCommerce plugin to use this api");
         }
         $params = [];
         if(isset($request["latitude"]) && isset($request["longitude"])){
@@ -125,7 +125,7 @@ class FlutterStoreLocator extends FlutterBaseController
     public function get_products($request)
     {
         if (!is_plugin_active('yith-store-locator-for-wordpress/init.php')) {
-            return parent::sendError("invalid_plugin", "You need to install YITH Store Locator for WordPress & WooCommerce plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install YITH Store Locator for WordPress & WooCommerce plugin to use this api");
         }
         $store_id = $request["id"];
         $page = 1;

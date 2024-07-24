@@ -55,7 +55,7 @@ class FlutterMidtrans extends FlutterBaseController
     public function generate_snap_token($request)
     {
         if (!is_plugin_active('midtrans-woocommerce/midtrans-gateway.php')) {
-            return parent::sendError("invalid_plugin", "You need to install Midtrans WooCommerce Payment Gateway plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install Midtrans WooCommerce Payment Gateway plugin to use this api");
         }
         $json = file_get_contents('php://input');
         $body = json_decode($json, TRUE);

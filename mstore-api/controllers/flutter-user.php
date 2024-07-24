@@ -1132,7 +1132,7 @@ class FlutterUserController extends FlutterBaseController
         if (!empty($woocommerce_wpml->multi_currency) && !empty($woocommerce_wpml->settings['currencies_order'])) {
             return $woocommerce_wpml->settings['currency_options'];
         }
-        return parent::sendError("not_install_woocommerce_wpml", "WooCommerce WPML hasn't been installed yet.", 404);
+        return parent::send_invalid_plugin_error("WooCommerce WPML hasn't been installed yet.");
     }
 
     public function get_countries()

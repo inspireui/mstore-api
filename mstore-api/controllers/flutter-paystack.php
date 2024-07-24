@@ -55,7 +55,7 @@ class FlutterPayStack extends FlutterBaseController
     public function initialize_transaction($request)
     {
         if (!is_plugin_active('woo-paystack/woo-paystack.php')) {
-            return parent::sendError("invalid_plugin", "You need to install Paystack WooCommerce Payment Gateway plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install Paystack WooCommerce Payment Gateway plugin to use this api");
         }
         $json = file_get_contents('php://input');
         $body = json_decode($json, TRUE);
@@ -121,7 +121,7 @@ class FlutterPayStack extends FlutterBaseController
     public function verify_paystack_transaction($request)
     {
         if (!is_plugin_active('woo-paystack/woo-paystack.php')) {
-            return parent::sendError("invalid_plugin", "You need to install Paystack WooCommerce Payment Gateway plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install Paystack WooCommerce Payment Gateway plugin to use this api");
         }
         $json = file_get_contents('php://input');
         $body = json_decode($json, TRUE);

@@ -54,7 +54,7 @@ class FlutterWholesale extends FlutterBaseController
     public function get_roles($request)
     {
         if (!class_exists('WooCommerceWholeSalePrices')) {
-            return parent::sendError("invalid_plugin", "You need to install WooCommerce Wholesale Prices plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install WooCommerce Wholesale Prices plugin to use this api");
         }
         global $wc_wholesale_prices;
         $data =  $wc_wholesale_prices->wwp_wholesale_roles->getAllRegisteredWholesaleRoles();
@@ -75,7 +75,7 @@ class FlutterWholesale extends FlutterBaseController
         $role = $params["role"];
         
         if (!class_exists('WooCommerceWholeSalePrices')) {
-            return parent::sendError("invalid_plugin", "You need to install WooCommerce Wholesale Prices plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install WooCommerce Wholesale Prices plugin to use this api");
         }
         global $wc_wholesale_prices;
         $data =  $wc_wholesale_prices->wwp_wholesale_roles->getAllRegisteredWholesaleRoles();

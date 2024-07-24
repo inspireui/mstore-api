@@ -1142,7 +1142,7 @@ class FlutterWoo extends FlutterBaseController
     public function get_points($request)
     {
         if (!is_plugin_active('woocommerce-points-and-rewards/woocommerce-points-and-rewards.php')) {
-            return parent::sendError("invalid_plugin", "You need to install WooCommerce Points and Rewards plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install WooCommerce Points and Rewards plugin to use this api");
         }
 
         $cookie = $request["cookie"];
@@ -1168,7 +1168,7 @@ class FlutterWoo extends FlutterBaseController
     public function update_points($request)
     {
         if (!is_plugin_active('woocommerce-points-and-rewards/woocommerce-points-and-rewards.php')) {
-            return parent::sendError("invalid_plugin", "You need to install Points and Rewards for WooCommerce plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install Points and Rewards for WooCommerce plugin to use this api");
         }
 
         $json = file_get_contents('php://input');
@@ -1271,8 +1271,8 @@ class FlutterWoo extends FlutterBaseController
                 $arr[] = $date;
             }
             return $arr;
-        }else{
-            return parent::sendError("invalid_plugin", "You need to install Order Delivery Date for WooCommerce or WOOCOMMERCE FRONTEND MANAGER - DELIVERY plugin to use this api", 404);
+        } else {
+            return parent::send_invalid_plugin_error("You need to install Order Delivery Date for WooCommerce or WOOCOMMERCE FRONTEND MANAGER - DELIVERY plugin to use this api");
         }
     }
 
@@ -1295,7 +1295,7 @@ class FlutterWoo extends FlutterBaseController
         }
 
         if (!is_plugin_active('indeed-membership-pro/indeed-membership-pro.php')) {
-            return parent::sendError("invalid_plugin", "You need to install Ultimate Membership Pro plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install Ultimate Membership Pro plugin to use this api");
         }
 
         $meta_arr = ihc_post_metas($postid);

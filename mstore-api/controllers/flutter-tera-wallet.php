@@ -202,7 +202,7 @@ class FlutterTeraWallet extends FlutterBaseController
     public function get_transactions($request)
     {
         if (!is_plugin_active('woo-wallet/woo-wallet.php')) {
-            return parent::sendError("invalid_plugin", "You need to install TeraWallet plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install TeraWallet plugin to use this api");
         }
 
         $cookie = $request->get_header("User-Cookie");
@@ -237,7 +237,7 @@ class FlutterTeraWallet extends FlutterBaseController
     public function get_balance($request)
     {
         if (!is_plugin_active('woo-wallet/woo-wallet.php')) {
-            return parent::sendError("invalid_plugin", "You need to install TeraWallet plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install TeraWallet plugin to use this api");
         }
 
         $cookie = $request->get_header("User-Cookie");
@@ -256,7 +256,7 @@ class FlutterTeraWallet extends FlutterBaseController
     public function transfer($request)
     {
         if (!is_plugin_active('woo-wallet/woo-wallet.php')) {
-            return parent::sendError("invalid_plugin", "You need to install TeraWallet plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install TeraWallet plugin to use this api");
         }
 
         $cookie = $request->get_header("User-Cookie");
@@ -289,7 +289,7 @@ class FlutterTeraWallet extends FlutterBaseController
     public function check_recharge($request)
     {
         if (!is_plugin_active('woo-wallet/woo-wallet.php')) {
-            return parent::sendError("invalid_plugin", "You need to install TeraWallet plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install TeraWallet plugin to use this api");
         }
 
         $json = file_get_contents('php://input');
@@ -317,7 +317,7 @@ class FlutterTeraWallet extends FlutterBaseController
     public function process_payment($request)
     {
         if (!is_plugin_active('woo-wallet/woo-wallet.php')) {
-            return parent::sendError("invalid_plugin", "You need to install TeraWallet plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install TeraWallet plugin to use this api");
         }
 
         $json = file_get_contents('php://input');
@@ -365,7 +365,7 @@ class FlutterTeraWallet extends FlutterBaseController
     public function partial_payment($request)
     {
         if (!is_plugin_active('woo-wallet/woo-wallet.php')) {
-            return parent::sendError("invalid_plugin", "You need to install TeraWallet plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install TeraWallet plugin to use this api");
         }
 
         $json = file_get_contents('php://input');
@@ -398,7 +398,7 @@ class FlutterTeraWallet extends FlutterBaseController
     public function check_email($request)
     {
         if (!is_plugin_active('woo-wallet/woo-wallet.php')) {
-            return parent::sendError("invalid_plugin", "You need to install TeraWallet plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install TeraWallet plugin to use this api");
         }
 
         $json = file_get_contents('php://input');
@@ -440,7 +440,7 @@ class FlutterTeraWallet extends FlutterBaseController
 
     public function get_payment_methods($request){
         if (!class_exists('WOO_WALLET_WITHDRAWAL')) {
-            return parent::sendError("invalid_plugin", "You need to install TeraWallet Withdrawal plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install TeraWallet Withdrawal plugin to use this api");
         }
         return woo_wallet_withdrawal()->gateways->get_available_gateways();
     }
@@ -448,7 +448,7 @@ class FlutterTeraWallet extends FlutterBaseController
     public function get_payment_settings($request)
     {
         if (!class_exists('WOO_WALLET_WITHDRAWAL')) {
-            return parent::sendError("invalid_plugin", "You need to install TeraWallet Withdrawal plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install TeraWallet Withdrawal plugin to use this api");
         }
          $cookie = $request->get_header("User-Cookie");
         if (isset($cookie) && $cookie != null) {
@@ -480,7 +480,7 @@ class FlutterTeraWallet extends FlutterBaseController
     public function save_payment_settings($request)
     {
         if (!class_exists('WOO_WALLET_WITHDRAWAL')) {
-            return parent::sendError("invalid_plugin", "You need to install TeraWallet Withdrawal plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install TeraWallet Withdrawal plugin to use this api");
         }
 
         $json = file_get_contents('php://input');
@@ -515,7 +515,7 @@ class FlutterTeraWallet extends FlutterBaseController
 
     public function get_pending_requests($request){
         if (!class_exists('WOO_WALLET_WITHDRAWAL')) {
-            return parent::sendError("invalid_plugin", "You need to install TeraWallet Withdrawal plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install TeraWallet Withdrawal plugin to use this api");
         }
 
         $cookie = $request->get_header("User-Cookie");
@@ -554,7 +554,7 @@ class FlutterTeraWallet extends FlutterBaseController
 
     public function get_approved_requests($request){
         if (!class_exists('WOO_WALLET_WITHDRAWAL')) {
-            return parent::sendError("invalid_plugin", "You need to install TeraWallet Withdrawal plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install TeraWallet Withdrawal plugin to use this api");
         }
 
         $cookie = $request->get_header("User-Cookie");
@@ -591,7 +591,7 @@ class FlutterTeraWallet extends FlutterBaseController
 
     public function get_cancelled_requests($request){
         if (!class_exists('WOO_WALLET_WITHDRAWAL')) {
-            return parent::sendError("invalid_plugin", "You need to install TeraWallet Withdrawal plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install TeraWallet Withdrawal plugin to use this api");
         }
 
         $cookie = $request->get_header("User-Cookie");
@@ -685,7 +685,7 @@ class FlutterTeraWallet extends FlutterBaseController
     public function submit_request($request)
     {
         if (!class_exists('WOO_WALLET_WITHDRAWAL')) {
-            return parent::sendError("invalid_plugin", "You need to install TeraWallet Withdrawal plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install TeraWallet Withdrawal plugin to use this api");
         }
 
         $json = file_get_contents('php://input');
@@ -745,7 +745,7 @@ class FlutterTeraWallet extends FlutterBaseController
 
     function get_referrals($request){
         if (!is_plugin_active('woo-wallet/woo-wallet.php')) {
-            return parent::sendError("invalid_plugin", "You need to install TeraWallet plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install TeraWallet plugin to use this api");
         }
 
         $cookie = $request->get_header("User-Cookie");

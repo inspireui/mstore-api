@@ -55,7 +55,7 @@ class FlutterExpressPay extends FlutterBaseController
     {
 
         if (!is_plugin_active('woo-web-payment-getaway/web-payment-gateway.php')) {
-            return parent::sendError("invalid_plugin", "You need to install ShahbandrPay plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install ShahbandrPay plugin to use this api");
         }
 
         $json = file_get_contents('php://input');
@@ -103,7 +103,7 @@ class FlutterExpressPay extends FlutterBaseController
     public function card_checkout($request)
     {
         if (!is_plugin_active('woo-web-payment-getaway/web-payment-gateway.php')) {
-            return parent::sendError("invalid_plugin", "You need to install ShahbandrPay plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install ShahbandrPay plugin to use this api");
         }
 
         $json = file_get_contents('php://input');
