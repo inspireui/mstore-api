@@ -1477,10 +1477,25 @@ class FlutterWoo extends FlutterBaseController
         }
     }
 
-    /// Clone from function `custom_product_tabs_content` of `PSCW_PRODUCT_SIZE_CHART_F_WOO_Front_end`
+    /**
+     * custom_product_tabs_content
+     * 
+     * Clone from function `custom_product_tabs_content` of
+     * `PSCW_PRODUCT_SIZE_CHART_F_WOO_Front_end`
+     * 
+     * Plugin Product Size Chart For WooCommerce
+     * https://wordpress.org/plugins/product-size-chart-for-woo/
+     *
+     * @param  mixed $post_id
+     * @return String
+     */
     private function custom_product_tabs_content($post_id)
     {
         $html = '';
+
+        if (!class_exists('PSCW_PRODUCT_SIZE_CHART_F_WOO_Front_end')) {
+            return $html;
+        }
 
         // Initialize controller manually
         $controller = new PSCW_PRODUCT_SIZE_CHART_F_WOO_Front_end();
