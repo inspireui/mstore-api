@@ -772,17 +772,17 @@ class FlutterTemplate extends WP_REST_Posts_Controller
         $billing_postcode = (isset($user_info['billing_postcode'][0])) ? $user_info['billing_postcode'][0] : false;
         $billing_city = (isset($user_info['billing_city'][0])) ? $user_info['billing_city'][0] : false;
         $billing_country = (isset($user_info['billing_country'][0])) ? $user_info['billing_country'][0] : false;
-        $billing_phone = $user_info['billing_phone'][0];
+    	$billing_phone = isset($user_info['billing_phone'][0]) ? $user_info['billing_phone'][0] : false;
 
         $data = json_decode($object['value']);
-        $date_start = $data->date_start;
-        $date_end = $data->date_end;
-        $adults = $data->adults;
-        $tickets = $data->tickets;
-        $listing_id = $data->listing_id;
-        $slot = $data->slot;
-        $_hour_end = $data->_hour_end;
-        $_hour = $data->_hour;
+        $date_start = isset($data->date_start) ? $data->date_start : null;
+        $date_end = isset($data->date_end) ? $data->date_end : null;
+        $adults = isset($data->adults) ? $data->adults : null;
+        $tickets = isset($data->tickets) ? $data->tickets : null;
+        $listing_id = isset($data->listing_id) ? $data->listing_id : null;
+        $slot = isset($data->slot) ? $data->slot : null;
+        $_hour_end = isset($data->_hour_end) ? $data->_hour_end : null;
+        $_hour = isset($data->_hour) ? $data->_hour : null;
         $services = isset($data->services) ? $data->services : false;
         $comment_services = false;
         $message = '';

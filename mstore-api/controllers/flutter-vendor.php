@@ -812,7 +812,7 @@ class FlutterVendor extends FlutterBaseController
             }
             return $reviews;
         } else {
-            return parent::sendError("invalid_plugin", "Please install WCFM Marketplace Rest API plugin", 400);
+            return parent::send_invalid_plugin_error("Please install WCFM Marketplace Rest API plugin", 400);
         }
     }
 

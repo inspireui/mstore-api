@@ -66,7 +66,7 @@ class FlutterBooking extends FlutterBaseController
         $json = file_get_contents('php://input');
         $params = json_decode($json, TRUE);
         if (!is_plugin_active('woocommerce-appointments/woocommerce-appointments.php')) {
-            return parent::sendError("invalid_plugin", "You need to install WooCommerce Appointments plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install WooCommerce Appointments plugin to use this api");
         }
 
         //get order info
@@ -235,7 +235,7 @@ class FlutterBooking extends FlutterBaseController
     public function get_slots($request)
     {
         if (!is_plugin_active('woocommerce-appointments/woocommerce-appointments.php')) {
-            return parent::sendError("invalid_plugin", "You need to install WooCommerce Appointments plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install WooCommerce Appointments plugin to use this api");
         }
 
         $product_id = $request["product_id"];
