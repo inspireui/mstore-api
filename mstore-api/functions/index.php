@@ -423,6 +423,13 @@ function addYITHBadgeToMetaResponse($response, $product){
                 'value' => $badges,
         );
 
+        $hide_on_single = get_option( 'yith-wcbm-hide-on-single-product', 'no' ) === 'yes';
+        $meta_data[] = array(
+            'id'    => '_yith-wcbm-hide-on-single-product',
+            'key'   => '_yith-wcbm-hide-on-single-product',
+            'value' => $hide_on_single,
+        );
+        
         $response->data['meta_data'] = $meta_data;
     }
     return $response;

@@ -437,6 +437,10 @@ class FlutterVendor extends FlutterBaseController
                 $product->set_category_ids([$request["categories"][0]["id"]]);
                 $product->save();
             }
+            if (isset($request["tags"]) && count($request["tags"]) > 0) {
+                $product->set_tag_ids([$request["tags"][0]["id"]]);
+                $product->save();
+            }
             return $product->get_data();
         } else {
             return parent::sendError("invalid_role", "You must be seller to create product", 401);
