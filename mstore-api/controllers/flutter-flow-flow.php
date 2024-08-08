@@ -44,7 +44,7 @@ class FlutterFlowFlow extends FlutterBaseController
     public function get_stream_data($request)
     {
         if (!is_plugin_active('flow-flow/flow-flow.php')) {
-            return parent::sendError("invalid_plugin", "You need to install Flow-Flow plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install Flow-Flow plugin to use this api");
         }
         global $wpdb;
         $stream_id = sanitize_text_field($request['stream_id']);

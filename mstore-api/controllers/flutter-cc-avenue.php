@@ -43,7 +43,7 @@ class FlutterCCAvenue extends FlutterBaseController
     public function checkout()
     {
         if (!is_plugin_active('ccavanue-woocommerce-payment-getway/index.php')) {
-            return parent::sendError("invalid_plugin", "You need to install CCAvenue Payment Gateway for WooCommerce plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install CCAvenue Payment Gateway for WooCommerce plugin to use this api");
         }
 
         $json = file_get_contents('php://input');
@@ -53,8 +53,8 @@ class FlutterCCAvenue extends FlutterBaseController
         $cancel_url = sanitize_text_field($body['cancel_url']);
 
         $available_payment_methods = WC()->payment_gateways->payment_gateways();
-        if(!isset($available_payment_methods['ccavenue'])){
-            return parent::sendError("invalid_plugin", "You need to install CCAvenue Payment Gateway for WooCommerce plugin to use this api", 404);
+        if (!isset($available_payment_methods['ccavenue'])) {
+            return parent::send_invalid_plugin_error("You need to install CCAvenue Payment Gateway for WooCommerce plugin to use this api");
         }
         
         $paymentMethod = $available_payment_methods['ccavenue'];

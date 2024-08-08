@@ -58,7 +58,7 @@ class FlutterStripe extends FlutterBaseController
     public function create_payment_intent($request)
     {
         if (!is_plugin_active('woocommerce-gateway-stripe/woocommerce-gateway-stripe.php')) {
-            return parent::sendError("invalid_plugin", "You need to install WooCommerce Stripe Gateway plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install WooCommerce Stripe Gateway plugin to use this api");
         }
         $json = file_get_contents('php://input');
         $body = json_decode($json, TRUE);
@@ -112,7 +112,7 @@ class FlutterStripe extends FlutterBaseController
     public function get_payment_intent($request)
     {
         if (!is_plugin_active('woocommerce-gateway-stripe/woocommerce-gateway-stripe.php')) {
-            return parent::sendError("invalid_plugin", "You need to install WooCommerce Stripe Gateway plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install WooCommerce Stripe Gateway plugin to use this api");
         }
         $parameters = $request->get_params();
         $payment_intent_id = $parameters['id'];

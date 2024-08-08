@@ -16,4 +16,14 @@ class FlutterBaseController
     {
         return isPurchaseCodeVerified();
     }
+
+    /**
+     * Send invalid plugin error.
+     * 
+     * @param string $message Error message.
+     */
+    public function send_invalid_plugin_error($message)
+    {
+        return $this->sendError("invalid_plugin", $message, 403);
+    }
 }

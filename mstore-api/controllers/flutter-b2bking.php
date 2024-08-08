@@ -106,7 +106,7 @@ class FlutterB2BKing extends FlutterBaseController
     public function get_roles($request)
     {
         if (!class_exists('B2bking')) {
-            return parent::sendError("invalid_plugin", "You need to install B2BKing Core plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install B2BKing Core plugin to use this api");
         }
 
         $roles = get_posts([
@@ -135,7 +135,7 @@ class FlutterB2BKing extends FlutterBaseController
     public function get_register_fields($request)
     {
         if (!class_exists('B2bking')) {
-            return parent::sendError("invalid_plugin", "You need to install B2BKing Core plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install B2BKing Core plugin to use this api");
         }
 
         $fields = array();
@@ -194,7 +194,7 @@ class FlutterB2BKing extends FlutterBaseController
         $register_role = sanitize_text_field(filter_input(INPUT_POST, 'b2bking_registration_roles_dropdown')); 
         
         if (!class_exists('B2bking')) {
-            return parent::sendError("invalid_plugin", "You need to install B2BKing Core plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install B2BKing Core plugin to use this api");
         }
 
         //Check role
@@ -449,7 +449,7 @@ class FlutterB2BKing extends FlutterBaseController
     public function send_quote()
     {
         if (!class_exists('B2bking')) {
-            return parent::sendError("invalid_plugin", "You need to install B2BKing Core plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install B2BKing Core plugin to use this api");
         }
 
         $json = file_get_contents('php://input');

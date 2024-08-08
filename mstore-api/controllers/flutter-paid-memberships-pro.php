@@ -55,7 +55,7 @@ class FlutterPaidMembershipsPro extends FlutterBaseController
     public function get_plans()
     {
         if (!is_plugin_active('paid-memberships-pro/paid-memberships-pro.php')) {
-            return parent::sendError("plugin_not_found", "Please install Paid Memberships Pro", 404);
+            return parent::send_invalid_plugin_error("Please install Paid Memberships Pro");
         }
 
         $gateway = pmpro_getOption( "gateway" );
@@ -292,7 +292,7 @@ class FlutterPaidMembershipsPro extends FlutterBaseController
     public function membership_register()
     {
         if (!is_plugin_active('paid-memberships-pro/paid-memberships-pro.php')) {
-            return parent::sendError("plugin_not_found", "Please install Paid Memberships Pro", 404);
+            return parent::send_invalid_plugin_error("Please install Paid Memberships Pro");
         }
 
         global $wpdb, $gateway, $username, $password, $password2, $bfirstname, $blastname, $baddress1, $baddress2, $bcity, $bstate, $bzipcode, $bcountry, $bphone, $bemail, $bconfirmemail, $CardType, $AccountNumber, $ExpirationMonth, $ExpirationYear, $pmpro_requirebilling;

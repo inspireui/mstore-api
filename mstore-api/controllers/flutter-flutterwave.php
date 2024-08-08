@@ -45,7 +45,7 @@ class FlutterFlutterwave extends FlutterBaseController
     public function flw_verify_payment($request)
     {
         if (!is_plugin_active('rave-woocommerce-payment-gateway/woocommerce-rave.php')) {
-            return parent::sendError("invalid_plugin", "You need to install Flutterwave WooCommerce plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install Flutterwave WooCommerce plugin to use this api");
         }
         $_GET['txref'] = sanitize_text_field($request['txref']);
 

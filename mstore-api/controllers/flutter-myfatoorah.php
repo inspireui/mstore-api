@@ -45,7 +45,7 @@ class FlutterMyFatoorah extends FlutterBaseController
     public function myfatoorah_complete($request)
     {
         if (!is_plugin_active('myfatoorah-woocommerce/myfatoorah-woocommerce.php')) {
-            return parent::sendError("invalid_plugin", "You need to install MyFatoorah – WooCommerce plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install MyFatoorah – WooCommerce plugin to use this api");
         }
         $_GET['oid'] = base64_encode(sanitize_text_field($request['orderId']));
         $_GET['paymentId'] = $request['paymentId'];

@@ -52,7 +52,7 @@ class FlutterCompositeProducts extends FlutterBaseController
     public function get_components($request)
     {
         if (!class_exists('YITH_WCP')) {
-            return parent::sendError("invalid_plugin", "You need to install YITH Composite Products for WooCommerce plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install YITH Composite Products for WooCommerce plugin to use this api");
         }
         $product_id = $request["id"];
         $components = get_post_meta( $product_id, '_ywcp_component_data_list' );

@@ -1,5 +1,6 @@
 <?php
 require_once(__DIR__ . '/flutter-base.php');
+
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 /*
@@ -56,7 +57,7 @@ class Flutter2C2P extends FlutterBaseController
     public function payment_success()
     {
         if (!is_plugin_active('2c2p_woocommerce/2c2p.php')) {
-            return parent::sendError("invalid_plugin", "You need to install 2C2P Redirect API for WooCommerce plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install 2C2P Redirect API for WooCommerce plugin to use this api");
         }
 
         $objWC_Gateway_2c2p = new WC_Gateway_2c2p();
@@ -92,7 +93,7 @@ class Flutter2C2P extends FlutterBaseController
     public function generate_payment_token($request)
     {
         if (!is_plugin_active('2c2p_woocommerce/2c2p.php')) {
-            return parent::sendError("invalid_plugin", "You need to install 2C2P Redirect API for WooCommerce plugin to use this api", 404);
+            return parent::send_invalid_plugin_error("You need to install 2C2P Redirect API for WooCommerce plugin to use this api");
         }
 
         $json = file_get_contents('php://input');
