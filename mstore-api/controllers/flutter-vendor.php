@@ -586,6 +586,14 @@ class FlutterVendor extends FlutterBaseController
                     );
                 }
             }
+            if (isset($request['exclude']) && !empty($request['exclude'])) {
+                $excluded_ids = array_map('intval', explode(',', $request['exclude']));
+                if (isset($args['post__not_in'])) {
+                    $args['post__not_in'] = array_merge($args['post__not_in'], $excluded_ids);
+                } else {
+                    $args['post__not_in'] = $excluded_ids;
+                }
+            }
             $products = get_posts($args);
         } else {
             global $woocommerce, $wpdb;
