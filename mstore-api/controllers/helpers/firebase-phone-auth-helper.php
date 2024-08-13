@@ -28,11 +28,11 @@ class FirebasePhoneAuthHelper
         $json = json_decode($fileContent, true);
         $projectId = $json['project_id'];
 
-        if (!isset($decodedPayload['aud']) || $decodedPayload['aud'] != $projectId) {
+        if (!isset($decodedPayload['aud']) || $decodedPayload['aud'] !== $projectId) {
             return false;
         }
         
-        if (!isset($decodedPayload['iss']) || $decodedPayload['iss'] != 'https://securetoken.google.com/'.$projectId) {
+        if (!isset($decodedPayload['iss']) || $decodedPayload['iss'] !== 'https://securetoken.google.com/'.$projectId) {
             return false;
         }
 
