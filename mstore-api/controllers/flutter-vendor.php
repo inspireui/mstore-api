@@ -607,6 +607,9 @@ class FlutterVendor extends FlutterBaseController
             if (isset($request['lang'])) {
                 $params['lang'] = $request['lang'];
             }
+            if(isset($request['is_all_data'])){
+                $params['is_all_data'] = $request['is_all_data'];
+            }
             $req->set_query_params($params);
             $response = $controller->get_items($req);
             remove_filter( 'woocommerce_rest_check_permissions', '__return_true' );
