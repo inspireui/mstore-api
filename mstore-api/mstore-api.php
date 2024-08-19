@@ -356,13 +356,19 @@ class MstoreCheckOut
     }
 
     //new order or update order via API
-    function track_api_new_order($object,$request, $creating)
+    function track_api_new_order($object, $request, $creating)
     {
-        if($creating){
+        if ($creating) {
             trackNewOrder($object->id);
-        }else{
+
+            // Update order attributes. Requires WooCommerce 8.5.0 or later.
+            // And make sure you have enabled `Order Attributes` in WooCommerce
+            // Settings > Advanced > Features.
+            // See: https://woocommerce.com/document/order-attribution-tracking/
+            do_action('woocommerce_store_api_checkout_update_order_from_request', $object, $request);
+        } else {
             $body = $request->get_body_params();
-            if(isset($body['status'])){
+            if (isset($body['status'])) {
                 sendNotificationForOrderStatusUpdated($object->id, $body['status']);
             }
         }
