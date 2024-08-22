@@ -92,6 +92,16 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
                 'schema' => array($this, 'get_public_item_schema'),
             )
         );
+
+        register_rest_route($this->namespace, '/orders/stats', array(
+            array(
+                'methods' => WP_REST_Server::CREATABLE,
+                'callback' => array($this, 'get_order_stats'),
+                'permission_callback' => array($this, 'custom_create_item_permissions_check'),
+                'args' => $this->get_endpoint_args_for_item_schema(WP_REST_Server::CREATABLE),
+            ),
+            'schema' => array($this, 'get_public_item_schema'),
+        ));
     }
 
     function custom_create_item_permissions_check($request)
@@ -229,6 +239,43 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
         $response = $this->delete_item($request);
         remove_filter( 'woocommerce_rest_check_permissions', '__return_true' );
         return $response;
+    }
+
+    function get_order_stats()
+    {
+        $json = file_get_contents('php://input');
+        $params = json_decode($json, TRUE);
+        $results = (object) array();
+        $statuses = wc_get_order_statuses();
+        $statuses_keys = array_keys($statuses);
+        $year = $params['year'] ?? 2024;
+        $date = date('Y-m-d', strtotime($year . '-01-01'));
+        for ($i = 0; $i < 12; $i++) {
+            $next_date = date('Y-m-d', strtotime('+1 month', strtotime($date)));
+            $month = (string) ($i + 1);
+            $results->$month = $this->wp_count_orders($date, $next_date, $statuses_keys);
+            $date = $next_date;
+        }
+        $results->statuses = $statuses;
+        return $results;
+    }
+
+    function wp_count_orders($start_date, $end_date, $statuses)
+    {
+        global $wpdb;
+        $type = 'shop_order';
+        $created_via = 'rest-api';
+        $query = "SELECT status, COUNT( * ) AS num_orders FROM {$wpdb->prefix}wc_orders";
+        $query .= " INNER JOIN {$wpdb->prefix}wc_order_operational_data ON {$wpdb->prefix}wc_orders.id = {$wpdb->prefix}wc_order_operational_data.order_id";
+        $query .= " WHERE type = %s AND created_via = \"$created_via\" AND date_created_gmt >= \"$start_date\" AND date_created_gmt < \"$end_date\"";
+        $query .= ' GROUP BY status';
+        $results = (array) $wpdb->get_results($wpdb->prepare($query, $type), ARRAY_A);
+        $counts  = array_fill_keys($statuses, 0);
+        foreach ($results as $row) {
+            $counts[$row['status']] = $row['num_orders'];
+        }
+        $counts = (object) $counts;
+        return $counts;
     }
 }
 
