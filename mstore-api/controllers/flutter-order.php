@@ -243,39 +243,67 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
 
     function get_order_stats()
     {
-        $json = file_get_contents('php://input');
-        $params = json_decode($json, TRUE);
-        $results = (object) array();
-        $statuses = wc_get_order_statuses();
-        $statuses_keys = array_keys($statuses);
-        $year = $params['year'] ?? 2024;
-        $date = date('Y-m-d', strtotime($year . '-01-01'));
-        for ($i = 0; $i < 12; $i++) {
-            $next_date = date('Y-m-d', strtotime('+1 month', strtotime($date)));
-            $month = (string) ($i + 1);
-            $results->$month = $this->wp_count_orders($date, $next_date, $statuses_keys);
-            $date = $next_date;
+        try {
+            global $WOOCS;
+            //global $woocommerce_wpml;
+            $json = file_get_contents('php://input');
+            $params = json_decode($json, TRUE);
+            $results = (object) array();
+            $year = $params['year'] ?? 2024;
+            $currency = $params['currency'] ?? 'VND';
+            $date = date('Y-m-d', strtotime($year . '-01-01'));
+            $currencies = array();
+            if (!empty($WOOCS)) {
+                $currencies = $WOOCS->get_currencies();
+            }
+            // if (!empty($woocommerce_wpml->multi_currency) && !empty($woocommerce_wpml->settings['currencies_order'])) {
+            //     $currencies = $woocommerce_wpml->settings['currency_options'];
+            // }
+            $currency_value = $currencies[$currency] ?? array_shift(array_values($currencies));;
+            for ($i = 0; $i < 12; $i++) {
+                $next_date = date('Y-m-d', strtotime('+1 month', strtotime($date)));
+                $month = (string) ($i + 1);
+                $sales = $this->wp_sale_orders($date, $next_date, $currencies);
+                $rate = $currency_value['rate'];
+                if (!empty($rate)) {
+                    $sales *= $rate;
+                }
+                $results->$month = $sales;
+                $date = $next_date;
+            }
+            $results->currency = $currency_value;
+            return $results;
+        } catch (Exception $e) {
+            return (object) array();
         }
-        $results->statuses = $statuses;
-        return $results;
     }
 
-    function wp_count_orders($start_date, $end_date, $statuses)
+    function wp_sale_orders($start_date, $end_date, $currencies)
     {
-        global $wpdb;
-        $type = 'shop_order';
-        $created_via = 'rest-api';
-        $query = "SELECT status, COUNT( * ) AS num_orders FROM {$wpdb->prefix}wc_orders";
-        $query .= " INNER JOIN {$wpdb->prefix}wc_order_operational_data ON {$wpdb->prefix}wc_orders.id = {$wpdb->prefix}wc_order_operational_data.order_id";
-        $query .= " WHERE type = %s AND created_via = \"$created_via\" AND date_created_gmt >= \"$start_date\" AND date_created_gmt < \"$end_date\"";
-        $query .= ' GROUP BY status';
-        $results = (array) $wpdb->get_results($wpdb->prepare($query, $type), ARRAY_A);
-        $counts  = array_fill_keys($statuses, 0);
-        foreach ($results as $row) {
-            $counts[$row['status']] = $row['num_orders'];
+        try {
+            global $wpdb;
+            $type = 'shop_order';
+            $created_via = 'rest-api';
+            $query = "SELECT currency, SUM( total_amount ) AS sale_orders FROM {$wpdb->prefix}wc_orders";
+            $query .= " INNER JOIN {$wpdb->prefix}wc_order_operational_data ON {$wpdb->prefix}wc_orders.id = {$wpdb->prefix}wc_order_operational_data.order_id";
+            $query .= " WHERE type = %s AND date_created_gmt >= \"$start_date\" AND date_created_gmt < \"$end_date\"";
+            $query .= " AND status = \"wc-completed\" AND created_via = \"$created_via\"";
+            $query .= ' GROUP BY currency';
+            $results = (array) $wpdb->get_results($wpdb->prepare($query, $type), ARRAY_A);
+            $total = 0;
+            foreach ($results as $row) {
+                $currency = $currencies[$row['currency']];
+                $rate = $currency['rate'];
+                $sale = $row['sale_orders'];
+                if (!empty($rate)) {
+                    $sale /= $rate;
+                }
+                $total += $sale;
+            }
+            return $total;
+        } catch (Exception $e) {
+            return 0;
         }
-        $counts = (object) $counts;
-        return $counts;
     }
 }
 
