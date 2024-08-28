@@ -251,6 +251,7 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
             $results = (object) array();
             $year = $params['year'] ?? 2024;
             $currency = $params['currency'] ?? 'VND';
+            $created_via = $params['created_via'] ?? 'rest-api';
             $date = date('Y-m-d', strtotime($year . '-01-01'));
             $currencies = array();
             if (!empty($WOOCS)) {
@@ -263,7 +264,7 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
             for ($i = 0; $i < 12; $i++) {
                 $next_date = date('Y-m-d', strtotime('+1 month', strtotime($date)));
                 $month = (string) ($i + 1);
-                $sales = $this->wp_sale_orders($date, $next_date, $currencies);
+                $sales = $this->wp_sale_orders($date, $next_date, $created_via, $currencies);
                 $rate = $currency_value['rate'];
                 if (!empty($rate)) {
                     $sales *= $rate;
@@ -278,12 +279,11 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
         }
     }
 
-    function wp_sale_orders($start_date, $end_date, $currencies)
+    function wp_sale_orders($start_date, $end_date, $created_via, $currencies)
     {
         try {
             global $wpdb;
             $type = 'shop_order';
-            $created_via = 'rest-api';
             $query = "SELECT currency, SUM( total_amount ) AS sale_orders FROM {$wpdb->prefix}wc_orders";
             $query .= " INNER JOIN {$wpdb->prefix}wc_order_operational_data ON {$wpdb->prefix}wc_orders.id = {$wpdb->prefix}wc_order_operational_data.order_id";
             $query .= " WHERE type = %s AND date_created_gmt >= \"$start_date\" AND date_created_gmt < \"$end_date\"";
