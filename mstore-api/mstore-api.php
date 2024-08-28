@@ -419,7 +419,7 @@ class MstoreCheckOut
                 }
             }
         }
-        if (isset($_GET['mobile'])) {
+        if (isset($_GET['mobile']) && isset($_GET['code'])) {
             $order->set_created_via('rest-api');
         }
     }
