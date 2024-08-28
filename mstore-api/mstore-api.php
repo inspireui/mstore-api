@@ -211,6 +211,9 @@ class MstoreCheckOut
         //Handle listen to assign delivery boy on the website
         add_action( 'wcfmd_after_delivery_boy_assigned', array($this, 'track_delivery_boy_assigned'), 400, 6 );
 
+        // add mark rest-api for webview checkout
+        add_action('woocommerce_order_after_calculate_totals', array($this, 'mark_order_with_mobile_rest_api'), 10, 2);
+
         $path = get_template_directory() . "/templates";
         if (!file_exists($path)) {
             mkdir($path, 0777, true);
@@ -403,6 +406,22 @@ class MstoreCheckOut
             PRIMARY KEY  (id)
         ) $charset_collate;";
         $success = maybe_create_table($table_name, $sql);
+    }
+
+    function mark_order_with_mobile_rest_api($and_taxes, $order)
+    {
+        if (empty($_GET) && isset($_SERVER['HTTP_REFERER'])) {
+            $url_components = parse_url($_SERVER['HTTP_REFERER']);
+            if (isset($url_components['query'])) {
+                parse_str($url_components['query'], $params);
+                if (!empty($params)) {
+                    $_GET = $params;
+                }
+            }
+        }
+        if (isset($_GET['mobile'])) {
+            $order->set_created_via('rest-api');
+        }
     }
 }
 
