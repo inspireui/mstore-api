@@ -34,7 +34,7 @@ class CUSTOM_WC_REST_Customers_Controller extends WC_REST_Customers_Controller
 
     function custom_delete_item_permissions_check($request)
     {
-        $cookie = $request->get_header("User-Cookie");
+        $cookie = get_header_user_cookie($request->get_header("User-Cookie"));
         if (isset($cookie) && $cookie != null) {
             $user_id = validateCookieLogin($cookie);
             if (is_wp_error($user_id)) {

@@ -291,7 +291,7 @@ class FlutterB2BKing extends FlutterBaseController
     }
 
     function get_tiered_price($request){
-        $cookie = $request->get_header("User-Cookie");
+        $cookie = get_header_user_cookie($request->get_header("User-Cookie"));
         $post_id = $request->get_param( 'id' );
         $product = wc_get_product($post_id);
         if (isset($cookie) && $cookie != null) {
@@ -400,7 +400,7 @@ class FlutterB2BKing extends FlutterBaseController
     }
 
     function get_info_table($request){
-        $cookie = $request->get_header("User-Cookie");
+        $cookie = get_header_user_cookie($request->get_header("User-Cookie"));
         $post_id = $request->get_param( 'id' );
         if (isset($cookie) && $cookie != null) {
             $user_id = validateCookieLogin($cookie);

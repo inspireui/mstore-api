@@ -138,7 +138,7 @@ class FlutterMultiVendor
 
     function custom_permissions_check($request)
     {
-        $cookie = $request->get_header("User-Cookie");
+        $cookie = get_header_user_cookie($request->get_header("User-Cookie"));
         if (isset($cookie) && $cookie != null) {
             $user_id = validateCookieLogin($cookie);
             return !is_wp_error($user_id);

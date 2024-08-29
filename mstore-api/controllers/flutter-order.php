@@ -96,7 +96,7 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
 
     function custom_create_item_permissions_check($request)
     {
-        $cookie = $request->get_header("User-Cookie");
+        $cookie = get_header_user_cookie($request->get_header("User-Cookie"));
         $json = file_get_contents('php://input');
         $params = json_decode($json, TRUE);
         if (isset($cookie) && $cookie != null) {
@@ -117,7 +117,7 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
 
     function custom_delete_item_permissions_check($request)
     {
-        $cookie = $request->get_header("User-Cookie");
+        $cookie = get_header_user_cookie($request->get_header("User-Cookie"));
         $json = file_get_contents('php://input');
         $params = json_decode($json, TRUE);
         if (isset($cookie) && $cookie != null) {

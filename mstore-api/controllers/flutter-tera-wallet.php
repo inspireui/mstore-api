@@ -205,7 +205,7 @@ class FlutterTeraWallet extends FlutterBaseController
             return parent::send_invalid_plugin_error("You need to install TeraWallet plugin to use this api");
         }
 
-        $cookie = $request->get_header("User-Cookie");
+        $cookie = get_header_user_cookie($request->get_header("User-Cookie"));
         if (isset($cookie) && $cookie != null) {
             $user_id = validateCookieLogin($cookie);
             if (is_wp_error($user_id)) {
@@ -240,7 +240,7 @@ class FlutterTeraWallet extends FlutterBaseController
             return parent::send_invalid_plugin_error("You need to install TeraWallet plugin to use this api");
         }
 
-        $cookie = $request->get_header("User-Cookie");
+        $cookie = get_header_user_cookie($request->get_header("User-Cookie"));
         if (isset($cookie) && $cookie != null) {
             $user_id = validateCookieLogin($cookie);
             if (is_wp_error($user_id)) {
@@ -259,7 +259,7 @@ class FlutterTeraWallet extends FlutterBaseController
             return parent::send_invalid_plugin_error("You need to install TeraWallet plugin to use this api");
         }
 
-        $cookie = $request->get_header("User-Cookie");
+        $cookie = get_header_user_cookie($request->get_header("User-Cookie"));
         if (isset($cookie) && $cookie != null) {
             $user_id = validateCookieLogin($cookie);
             if (is_wp_error($user_id)) {
@@ -322,7 +322,7 @@ class FlutterTeraWallet extends FlutterBaseController
 
         $json = file_get_contents('php://input');
         $params = json_decode($json, TRUE);
-        $cookie = $request->get_header("User-Cookie");
+        $cookie = get_header_user_cookie($request->get_header("User-Cookie"));
         if (isset($cookie) && $cookie != null) {
             $user_id = validateCookieLogin($cookie);
             if (is_wp_error($user_id)) {
@@ -370,7 +370,7 @@ class FlutterTeraWallet extends FlutterBaseController
 
         $json = file_get_contents('php://input');
         $params = json_decode($json, TRUE);
-        $cookie = $request->get_header("User-Cookie");
+        $cookie = get_header_user_cookie($request->get_header("User-Cookie"));
         if (isset($cookie) && $cookie != null) {
             $user_id = validateCookieLogin($cookie);
             if (is_wp_error($user_id)) {
@@ -403,7 +403,7 @@ class FlutterTeraWallet extends FlutterBaseController
 
         $json = file_get_contents('php://input');
         $params = json_decode($json, TRUE);
-        $cookie = $request->get_header("User-Cookie");
+        $cookie = get_header_user_cookie($request->get_header("User-Cookie"));
         if (isset($cookie) && $cookie != null) {
             $user_id = validateCookieLogin($cookie);
             if (is_wp_error($user_id)) {
@@ -450,7 +450,7 @@ class FlutterTeraWallet extends FlutterBaseController
         if (!class_exists('WOO_WALLET_WITHDRAWAL')) {
             return parent::send_invalid_plugin_error("You need to install TeraWallet Withdrawal plugin to use this api");
         }
-         $cookie = $request->get_header("User-Cookie");
+         $cookie = get_header_user_cookie($request->get_header("User-Cookie"));
         if (isset($cookie) && $cookie != null) {
             $user_id = validateCookieLogin($cookie);
             if (is_wp_error($user_id)) {
@@ -485,7 +485,7 @@ class FlutterTeraWallet extends FlutterBaseController
 
         $json = file_get_contents('php://input');
         $params = json_decode($json, TRUE);
-        $cookie = $request->get_header("User-Cookie");
+        $cookie = get_header_user_cookie($request->get_header("User-Cookie"));
         if (isset($cookie) && $cookie != null) {
             $user_id = validateCookieLogin($cookie);
             if (is_wp_error($user_id)) {
@@ -518,7 +518,7 @@ class FlutterTeraWallet extends FlutterBaseController
             return parent::send_invalid_plugin_error("You need to install TeraWallet Withdrawal plugin to use this api");
         }
 
-        $cookie = $request->get_header("User-Cookie");
+        $cookie = get_header_user_cookie($request->get_header("User-Cookie"));
         if (isset($cookie) && $cookie != null) {
             $user_id = validateCookieLogin($cookie);
             if (is_wp_error($user_id)) {
@@ -557,7 +557,7 @@ class FlutterTeraWallet extends FlutterBaseController
             return parent::send_invalid_plugin_error("You need to install TeraWallet Withdrawal plugin to use this api");
         }
 
-        $cookie = $request->get_header("User-Cookie");
+        $cookie = get_header_user_cookie($request->get_header("User-Cookie"));
         if (isset($cookie) && $cookie != null) {
             $user_id = validateCookieLogin($cookie);
             if (is_wp_error($user_id)) {
@@ -594,7 +594,7 @@ class FlutterTeraWallet extends FlutterBaseController
             return parent::send_invalid_plugin_error("You need to install TeraWallet Withdrawal plugin to use this api");
         }
 
-        $cookie = $request->get_header("User-Cookie");
+        $cookie = get_header_user_cookie($request->get_header("User-Cookie"));
         if (isset($cookie) && $cookie != null) {
             $user_id = validateCookieLogin($cookie);
             if (is_wp_error($user_id)) {
@@ -690,7 +690,7 @@ class FlutterTeraWallet extends FlutterBaseController
 
         $json = file_get_contents('php://input');
         $params = json_decode($json, TRUE);
-        $cookie = $request->get_header("User-Cookie");
+        $cookie = get_header_user_cookie($request->get_header("User-Cookie"));
         if (isset($cookie) && $cookie != null) {
             $user_id = validateCookieLogin($cookie);
             if (is_wp_error($user_id)) {
@@ -748,7 +748,7 @@ class FlutterTeraWallet extends FlutterBaseController
             return parent::send_invalid_plugin_error("You need to install TeraWallet plugin to use this api");
         }
 
-        $cookie = $request->get_header("User-Cookie");
+        $cookie = get_header_user_cookie($request->get_header("User-Cookie"));
         if (isset($cookie) && $cookie != null) {
             $user_id = validateCookieLogin($cookie);
             if (is_wp_error($user_id)) {
