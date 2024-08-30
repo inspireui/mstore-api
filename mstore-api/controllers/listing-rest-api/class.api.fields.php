@@ -295,6 +295,17 @@ class FlutterTemplate extends WP_REST_Posts_Controller
                     'get_callback'  => array($this,'_rest_get_lng_data'),
                 )
             );
+
+            register_rest_route('wp/v2', '/job_listing/(?P<id>\d+)/contents', array(
+                'methods' => 'GET',
+                'callback' => array(
+                    $this,
+                    'get_listing_tabs'
+                ) ,
+                'permission_callback' => function () {
+                    return true;
+                }
+            ));
         }
 
         /* --- meta field for gallery image --- */
@@ -1173,6 +1184,111 @@ class FlutterTemplate extends WP_REST_Posts_Controller
 
             return new WP_REST_Response($data, 200);
 
+        }
+
+        function get_listing_tabs($request){
+            $listing_id = $request['id'];
+            $post = get_post($listing_id);
+            $listing = MyListing\Src\Listing::get( $post );
+
+            if ( ! $listing->type ) {
+                return [];
+            }
+
+            $layout = $listing->type->get_layout();
+
+            $blocks = [];
+            foreach ((array) $layout['menu_items'] as $key => &$menu_item){
+                if ($menu_item['page'] == 'main' || $menu_item['page'] == 'custom'){
+                    if ( empty( $menu_item['layout'] ) ) {
+                        $menu_item['layout'] = [];
+                    }
+
+                    if ( empty( $menu_item['sidebar'] ) ) {
+                        $menu_item['sidebar'] = [];
+                    }
+
+                    if ( in_array( $menu_item['template'], ['two-columns', 'content-sidebar', 'sidebar-content'] ) ) {
+                        $first_col = $menu_item['template'] === 'sidebar-content' ? 'sidebar' : 'layout';
+                        $second_col = $first_col === 'layout' ? 'sidebar' : 'layout';
+
+                        $menu_item[ 'layout' ] = array_merge( $menu_item[ $first_col ], $menu_item[ $second_col ] );
+                    }
+
+                    foreach ( $menu_item['layout'] as $block ){
+                        if ( empty( $block['type'] ) ) {
+                            $block['type'] = 'default';
+                        }
+
+                        if ( empty( $block['id'] ) ) {
+                            $block['id'] = '';
+                        }
+                        $block->set_listing( $listing );
+
+                        $block['type'] = $block->get_type();
+                        switch ($block['type']) {
+                            case 'gallery':
+                                $field = $listing->get_field( $block['show_field'], true );
+                                $block['gallery'] = $field->get_value();
+                                break;
+                            case 'text':
+                                $field = $listing->get_field( $block['show_field'], true );
+                                $block['text'] = $field->get_value();
+                                break;
+                            case 'table':
+                            case 'accordion':
+                                $block['rows'] = $block->get_formatted_rows( $listing );
+                                break;
+                            case 'tags':
+                                $block['tags'] = $listing->get_field( 'tags' );
+                                break;
+                            case 'categories':
+                                $block['categories'] = $listing->get_field( 'category' );
+                                break;
+                            case 'author':
+                                $author = $listing->get_author();
+                                if ( ! ( $author instanceof \MyListing\Src\User && $author->exists() ) ) {
+                                    $block['author'] = null;
+                                }else{
+                                    $avatar = get_user_meta($user->ID, 'user_avatar', true);
+                                    if (!isset($avatar) || $avatar == "" || is_bool($avatar)) {
+                                        $avatar = get_avatar_url($user->ID);
+                                    } else {
+                                        $avatar = $avatar[0];
+                                    }
+                                    $block['author'] = array(
+                                        "id" => $author->ID,
+                                        "displayname" => $author->display_name,
+                                        "firstname" => $author->user_firstname,
+                                        "lastname" => $author->last_name,
+                                        "nickname" => $author->nickname,
+                                        "avatar" => $avatar,
+                                    );
+                                }
+                                break;
+                            case 'work_hours':
+                                $block['work_hours'] = $listing->get_field( 'work_hours' ) ;
+                                break;
+                            case 'video':
+                                $video_url = $listing->get_field( $block->get_prop( 'show_field' ) );
+                                $block['video'] = \MyListing\Helpers::get_video_embed_details( $video_url );
+                                break;
+                            case 'location':
+                                $field = $listing->get_field_object( $block['show_field'], true );
+								$locations = $field->get_value();
+                                $block['locations'] = $locations;
+                                break;
+                            default:
+                     
+                                break;
+                        }
+                        $blocks[] = $block;
+                    }
+
+                }
+            }
+
+            return $blocks;
         }
 
         function _rest_get_address_lat_lng_data($object)
@@ -2341,6 +2457,8 @@ class FlutterTemplate extends WP_REST_Posts_Controller
 
             return new WP_REST_Response($listings_grouped, 200);
         }
+
+
     }
 
     new FlutterTemplate;
