@@ -287,7 +287,10 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
             $query = "SELECT currency, SUM( total_amount ) AS sale_orders FROM {$wpdb->prefix}wc_orders";
             $query .= " INNER JOIN {$wpdb->prefix}wc_order_operational_data ON {$wpdb->prefix}wc_orders.id = {$wpdb->prefix}wc_order_operational_data.order_id";
             $query .= " WHERE type = %s AND date_created_gmt >= \"$start_date\" AND date_created_gmt < \"$end_date\"";
-            $query .= " AND status = \"wc-completed\" AND created_via = \"$created_via\"";
+            $query .= " AND status = \"wc-completed\"";
+            if ($created_via != 'all') {
+                $query .= " AND created_via = \"$created_via\"";
+            }
             $query .= ' GROUP BY currency';
             $results = (array) $wpdb->get_results($wpdb->prepare($query, $type), ARRAY_A);
             $total = 0;
