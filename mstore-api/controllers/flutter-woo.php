@@ -554,8 +554,29 @@ class FlutterWoo extends FlutterBaseController
             // Load cart item data - may be added by other plugins.
             $cart_item_data = (array)apply_filters('woocommerce_add_cart_item_data', $cart_item_data, $product_id, $variation_id, $quantity);
 
+            /// convert array to array string because generate_cart_id using trim(string) function
+            $variation_array = array();
+            if ( is_array( $variation ) && ! empty( $variation ) ) {
+                foreach ( $variation as $key => $value ) {
+                    if (is_array($value)) {
+                        $variation_array[$key] = implode(',', $value);
+                        continue;
+                    }
+                    $variation_array[$key] = $value;
+                }
+            }
+            $cart_item_data_array = array();
+            if ( is_array( $cart_item_data ) && ! empty( $cart_item_data ) ) {
+                foreach ( $cart_item_data as $key => $value ) {
+                    if (is_array($value)) {
+                        $cart_item_data_array[$key] = implode(',', $value);
+                        continue;
+                    }
+                    $cart_item_data_array[$key] = $value;
+                }
+            }
             // Generate a ID based on product ID, variation ID, variation data, and other cart item data.
-            $cart_id = WC()->cart->generate_cart_id($product_id, $variation_id, $variation, $cart_item_data);
+            $cart_id = WC()->cart->generate_cart_id($product_id, $variation_id, $variation_array, $cart_item_data_array);
 
             // Find the cart item key in the existing cart.
             $cart_item_key = WC()->cart->find_product_in_cart($cart_id);

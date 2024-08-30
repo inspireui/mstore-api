@@ -493,6 +493,8 @@ add_filter('woocommerce_rest_product_object_query', 'flutter_custom_rest_product
 add_filter('woocommerce_rest_product_tag_query', 'flutter_custom_rest_product_tag_query', 10, 2);
 add_filter('woocommerce_rest_product_brand_query', 'flutter_custom_rest_product_brand_query', 10, 2);
 add_filter('rest_product_collection_params', 'flutter_custom_rest_product_collection_params', 10, 1);
+add_filter('posts_pre_query', 'flutter_custom_posts_pre_query', 10, 2);
+add_filter('found_posts', 'flutter_custom_found_posts', 20, 2);
 
 /**
  * WooCommerce REST API: Random sorting for products.
@@ -750,6 +752,46 @@ function custom_woocommerce_rest_prepare_product_variation_object($response, $ob
     }
     return $response;
 }
+
+/**
+ * Wordpress REST API: Support Rest API with Relevanssi.
+ *
+ * Attaches to 'the_posts' filter hook, checks to see if there's a place for a
+ * search and runs relevanssi_do_query() if there is.
+ * 
+ * https://www.relevanssi.com/user-manual/using-relevanssi-outside-search-pages/
+ *
+ * @param array    $posts An array of post objects.
+ * @param WP_Query $query The WP_Query object, default false.
+ */
+function flutter_custom_posts_pre_query($posts, $query)
+{
+    if ($query->is_search() && defined('REST_REQUEST') && REST_REQUEST) {
+        if (function_exists('relevanssi_do_query')) {
+            $posts = relevanssi_do_query($query);
+            $query->relevanssi_found_posts = $query->found_posts;
+            return $posts;
+        }
+    }
+    return $posts;
+}
+
+/**
+ * Wordpress REST API: Customize `found_posts` in Rest API with Relevanssi.
+ *
+ * @param int $found_posts The number of posts found.
+ * @param WP_Query $query The WP_Query object.
+ */
+function flutter_custom_found_posts($found_posts, $query)
+{
+    if ($query->is_search() && defined('REST_REQUEST') && REST_REQUEST) {
+        if (function_exists('relevanssi_do_query')) {
+            return $query->relevanssi_found_posts;
+        }
+    }
+    return $found_posts;
+}
+
 
 // Prepare data before checkout by webview
 function flutter_prepare_checkout()
