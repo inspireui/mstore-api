@@ -1229,10 +1229,16 @@ class FlutterTemplate extends WP_REST_Posts_Controller
                         switch ($block['type']) {
                             case 'gallery':
                                 $field = $listing->get_field( $block['show_field'], true );
+                                if(!$field){
+                                    break;
+                                }
                                 $block['gallery'] = $field->get_value();
                                 break;
                             case 'text':
                                 $field = $listing->get_field( $block['show_field'], true );
+                                if(!$field){
+                                    break;
+                                }
                                 $block['text'] = $field->get_value();
                                 break;
                             case 'table':
@@ -1250,9 +1256,9 @@ class FlutterTemplate extends WP_REST_Posts_Controller
                                 if ( ! ( $author instanceof \MyListing\Src\User && $author->exists() ) ) {
                                     $block['author'] = null;
                                 }else{
-                                    $avatar = get_user_meta($user->ID, 'user_avatar', true);
+                                    $avatar = get_user_meta($author->ID, 'user_avatar', true);
                                     if (!isset($avatar) || $avatar == "" || is_bool($avatar)) {
-                                        $avatar = get_avatar_url($user->ID);
+                                        $avatar = get_avatar_url($author->ID);
                                     } else {
                                         $avatar = $avatar[0];
                                     }
@@ -1275,6 +1281,9 @@ class FlutterTemplate extends WP_REST_Posts_Controller
                                 break;
                             case 'location':
                                 $field = $listing->get_field_object( $block['show_field'], true );
+                                if(!$field){
+                                    break;
+                                }
 								$locations = $field->get_value();
                                 $block['locations'] = $locations;
                                 break;
