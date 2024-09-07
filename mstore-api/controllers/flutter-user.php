@@ -391,6 +391,9 @@ class FlutterUserController extends FlutterBaseController
 
     public function register()
     {
+        if (!get_option( 'users_can_register' )) {
+            return parent::sendError("disabled_register", "Registration is not enabled.", 400);
+        }
         $json = file_get_contents('php://input');
         $params = json_decode($json, TRUE);
         $usernameReq = $params["username"];
@@ -404,7 +407,7 @@ class FlutterUserController extends FlutterBaseController
             $role = $params["role"];
         }
         if (isset($role)) {
-            if (!in_array($role, ['subscriber', 'wcfm_vendor', 'seller', 'wcfm_delivery_boy', 'driver','owner'], true)) {
+            if (!in_array($role, ['subscriber', 'wcfm_vendor', 'seller', 'wcfm_delivery_boy', 'driver'], true)) {
                 return parent::sendError("invalid_role", "Role is invalid.", 400);
             }
         }
@@ -1038,47 +1041,9 @@ class FlutterUserController extends FlutterBaseController
 
         if (isset($params->avatar)) {
             $count = 1;
-            require_once(ABSPATH . 'wp-admin' . '/includes/file.php');
-            require_once(ABSPATH . 'wp-admin' . '/includes/image.php');
-            $imgdata = $params->avatar;
-            $imgdata = trim($imgdata);
-            $imgdata = str_replace('data:image/png;base64,', '', $imgdata);
-            $imgdata = str_replace('data:image/jpg;base64,', '', $imgdata);
-            $imgdata = str_replace('data:image/jpeg;base64,', '', $imgdata);
-            $imgdata = str_replace('data:image/gif;base64,', '', $imgdata);
-            $imgdata = str_replace(' ', '+', $imgdata);
-            $imgdata = base64_decode($imgdata);
-            $f = finfo_open();
-            $mime_type = finfo_buffer($f, $imgdata, FILEINFO_MIME_TYPE);
-            $type_file = explode('/', $mime_type);
-            $avatar = time() . '_' . $count . '.' . $type_file[1];
-
-            $uploaddir = wp_upload_dir();
-            $myDirPath = $uploaddir["path"];
-            $myDirUrl = $uploaddir["url"];
-
-            file_put_contents($uploaddir["path"] . '/' . $avatar, $imgdata);
-
-            $filename = $myDirUrl . '/' . basename($avatar);
-            $wp_filetype = wp_check_filetype(basename($filename), null);
-            $uploadfile = $uploaddir["path"] . '/' . basename($filename);
-
-            $attachment = array(
-                "post_mime_type" => $wp_filetype["type"],
-                "post_title" => preg_replace("/\.[^.]+$/", "", basename($filename)),
-                "post_content" => "",
-                "post_author" => $user_id,
-                "post_status" => "inherit",
-                'guid' => $myDirUrl . '/' . basename($filename),
-            );
-
-            $attachment_id = wp_insert_attachment($attachment, $uploadfile);
-            $attach_data = apply_filters('wp_generate_attachment_metadata', $attachment, $attachment_id, 'create');
-            // $attach_data = wp_generate_attachment_metadata($attachment_id, $uploadfile);
-            wp_update_attachment_metadata($attachment_id, $attach_data);
+            $attachment_id = upload_image_from_mobile($params->avatar, $count, $user_id);
             $url = wp_get_attachment_image_src($attachment_id);
             update_user_meta($user_id, 'user_avatar', $url, '');
-
         }
 
 

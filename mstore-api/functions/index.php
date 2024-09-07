@@ -764,6 +764,10 @@ function upload_image_from_mobile($image, $count, $user_id)
 
     $filename = $myDirUrl . '/' . basename($avatar);
     $wp_filetype = wp_check_filetype(basename($filename), null);
+    if ( ! wp_match_mime_types( 'image', $wp_filetype['type'] ) ) {
+        throw new Exception( "The uploaded file is not a valid image. Please try again.");
+	}
+
     $uploadfile = $uploaddir["path"] . '/' . basename($filename);
 
     $attachment = array(
