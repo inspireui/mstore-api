@@ -1233,6 +1233,27 @@ class FlutterWoo extends FlutterBaseController
 
     public function create_product_review($request)
     {
+        //Validate review product for order
+        if(isset($request['comment_meta']) && is_array($request['comment_meta']) && $request['comment_meta']['order_id']){
+            $cookie = $request->get_header("User-Cookie");
+            if (isset($cookie) && $cookie != null) {
+                $user_id = validateCookieLogin($cookie);
+                if (is_wp_error($user_id)) {
+                    return $user_id;
+                }
+                $args = array(
+                    'id' => $request['comment_meta']['order_id'],
+                    'customer_id' => $user_id,
+                );
+                $orders = wc_get_orders( $args );
+                if (count($orders) == 0) {
+                    return parent::sendError("no_permission","You don't have the permissions to review this product", 400);
+                }
+            }else{
+                return parent::sendError("cookie_required","User-Cookie is required", 400);
+            }
+        }
+       
 		$images = $request['images'];
         $controller = new WC_REST_Product_Reviews_Controller();
 		$response = $controller->create_item($request);
