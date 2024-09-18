@@ -104,9 +104,11 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
             if (is_wp_error($user_id)) {
                 return false;
             }
-            $params["customer_id"] = $user_id;
-            wp_set_current_user($user_id);
-            $request->set_body_params($params);
+            if ('POST' === $request->get_method()) {
+                $params["customer_id"] = $user_id;
+                wp_set_current_user($user_id);
+                $request->set_body_params($params);
+            }
             return true;
         } else {
             $params["customer_id"] = 0;
