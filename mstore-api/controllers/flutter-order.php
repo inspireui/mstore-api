@@ -46,7 +46,7 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
                 array(
                     'methods' => WP_REST_Server::CREATABLE,
                     'callback' => array($this, 'update_item'),
-                    'permission_callback' => array($this, 'custom_create_item_permissions_check'),
+                    'permission_callback' => array($this, 'custom_update_item_permissions_check'),
                     'args' => $this->get_endpoint_args_for_item_schema(WP_REST_Server::CREATABLE),
                 ),
                 'schema' => array($this, 'get_public_item_schema'),
@@ -66,7 +66,7 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
                 array(
                     'methods' => WP_REST_Server::EDITABLE,
                     'callback' => array($this, 'update_item'),
-                    'permission_callback' => array($this, 'custom_create_item_permissions_check'),
+                    'permission_callback' => array($this, 'custom_update_item_permissions_check'),
                     'args' => $this->get_endpoint_args_for_item_schema(WP_REST_Server::EDITABLE),
                 ),
                 'schema' => array($this, 'get_public_item_schema'),
@@ -104,10 +104,26 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
             if (is_wp_error($user_id)) {
                 return false;
             }
-            if ('POST' === $request->get_method()) {
-                $params["customer_id"] = $user_id;
-                wp_set_current_user($user_id);
-                $request->set_body_params($params);
+            $params["customer_id"] = $user_id;
+            wp_set_current_user($user_id);
+            $request->set_body_params($params);
+            return true;
+        } else {
+            $params["customer_id"] = 0;
+            $request->set_body_params($params);
+            return true;
+        }
+    }
+
+    function custom_update_item_permissions_check($request)
+    {
+        $cookie = $request->get_header("User-Cookie");
+        $json = file_get_contents('php://input');
+        $params = json_decode($json, TRUE);
+        if (isset($cookie) && $cookie != null) {
+            $user_id = validateCookieLogin($cookie);
+            if (is_wp_error($user_id)) {
+                return false;
             }
             return true;
         } else {
