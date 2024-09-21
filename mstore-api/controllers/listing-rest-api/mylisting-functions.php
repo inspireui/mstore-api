@@ -17,9 +17,8 @@ function myListingExploreListings($request)
     $starttime = microtime(true);
 
     $page = absint( isset($form_data['page']) ? $form_data['page'] : 0 );
-    $per_page = absint( isset($form_data['per_page']) ? $form_data['per_page'] : c27()->get_setting('general_explore_listings_per_page', 9));
+    $per_page = isset($form_data['per_page']) ? absint(  $form_data['per_page'])  : -1;
     $orderby = sanitize_text_field( isset($form_data['orderby']) ? $form_data['orderby'] : 'date' );
-    $context = sanitize_text_field( isset( $form_data['context'] ) ? $form_data['context'] : 'advanced-search' );
     $args = [
         'order' => sanitize_text_field( isset($form_data['order']) ? $form_data['order'] : 'DESC' ),
         'offset' => $page * $per_page,
@@ -42,48 +41,11 @@ function myListingExploreListings($request)
         ];
     }
 	
-    if ( $context === 'term-search' ) {
-        $taxonomy = ! empty( $form_data['taxonomy'] ) ? sanitize_text_field( $form_data['taxonomy'] ) : false;
-        $term = ! empty( $form_data['term'] ) ? sanitize_text_field( $form_data['term'] ) : false;
-
-        if ( ! $taxonomy || ! $term || ! taxonomy_exists( $taxonomy ) ) {
-            return [];
-        }
-
-        $tax_query_operator = apply_filters( 'mylisting/explore/match-all-terms', false ) === true ? 'AND' : 'IN';
-        $args['tax_query'][] = [
-            'taxonomy' => $taxonomy,
-            'field' => 'term_id',
-            'terms' => $term,
-            'operator' => $tax_query_operator,
-            'include_children' => $tax_query_operator !== 'AND',
-        ];
-
-        // add support for nearby order in single term page
-        if ( isset( $form_data['proximity'], $form_data['lat'], $form_data['lng'] ) ) {
-            $proximity = absint( $form_data['proximity'] );
-            $location = isset( $form_data['search_location'] ) ? sanitize_text_field( stripslashes( $form_data['search_location'] ) ) : false;
-            $lat = (float) $form_data['lat'];
-            $lng = (float) $form_data['lng'];
-            $units = isset($form_data['proximity_units']) && $form_data['proximity_units'] == 'mi' ? 'mi' : 'km';
-            if ( $lat && $lng && $proximity && $location ) {
-                $earth_radius = $units == 'mi' ? 3959 : 6371;
-                $sql = $wpdb->prepare( \MyListing\Helpers::get_proximity_sql(), $earth_radius, $lat, $lng, $lat, $proximity );
-                $post_ids = (array) $wpdb->get_results( $sql, OBJECT_K );
-                if ( empty( $post_ids ) ) { $post_ids = ['none']; }
-                $args['post__in'] = array_keys( (array) $post_ids );
-                $args['search_location'] = '';
-            }
-        }
-    } else {
-        foreach ( (array) $type->get_advanced_filters() as $filter ) {
-            $args = $filter->apply_to_query( $args, $form_data );
-        }
+    foreach ( (array) $type->get_advanced_filters() as $filter ) {
+        $args = $filter->apply_to_query( $args, $form_data );
     }
-
+    
     $result = [];
-    $listing_wrap = ! empty( $request['listing_wrap'] ) ? sanitize_text_field( $request['listing_wrap'] ) : '';
-    $listing_wrap = apply_filters( 'mylisting/explore/listing-wrap', $listing_wrap );
 
     /**
      * Hook after the search args have been set, but before the query is executed.
