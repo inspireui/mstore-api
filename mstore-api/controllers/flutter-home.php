@@ -148,33 +148,18 @@ class FlutterHome extends WP_REST_Controller
             $array = json_decode($fileContent, true);
 
             //get products for horizontal layout
-            $countDataLayout = 0;
+            $array['HorizonLayout'] = $this->getProductsForHorizonLayout($array["HorizonLayout"], $api, $request);
+
+            //get products for dynamic layout
+            $tabBar = $array['TabBar'];
             $results = [];
-            $horizontalLayout = $array["HorizonLayout"];
-            foreach ($horizontalLayout as $layout) {
-                if (in_array($layout['layout'], $this->supportedLayouts)) {
-                    if($countDataLayout <  4){
-                        $layout["data"] = $this->getProductsByLayout($layout, $api, $request);
-                        $countDataLayout += 1;
-                    }
-                    $results[] = $layout;
-                } else {
-                    if (isset($layout["items"]) && count($layout["items"]) > 0) {
-                        $items = [];
-                        foreach ($layout["items"] as $item) {
-                            if($countDataLayout <  4 && array_key_exists('layout', $item) && in_array($item['layout'], $this->supportedLayouts)){
-                                $item["data"] = $this->getProductsByLayout($item, $api, $request);
-                                $countDataLayout += 1;
-                            }
-                            
-                            $items[] = $item;
-                        }
-                        $layout["items"] = $items;
-                    }
-                    $results[] = $layout;
+            foreach ($tabBar as $tabBarItem) {
+                if($tabBarItem['layout'] == 'dynamic' && isset($tabBarItem['configs']) && is_array($tabBarItem['configs']) && isset($tabBarItem['configs']['HorizonLayout'])){
+                    $tabBarItem['configs']['HorizonLayout'] = $this->getProductsForHorizonLayout($tabBarItem['configs']['HorizonLayout'], $api, $request);
                 }
+                $results[] = $tabBarItem;
             }
-            $array['HorizonLayout'] = $results;
+            $array['TabBar'] = $results;
 
             //get products for vertical layout
             if (isset($array["VerticalLayout"])) {
@@ -195,6 +180,34 @@ class FlutterHome extends WP_REST_Controller
         } else {
             return new WP_Error("existed_config", "Config file hasn't been uploaded yet.", array('status' => 400));
         }
+    }
+
+    function getProductsForHorizonLayout($horizonLayout, $api, $request){
+        $countDataLayout = 0;
+        $results = [];
+        foreach ($horizonLayout as $layout) {
+            if (in_array($layout['layout'], $this->supportedLayouts)) {
+                if($countDataLayout <  4){
+                    $layout["data"] = $this->getProductsByLayout($layout, $api, $request);
+                    $countDataLayout += 1;
+                }
+                $results[] = $layout;
+            } else {
+                if (isset($layout["items"]) && count($layout["items"]) > 0) {
+                    $items = [];
+                    foreach ($layout["items"] as $item) {
+                        if($countDataLayout <  4 && array_key_exists('layout', $item) && in_array($item['layout'], $this->supportedLayouts)){
+                            $item["data"] = $this->getProductsByLayout($item, $api, $request);
+                            $countDataLayout += 1;
+                        }
+                        $items[] = $item;
+                    }
+                    $layout["items"] = $items;
+                }
+                $results[] = $layout;
+            }
+        }
+        return $results;
     }
 
     function getProductsByLayout($layout, $api, $request)
