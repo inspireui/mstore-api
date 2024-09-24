@@ -527,8 +527,6 @@ class FlutterTemplate extends WP_REST_Posts_Controller
         if( $this->_isMyListing){
             $listing_type = $request['listing_type'] ?? 'place';
             $bodyReq = ['proximity_units'=>'km','listing_type'=>$listing_type, 'form_data'=>[
-                'page'=>$offset / $limit,
-                'per_page'=>$limit,
                 'search_keywords'=>'',
                 'proximity'=>$radius,
                 'lat'=>$current_lat,
@@ -540,6 +538,10 @@ class FlutterTemplate extends WP_REST_Posts_Controller
                 'sort'=>'nearby'
                 ]
             ];
+            if(isset($request['per_page']) && $request['per_page'] != -1){
+                $bodyReq['form_data']['page'] = $offset / $limit;
+                $bodyReq['form_data']['per_page'] = $limit;
+            }
 			$posts =  myListingExploreListings($bodyReq);
             $items = (array)($posts);
             foreach ($items as $item):
