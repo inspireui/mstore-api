@@ -1226,35 +1226,55 @@ class FlutterTemplate extends WP_REST_Posts_Controller
                         $block->set_listing( $listing );
 
                         $block['type'] = $block->get_type();
+
+                        $valid = true;
                         switch ($block['type']) {
                             case 'gallery':
-                                $field = $listing->get_field( $block['show_field'], true );
-                                if(!$field){
+                                if ( ! ( $field = $listing->get_field_object( $block->get_prop( 'show_field' ) ) ) ) {
+                                    $valid = false;
                                     break;
                                 }
                                 $block['gallery'] = $field->get_value();
                                 break;
                             case 'text':
-                                $field = $listing->get_field( $block['show_field'], true );
-                                if(!$field){
+                                if ( ! ( $listing->has_field( $block->get_prop( 'show_field' ) ) ) ) {
+                                    $valid = false;
                                     break;
                                 }
+                                $field = $listing->get_field( $block['show_field'], true );
                                 $block['text'] = $field->get_value();
                                 break;
                             case 'table':
                             case 'accordion':
-                                $block['rows'] = $block->get_formatted_rows( $listing );
+                                $rows = $block->get_formatted_rows( $listing );
+                                if ( empty( $rows ) ) {
+                                    $valid = false;
+                                    break;
+                                }
+                                $block['rows'] = $rows;
                                 break;
                             case 'tags':
-                                $block['tags'] = $listing->get_field( 'tags' );
+                                $terms = $listing->get_field( 'tags' );
+                                if ( empty( $terms ) || is_wp_error( $terms ) ) {
+                                    $valid = false;
+                                    break;
+                                }
+                                $block['tags'] = $terms;
                                 break;
                             case 'categories':
-                                $block['categories'] = $listing->get_field( 'category' );
+                                $terms = $listing->get_field( 'category' );
+                                if ( empty( $terms ) || is_wp_error( $terms ) ) {
+                                    $valid = false;
+                                    break;
+                                }
+                                $block['categories'] = $terms;
                                 break;
                             case 'author':
                                 $author = $listing->get_author();
                                 if ( ! ( $author instanceof \MyListing\Src\User && $author->exists() ) ) {
+                                    $valid = false;
                                     $block['author'] = null;
+                                    break;
                                 }else{
                                     $avatar = get_user_meta($author->ID, 'user_avatar', true);
                                     if (!isset($avatar) || $avatar == "" || is_bool($avatar)) {
@@ -1273,25 +1293,38 @@ class FlutterTemplate extends WP_REST_Posts_Controller
                                 }
                                 break;
                             case 'work_hours':
-                                $block['work_hours'] = $listing->get_field( 'work_hours' ) ;
+                                $work_hours = $listing->get_field( 'work_hours' ) ;
+                                $schedule = new MyListing\Src\Work_Hours( $work_hours );
+                                if ( ! $work_hours || $schedule->is_empty() ) {
+                                    $valid = false;
+                                    break;
+                                }
+                                $block['work_hours'] = $work_hours ;
                                 break;
                             case 'video':
                                 $video_url = $listing->get_field( $block->get_prop( 'show_field' ) );
-                                $block['video'] = \MyListing\Helpers::get_video_embed_details( $video_url );
-                                break;
-                            case 'location':
-                                $field = $listing->get_field_object( $block['show_field'], true );
-                                if(!$field){
+                                $video = \MyListing\Helpers::get_video_embed_details( $video_url );
+                                if ( ! ( $video_url && $video ) ) {
+                                    $valid = false;
                                     break;
                                 }
-								$locations = $field->get_value();
-                                $block['locations'] = $locations;
+                                $block['video'] = $video;
+                                break;
+                            case 'location':
+                                $field = $listing->get_field_object( $block->get_prop( 'show_field' ) );
+                                if ( ! $field || ! $field->get_value() ) {
+                                    $valid = false;
+                                    break;
+                                }
+                                $block['locations'] = $field->get_value();
                                 break;
                             default:
-                     
                                 break;
                         }
-                        $blocks[] = $block;
+
+                        if ($valid) {
+                            $blocks[] = $block;
+                        }
                     }
 
                 }
