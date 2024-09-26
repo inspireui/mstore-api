@@ -646,7 +646,11 @@ class FlutterTemplate extends WP_REST_Posts_Controller
 
         $coupon = (isset($request['coupon'])) ? $request['coupon'] : false;
         $services = (isset($request['services'])) ? $request['services'] : false;
-
+        if (is_array($services) && count($services) > 0) {
+            $services = array_map(function($item){
+                return ['service' => sanitize_title($item['service']), 'value'=>$item['value']];
+            }, $services);
+        }
         $data['price'] = Listeo_Core_Bookings_Calendar::calculate_price($request['listing_id'], $request['date_start'], $request['date_end'], $multiply, $services, '');
         if (!empty($coupon))
         {
