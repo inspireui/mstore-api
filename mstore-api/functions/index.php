@@ -523,9 +523,11 @@ function customProductResponse($response, $object, $request)
         foreach ($attributes as $key => $attr) {
             if(!is_string($attr)){
                 $check = $attr->is_taxonomy();
+                $is_image_type = false;
                 if ($check) {
                     $taxonomy = $attr->get_taxonomy_object();
                     $label = $taxonomy->attribute_label;
+                    $is_image_type = $taxonomy->attribute_type == 'image';
                 } else {
                     $label = $attr->get_name();
                 }
@@ -533,7 +535,24 @@ function customProductResponse($response, $object, $request)
                 $attrOptions = empty($attrOptions) ? array_map(function ($v){
                     return ['name'=>$v, 'slug' => $v];
                 },$attr["options"]) : $attrOptions;
-                $attributesData[] = array_merge($attr->get_data(), ["label" => $label, "name" => urldecode($key)], ['options' =>$attrOptions]);
+                
+                $is_image_type = $is_image_type == true && class_exists( 'Woo_Variation_Swatches_Frontend' );
+                if ($is_image_type) {
+                     $attrOptions = array_map(function ($item){
+                        $attachment_id = absint( woo_variation_swatches()->get_frontend()->get_product_attribute_image( $item ) );
+                        if ($attachment_id) {
+                            $image         = wp_get_attachment_image_src( $attachment_id, 'thumbnail' );
+                            if ( is_array( $image ) ) {
+                                $term = $item->to_array();
+                                $term['image_url'] = esc_url( $image[0] );
+                                return $term;
+                            }   
+                        }
+                        return $item;
+                    },$attrOptions);
+                }
+                
+                $attributesData[] = array_merge($attr->get_data(), ["label" => $label, "name" => urldecode($key), 'is_image_type' => $is_image_type], ['options' =>$attrOptions]);
             }
         }
         $response->data['attributesData'] = $attributesData;
