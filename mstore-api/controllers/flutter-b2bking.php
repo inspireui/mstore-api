@@ -392,7 +392,7 @@ class FlutterB2BKing extends FlutterBaseController
             foreach ($helper_array as $index=>$value){
                 $now_price = $value;
                 $discount = ($original_user_price-$now_price)/$original_user_price*100;
-                $tired_prices[] = ['quantity' => $index, 'discount' => round($discount), 'price'=>round($now_price)];
+                $tired_prices[] = ['quantity' => $index, 'discount' => round($discount), 'price'=>round($now_price, 2)];
             }
             return $tired_prices;
         }
