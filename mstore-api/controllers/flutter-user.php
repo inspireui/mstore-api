@@ -401,7 +401,10 @@ class FlutterUserController extends FlutterBaseController
         $userPassReq = $params["user_pass"];
         $userLoginReq = $params["user_login"];
         $userEmailReq = $params["user_email"];
-        $referralCodeReq = $params["referral_code"];
+
+        if (array_key_exists('referral_code', $params)) {
+            $referralCodeReq = $params["referral_code"];
+        }
 
         if(array_key_exists('role', $params)){
             $role = $params["role"];
@@ -473,7 +476,7 @@ class FlutterUserController extends FlutterBaseController
                 $_POST['user_role'] = $user['role'];//fix to register account with role in listeo
 
                 //
-                if ($referralCodeReq) {
+                if (isset($referralCodeReq) && $referralCodeReq) {
                     $_COOKIE['woo_wallet_referral'] = sanitize_text_field( wp_unslash( $referralCodeReq ) );
                 }
 

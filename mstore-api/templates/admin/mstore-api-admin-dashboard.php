@@ -1,7 +1,7 @@
 
 <?php include_once(plugin_dir_path(dirname(dirname(__FILE__))) . 'functions/index.php'); ?>
 <?php include_once(plugin_dir_path(dirname(dirname(__FILE__))) . 'controllers/helpers/firebase-message-helper.php'); ?>
-
+<!-- 
     <div class="wrap">
         <div class="thanks">
             <p>Thank you for installing Mstore API plugins.</p>
@@ -15,13 +15,13 @@
             }
             ?>
         </div>
-    </div>
+    </div> -->
 <?php
 $verified = isPurchaseCodeVerified();
 if (!isset($verified) || $verified === "" || $verified === false) {
     ?>
     <form action="" enctype="multipart/form-data" method="post" style="margin-bottom:50px">
-        <?php
+        <!-- <?php
         if (isset($_POST['but_verify'])) {
             $verified = verifyPurchaseCode(sanitize_text_field($_POST['code']));
 
@@ -36,7 +36,7 @@ if (!isset($verified) || $verified === "" || $verified === false) {
                 <?php
             }
         }
-        ?>
+        ?> -->
 
         <input type="text" class="mstore-input-class" placeholder="Enter Purchase Code" name="code">
         <div>
