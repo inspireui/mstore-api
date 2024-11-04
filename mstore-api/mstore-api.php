@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the FluxBuilder and FluxStore Mobile App
- * Version: 4.15.5
+ * Version: 4.15.6
  * Author: FluxBuilder
  * Author URI: https://fluxbuilder.com
  *
@@ -56,7 +56,7 @@ if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
 
 class MstoreCheckOut
 {
-    public $version = '4.15.5';
+    public $version = '4.15.6';
 
     public function __construct()
     {
@@ -67,6 +67,8 @@ class MstoreCheckOut
          * Prepare data before checkout by webview
          */
         add_action('template_redirect', 'flutter_prepare_checkout');
+
+        add_action( 'pre_get_posts', 'set_author_in_for_vendor_staff' );
 
         include_once(ABSPATH . 'wp-admin/includes/plugin.php');
         //include_once(ABSPATH . 'wp-includes/pluggable.php');
@@ -1038,6 +1040,24 @@ function flutter_prepare_checkout()
                 }
             }
         }
+    }
+}
+
+function set_author_in_for_vendor_staff( $query ) {
+    global $post;
+    if ( class_exists('WeDevs_Dokan') && dokan()->is_pro_exists() && isset( $query->query['post_type'] ) && $query->query['post_type'] === 'global_product_addon' && $post != null ) {
+        $vendor        = dokan_get_vendor_by_product( $post->ID );
+
+        // Check if $vendor is valid before proceeding
+        if (!$vendor) {
+            return;
+        }
+
+        $vendor_staffs = dokan_get_vendor_staff( $vendor->get_id() );
+        if ( ! in_array( $vendor->get_id(), $vendor_staffs, true ) ) {
+            return;
+        }
+        $query->set( 'author__in', $vendor_staffs );
     }
 }
 

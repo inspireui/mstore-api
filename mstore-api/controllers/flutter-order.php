@@ -47,7 +47,7 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
                     'methods' => WP_REST_Server::CREATABLE,
                     'callback' => array($this, 'update_item'),
                     'permission_callback' => array($this, 'custom_update_item_permissions_check'),
-                    'args' => $this->get_endpoint_args_for_item_schema(WP_REST_Server::CREATABLE),
+                    'args' => $this->get_endpoint_args_for_item_schema(WP_REST_Server::EDITABLE),
                 ),
                 'schema' => array($this, 'get_public_item_schema'),
             )
@@ -127,9 +127,7 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
             }
             return true;
         } else {
-            $params["customer_id"] = 0;
-            $request->set_body_params($params);
-            return true;
+            return false;
         }
     }
 

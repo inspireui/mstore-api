@@ -437,7 +437,7 @@ function addYITHBadgeToMetaResponse($response, $product){
 
 function customProductResponse($response, $object, $request)
 {
-    global $woocommerce_wpml;
+    global $woocommerce_wpml, $product;
 
     // Will load the product variations if this request is for a specific
     // product by ID
@@ -558,8 +558,15 @@ function customProductResponse($response, $object, $request)
         $response->data['attributesData'] = $attributesData;
     }
     
-    /* Product Add On */
+    
+    // /* Product Add On */
     if(class_exists('WC_Product_Addons_Helper')){
+        if(class_exists('WeDevs_Dokan') && dokan()->is_pro_exists()){
+            global $post;
+            wp_cache_delete('all_products', 'global_product_addons');
+            $post = get_post($response->data['id']);
+        }
+
         $add_ons_list =  [];
         $product_addons = WC_Product_Addons_Helper::get_product_addons( $response->data['id'], false );
         //$add_ons_list  = count($addOns) == 0 ? $product_addons : array_merge($product_addons, $addOns);
@@ -592,7 +599,7 @@ function customProductResponse($response, $object, $request)
         }
         $response->data['meta_data'] = $new_meta_data;
     }
-    
+
 
     /* Product Booking */
     if (is_plugin_active('woocommerce-appointments/woocommerce-appointments.php')) {
