@@ -211,6 +211,16 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
 
         // Send the customer invoice email.
        	$order = wc_get_order( $data['id'] );
+
+        if ($order->get_payment_method() == 'cod') {
+           if ( $order->get_total() > 0 ) {
+			// Mark as processing or on-hold (payment won't be taken until delivery).
+                $order->update_status( apply_filters( 'woocommerce_cod_process_payment_order_status', $order->has_downloadable_item() ? 'on-hold' : 'processing', $order ), __( 'Payment to be made upon delivery.', 'woocommerce' ) );
+            } else {
+                $order->payment_complete();
+            }
+        }
+
         if($order->get_payment_method() == 'cod' || $order->has_status( array( 'processing', 'completed' ) )){
             WC()->payment_gateways();
             WC()->shipping();

@@ -637,6 +637,18 @@ function customProductResponse($response, $object, $request)
     /* YITH WooCommerce Badge Management Premium */
     $response = addYITHBadgeToMetaResponse($response, $product);
 
+    /* WooCommerce Simple Auction */
+    if(class_exists( 'WooCommerce_simple_auction' ) && $product->get_type() == 'auction'){
+        $meta_data = $response->data['meta_data'];
+        $meta_data[] = new WC_Meta_Data(
+            array(
+                'key'   =>'_auction_bid_value',
+                'value' => $product->bid_value(),
+            )
+        );
+        $response->data['meta_data'] = $meta_data;
+    }
+
     $blackListKeys = ['yoast_head','yoast_head_json','_links'];
     $response->data = array_diff_key($response->data,array_flip($blackListKeys));
     return $response;
