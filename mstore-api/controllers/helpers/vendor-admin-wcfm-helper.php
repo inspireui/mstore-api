@@ -822,6 +822,16 @@ class VendorAdminWCFMHelper
         }
         $offset = ($offset - 1) * $length;
 
+        //validate order param
+        if(!empty($request["order"]) && $request["order"] != 'asc' && $request["order"] != 'desc'){
+            return $this->sendError("request_failed", "order is invalid", 400);
+        }
+
+        //validate status_type param
+        if(!empty($request["status_type"]) && $request["status_type"] != 'approved' && $request["status_type"] != 'pending'){
+            return $this->sendError("request_failed", "status_type is invalid", 400);
+        }
+
         $the_orderby = !empty($request["orderby"])
             ? sanitize_text_field($request["orderby"])
             : "ID";

@@ -39,6 +39,26 @@ class FlutterAuction extends FlutterBaseController
                 }
             ),
         ));
+
+        register_rest_route(
+            $this->namespace,
+            '/history' . '/(?P<id>[\d]+)',
+            array(
+                'args' => array(
+                    'id' => array(
+                        'description' => __('Unique identifier for the resource.', 'woocommerce'),
+                        'type' => 'integer',
+                    ),
+                ),
+                array(
+                    'methods' => "GET",
+                    'callback' => array($this, 'get_auction_history'),
+                    'permission_callback' => function () {
+                        return parent::checkApiPermission();
+                    }
+                ),
+            )
+        );
     }
 
     public function placebid($request)
@@ -90,6 +110,36 @@ class FlutterAuction extends FlutterBaseController
             }
         }
         return true;
+    }
+
+    public function get_auction_history($request)
+    {
+        if (!class_exists('WooCommerce_simple_auction')) {
+            return parent::send_invalid_plugin_error("You need to install WooCommerce Simple Auction plugin to use this api");
+        }
+
+        $product = wc_get_product($request['id']);
+        if ($product) {
+            if ($product->is_sealed()) {
+                return parent::sendError("is_sealed", 'This auction is sealed. Upon auction finish auction history and winner will be available to the public.' , 200);
+            }else{
+                $datetimeformat = get_option('date_format').' '.get_option('time_format');
+                $results = [];
+                $auction_history = apply_filters('woocommerce__auction_history_data', $product->auction_history());
+                if (!empty($auction_history)) {
+                    foreach ($auction_history as $history_value) {
+                        $results[] = [
+                            'date' => $history_value->date, 
+                            'bid' => $history_value->bid, 
+                            'displayname' => apply_filters( 'woocommerce_simple_auctions_displayname', get_userdata($history_value->userid)->display_name, $product )
+                        ];
+                    }
+                }
+                return $results;
+            }
+        }else{
+            return parent::sendError("invalid", $request['id'] . ' not found' , 400);
+        }
     }
 }
 
