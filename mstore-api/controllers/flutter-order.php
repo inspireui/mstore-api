@@ -122,11 +122,10 @@ class CUSTOM_WC_REST_Orders_Controller extends WC_REST_Orders_Controller
         $params = json_decode($json, TRUE);
         if (isset($cookie) && $cookie != null) {
             $user_id = validateCookieLogin($cookie);
-            if (is_wp_error($user_id)) {
-                return false;
-            }
+            return !is_wp_error($user_id);
+        } else if(count(array_keys($params)) == 1 && array_key_exists('status', $params)){ // allow Guest to change order status when enable UpdateOrderStatus in the app
             return true;
-        } else {
+        }else {
             return false;
         }
     }

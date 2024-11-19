@@ -48,6 +48,9 @@ Ready to go mobile? Download the MStore API plugin and unlock the power of FluxB
 1. Click Install.
 
 == Changelog ==
+= 4.15.9 =
+  * Fix edit order status for guest checkout
+
 = 4.15.8 =
   * Validate order and status_type params for reviews api
 
