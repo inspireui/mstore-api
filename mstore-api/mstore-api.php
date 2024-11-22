@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the FluxBuilder and FluxStore Mobile App
- * Version: 4.15.9
+ * Version: 4.16.0
  * Author: FluxBuilder
  * Author URI: https://fluxbuilder.com
  *
@@ -50,6 +50,7 @@ include_once plugin_dir_path(__FILE__) . "controllers/helpers/firebase-message-h
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-fib.php";
 include_once plugin_dir_path(__FILE__) . "controllers/helpers/firebase-phone-auth-helper.php";
 include_once plugin_dir_path(__FILE__) . "controllers/flutter-auction.php";
+include_once plugin_dir_path(__FILE__) . "controllers/flutter-iyzico.php";
 
 if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
     require __DIR__ . '/vendor/autoload.php';
@@ -57,7 +58,7 @@ if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
 
 class MstoreCheckOut
 {
-    public $version = '4.15.9';
+    public $version = '4.16.0';
 
     public function __construct()
     {
