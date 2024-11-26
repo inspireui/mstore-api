@@ -1180,7 +1180,23 @@ class FlutterWoo extends FlutterBaseController
             $max_product_point_discount = get_option('wc_points_rewards_max_discount');
             $max_point_discount = get_option('wc_points_rewards_cart_max_discount');
 
-            return ["points" => $myPoints, "cart_price_rate" => floatval($monetary_value), "cart_points_rate" => intval($points), "max_point_discount" => $max_point_discount, "max_product_point_discount" => $max_product_point_discount];
+            $ratio = explode( ':', get_option( 'wc_points_rewards_earn_points_ratio', '' ) );
+            if ( empty( $ratio ) ) {
+                $points_rate = 0;
+                $price_rate = 0;
+            }else{
+                $points_rate         = ! empty( $ratio[0] ) ? $ratio[0] : 0;
+                $price_rate = ! empty( $ratio[1] ) ? $ratio[1] : 0;
+            }
+
+            return [
+                "points" => $myPoints, 
+                "price_rate" => floatval($price_rate), 
+                "points_rate" => intval($points_rate), 
+                "cart_price_rate" => floatval($monetary_value), 
+                "cart_points_rate" => intval($points), 
+                "max_point_discount" => $max_point_discount, 
+                "max_product_point_discount" => $max_product_point_discount];
         } else {
             return parent::sendError("disabled_redemption", "Disabled partial redemption", 400);
         }

@@ -48,6 +48,9 @@ Ready to go mobile? Download the MStore API plugin and unlock the power of FluxB
 1. Click Install.
 
 == Changelog ==
+= 4.16.1 =
+  * Return Earn Points Conversion Rate for points api
+
 = 4.16.0 =
   * Support iyzico payment
 
