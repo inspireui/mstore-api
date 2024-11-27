@@ -44,9 +44,6 @@ class FlutterPhonePe extends FlutterBaseController
 
     public function callback($request)
     {
-        if (!class_exists('PPEX_WC_PG_Client')) {
-            return parent::send_invalid_plugin_error("You need to install PhonePe Payment Solutions plugin to use this api");
-        }
         $json = file_get_contents('php://input');
         $body = json_decode($json, TRUE);
         if($body['response']){
