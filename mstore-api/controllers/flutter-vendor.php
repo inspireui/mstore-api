@@ -430,7 +430,14 @@ class FlutterVendor extends FlutterBaseController
                 }
             }
 
-            wp_set_object_terms($post_id, isset($request['product_type']) ? $request['product_type'] : "simple", 'product_type');
+            if (isset($request['meta_data']) && is_array($request['meta_data'])) {
+                foreach ($request['meta_data'] as $item) {
+                    if($item['value'] != null){
+                        update_post_meta($post_id, $item['key'], $item['value']);
+                    }
+                }
+            }
+
             $product->save();
             $product = wc_get_product($post_id);
             if (isset($request["categories"]) && count($request["categories"]) > 0) {
@@ -441,6 +448,11 @@ class FlutterVendor extends FlutterBaseController
                 $product->set_tag_ids([$request["tags"][0]["id"]]);
                 $product->save();
             }
+
+            //this function must call after $product->save(), $product is simple, if call $product->save() it will update product type to simple again
+            wp_set_object_terms($post_id, isset($request['product_type']) ? $request['product_type'] : "simple", 'product_type');
+
+            $product = wc_get_product($post_id);
             return $product->get_data();
         } else {
             return parent::sendError("invalid_role", "You must be seller to create product", 401);
