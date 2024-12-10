@@ -3,7 +3,7 @@
  * Plugin Name: MStore API
  * Plugin URI: https://github.com/inspireui/mstore-api
  * Description: The MStore API Plugin which is used for the FluxBuilder and FluxStore Mobile App
- * Version: 4.16.3
+ * Version: 4.16.4
  * Author: FluxBuilder
  * Author URI: https://fluxbuilder.com
  *
@@ -59,7 +59,7 @@ if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
 
 class MstoreCheckOut
 {
-    public $version = '4.16.3';
+    public $version = '4.16.4';
 
     public function __construct()
     {
@@ -722,6 +722,20 @@ function custom_woocommerce_rest_prepare_product_variation_object($response, $ob
         if($sign_up_fee != null){
             $response->data['regular_price']= $sign_up_fee;
             $response->data['price']= $sign_up_fee;
+        }
+    }
+
+    if (class_exists('WooCommerceWholeSalePrices')) {
+        $meta_data = $response->data['meta_data'];
+        foreach ($meta_data as $v) {
+            $key = is_array($v) ? $v['key'] : $v->__get('key');
+            if ((strpos($key, '_wholesale_price') !== false && strpos($key, '_have_wholesale_price') === false) || (strpos($key, '_wholesale_sale_price') !== false && strpos($key, '_have_wholesale_sale_price') === false)) {
+                if($v->__get('value')){
+                    $wholesale_price = wc_get_price_to_display(  $object, array( 'price' => $v->__get('value') ) );
+                    $v->__set("value", number_format($wholesale_price, 2, '.', ''));
+                    $v->apply_changes();
+                }
+            }
         }
     }
 

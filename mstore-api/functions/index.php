@@ -649,6 +649,20 @@ function customProductResponse($response, $object, $request)
         $response->data['meta_data'] = $meta_data;
     }
 
+    if (class_exists('WooCommerceWholeSalePrices')) {
+        $meta_data = $response->data['meta_data'];
+        foreach ($meta_data as $v) {
+            $key = is_array($v) ? $v['key'] : $v->__get('key');
+            if ((strpos($key, '_wholesale_price') !== false && strpos($key, '_have_wholesale_price') === false) || (strpos($key, '_wholesale_sale_price') !== false && strpos($key, '_have_wholesale_sale_price') === false)) {
+                if($v->__get('value')){
+                    $wholesale_price = wc_get_price_to_display(  $object, array( 'price' => $v->__get('value') ) );
+                    $v->__set("value", number_format($wholesale_price, 2, '.', ''));
+                    $v->apply_changes();
+                }
+            }
+        }
+    }
+
     $blackListKeys = ['yoast_head','yoast_head_json','_links'];
     $response->data = array_diff_key($response->data,array_flip($blackListKeys));
     return $response;

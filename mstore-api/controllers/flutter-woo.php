@@ -423,7 +423,7 @@ class FlutterWoo extends FlutterBaseController
     /**
      * Check any prerequisites for our REST request.
      */
-    private function check_prerequisites($request)
+    private function check_prerequisites($request, $body)
     {
         $cookie = $request->get_header("User-Cookie");
         if (isset($cookie) && $cookie != null) {
@@ -705,7 +705,7 @@ class FlutterWoo extends FlutterBaseController
         $json = file_get_contents('php://input');
         $body = json_decode($json, TRUE);
 
-        $check = $this->check_prerequisites($request);
+        $check = $this->check_prerequisites($request, $body);
         if(is_wp_error($check)){
             return $check;
         }
@@ -790,7 +790,7 @@ class FlutterWoo extends FlutterBaseController
         $json = file_get_contents('php://input');
         $body = json_decode($json, TRUE);
 
-        $check = $this->check_prerequisites($request);
+        $check = $this->check_prerequisites($request, $body);
         if(is_wp_error($check)){
             return $check;
         }
@@ -841,7 +841,7 @@ class FlutterWoo extends FlutterBaseController
         $json = file_get_contents('php://input');
         $body = json_decode($json, TRUE);
 
-        $check = $this->check_prerequisites($request);
+        $check = $this->check_prerequisites($request, $body);
         if(is_wp_error($check)){
             return $check;
         }
@@ -1088,7 +1088,7 @@ class FlutterWoo extends FlutterBaseController
         $json = file_get_contents('php://input');
         $body = json_decode($json, TRUE);
 
-        $check = $this->check_prerequisites($request);
+        $check = $this->check_prerequisites($request, $body);
         if(is_wp_error($check)){
             return $check;
         }
