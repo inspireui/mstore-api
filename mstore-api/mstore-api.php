@@ -1102,10 +1102,30 @@ function custom_woocommerce_rest_prepare_shop_order_object($response)
     }
     $response->data['line_items'] = $line_items;
 
-    // Get the value
-    $bacs_info = get_option( 'woocommerce_bacs_accounts');
-    $response->data['bacs_info'] = $bacs_info;
-    
+    // Get payment method
+    $payment_method = $response->data['payment_method'];
+    $payment_method_title = $response->data['payment_method_title'];
+    $order_id = $response->data['id'];
+
+    // Get default Bank transfer info
+    if ($payment_method == 'bacs' && class_exists('WC_Gateway_BACS')) {
+        $bacs = new WC_Gateway_BACS();
+        $bacs_accounts = apply_filters('woocommerce_bacs_accounts', $bacs->account_details, $order_id);
+        $response->data['bacs_info'] = $bacs_accounts;
+    }
+
+    // Get other Bank transfer info
+    if (strpos($payment_method, 'bank_transfer') !== false && is_plugin_active('fr-multi-bank-transfer-payment-gateways-for-woocommerce/fr-multi-bank-transfer-gateways-for-woocommerce.php')) {
+        require_once ABSPATH . 'wp-content/plugins/fr-multi-bank-transfer-payment-gateways-for-woocommerce/includes/gateways/class-fr-multi-bank-transfer-gateways-for-woocommerce-bank-transfer.php';
+
+        $bacs = new Fr_Multi_Bank_Transfer_Gateways_For_Woocommerce_Bank_Transfer([
+            'id' => $payment_method,
+            'method_title' => $payment_method_title,
+        ]);
+        $bacs_accounts = apply_filters('woocommerce_bacs_accounts', $bacs->account_details, $order_id);
+        $response->data['bacs_info'] = $bacs_accounts;
+    }
+
     return $response;
 }
 
