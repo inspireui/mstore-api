@@ -809,6 +809,11 @@ function upload_image_from_mobile($image, $count, $user_id)
     $type_file = explode('/', $mime_type);
     $avatar = time() . '_' . $count . '.' . $type_file[1];
 
+    $wp_filetype = wp_check_filetype(basename($avatar), null);
+    if ( ! wp_match_mime_types( 'image', $wp_filetype['type'] ) ) {
+        throw new Exception( "The uploaded file is not a valid image. Please try again.");
+	}
+
     $uploaddir = wp_upload_dir();
     $myDirPath = $uploaddir["path"];
     $myDirUrl = $uploaddir["url"];
@@ -816,10 +821,6 @@ function upload_image_from_mobile($image, $count, $user_id)
     file_put_contents($uploaddir["path"] . '/' . $avatar, $imgdata);
 
     $filename = $myDirUrl . '/' . basename($avatar);
-    $wp_filetype = wp_check_filetype(basename($filename), null);
-    if ( ! wp_match_mime_types( 'image', $wp_filetype['type'] ) ) {
-        throw new Exception( "The uploaded file is not a valid image. Please try again.");
-	}
 
     $uploadfile = $uploaddir["path"] . '/' . basename($filename);
 

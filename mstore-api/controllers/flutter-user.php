@@ -1044,9 +1044,13 @@ class FlutterUserController extends FlutterBaseController
 
         if (isset($params->avatar)) {
             $count = 1;
-            $attachment_id = upload_image_from_mobile($params->avatar, $count, $user_id);
-            $url = wp_get_attachment_image_src($attachment_id);
-            update_user_meta($user_id, 'user_avatar', $url, '');
+            try {
+                $attachment_id = upload_image_from_mobile($params->avatar, $count, $user_id);
+                $url = wp_get_attachment_image_src($attachment_id);
+                update_user_meta($user_id, 'user_avatar', $url, '');
+             } catch (Exception $e) {
+                return new WP_Error("invalid_avatar", $e->getMessage(), array('status' => 400));
+            }
         }
 
 
