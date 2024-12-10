@@ -618,7 +618,16 @@ function flutter_custom_change_product_attribute($response, $item, $request)
 {
     $taxonomy = wc_attribute_taxonomy_name($item->attribute_name);
 
-    // Get list attribute terms based on attribute.
+    // Combine all attribute terms into the return result when getting
+    // attributes. Reduce api calls to get sub-attributes from the app
+    $options = get_terms([
+        'taxonomy' => $taxonomy,
+        'hide_empty' => false,
+    ]);
+
+    $response->data['terms'] = $options;
+
+    // Get list count of attribute terms based on attribute.
     $terms = get_filtered_term_product_counts($request, $taxonomy);
 
     $is_visible = false;
